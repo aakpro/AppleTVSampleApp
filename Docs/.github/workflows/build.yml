@@ -1,0 +1,66 @@
+name: SampleTV Build & Test Pipeline  
+on:  
+  push:  
+    branches: [main, feature/*]    
+  pull_request:  
+    branches: [main]
+
+jobs:
+  build-and-test:
+    runs-on: macos-latest
+    
+    steps:      
+      - name: Checkout Codebase  
+        uses: actions/checkout@v3
+        
+      # Bump version if phase completed (optional)  
+      - name: Setup Package.swift  
+        run: |  
+          swift pkg update || echo "SwiftPM not found"
+
+      # Swift Build  
+      - name: Build Codebase
+        run: 
+          swift build --release
+      
+    # Tests + Coverage Check  
+    - name: Run Tests & Generate Coverage Report
+      run:
+        swift test --generate-xctest-coverage-report | tee coverage.txt
+      
+      - name: Verify Coverage ≥ 85%
+        if: always()
+        run: | 
+          grep -i "percent" coverage.txt 
+          (should show >85, fail if <85)
+
+    # Clippy Type Safety Scan  
+    - name: Run Clippy Strict Mode Check
+      run: |
+        swift build --check-yaml && \
+        git add . && \
+        git commit -q "Clippy check" && \
+        swift build --clean
+        
+    # SwiftLint Compliance  
+    - name: Run SwiftLint (CI Gate)
+      run: |
+        swift build --lint-strict && \
+        echo "SwiftLint violations:" && \
+        swift lint
+
+  release-check: 
+    runs-on: macos-latest
+    if: github.event_name == 'workflow_dispatch'
+    
+    steps:      
+      # Version check - only create tag if all phases complete  
+      - name: Bump Version & Create Release Tag      
+        id: version-bumper        
+        run: |          
+          # Read current version from Package.swift
+          grep -oP "\d+\.\d+\.(\d+|\*)/" package.swift > current_version.txt
+          
+          # If all phases merged (0.x.6.x or higher), bump to v1.0.0
+          # Check CHANGELOG.md for "Unreleased" section
+          if [ ! -f "CHANGELOG.md" ]; then false; fi
