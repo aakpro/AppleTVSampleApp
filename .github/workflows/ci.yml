@@ -28,6 +28,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Select Xcode
+        run: |
+          latest_xcode=$(ls -d /Applications/Xcode* | sort -V | tail -n 1)
+          echo "Selecting $latest_xcode"
+          sudo xcode-select -s "$latest_xcode/Contents/Developer"
+          xcodebuild -version
+
       - name: Select an Apple TV simulator
         run: |
           UDID=$(xcrun simctl list devices available -j \
