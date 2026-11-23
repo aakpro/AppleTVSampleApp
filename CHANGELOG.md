@@ -5,10 +5,17 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
-### Added
-- Planning documentation: README, AGENTS, architecture, API specification, project structure, release process,
-  PR template and one implementation guide per phase.
-- Verified templates in `Docs/templates/` (SwiftLint with architecture-boundary rules, CI workflow, xcconfig secrets, `.gitignore`).
-
 ### Changed
 - Phase order is now Foundation → Domain → API → Discovery → Search → Player, so the API layer can implement protocols the Domain defines.
+- **Phase 1:** Removed Xcode template code (`Item.swift`, `ContentView.swift` with SwiftData); replaced with foundation skeleton.
+- Added Swift 6 language mode (`SWIFT_VERSION: 6.0`) to all targets.
+- Created `AppConfiguration`: reads TMDB token from Info.plist via `Secrets.xcconfig`, validates presence vs placeholder.
+- Created `AppContainer`: composition root for dependency injection; Phases 2-6 will wire in repository, use cases, and factories.
+- Created `RootView`: shows "SampleTV" title when token exists; otherwise shows "TMDB token missing" placeholder message instead of crashing.
+- Lint passes: `swiftlint lint` reports **0 violations**.
+
+### Added
+- Planning documentation: README, AGENTS, architecture, API specification, project structure, release process, PR template and one implementation guide per phase.
+- Verified templates in `Docs/templates/` (SwiftLint with architecture-boundary rules, CI workflow, xcconfig secrets, `.gitignore`).
+- Foundation skeleton: `AppConfiguration`, `AppContainer`, `RootView`, `AppConfigurationTests`.
+- GitHub Actions CI: SwiftLint error testing (`fail-fast`) and tvOS app build.
