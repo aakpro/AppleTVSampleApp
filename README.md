@@ -1,196 +1,106 @@
-# SampleTV - Apple TV+ Style Video Streaming App
+# SampleTV
 
-> ⚡ **Project Overview**: A top-tier software engineering demonstration of a premium video streaming application built with Clean Architecture principles and enterprise-grade Swift ecosystem. Focused exclusively on content playback functionality inspired by Apple TV+.
+A tvOS streaming-style sample app (inspired by Apple TV+) built to demonstrate Clean Architecture with
+SwiftUI and local Swift packages. It lists movies and TV shows from [TMDB](https://www.themoviedb.org),
+supports search and filtering, and plays a sample HLS stream with the system player.
 
----
+> **Status: Phase 1 not started.** The repository currently holds the Xcode tvOS template
+> (SwiftUI + SwiftData) and the planning documents. Everything below describes the *target* design;
+> [Docs/PROJECT_STRUCTURE.md](Docs/PROJECT_STRUCTURE.md) tracks what actually exists.
 
-## 🎯 Project Philosophy
+## Requirements
 
-This project embodies the highest standards of iOS development:
-1. **Clean Architecture** - Enterprise, Domain, Presentation layers
-2. **MVVM in Presentation Layer** - ViewModels with business logic separation
-3. **Dependency Injection** - Structural conformances + Application-wide DI container (SwiftInject)
-4. **Feature-Based Local SPMs** - Modularized codebases per feature
-5. **Version Control Excellence** - Full GitHub workflow with PR reviews and release tags
+| Tool | Version | Notes |
+|------|---------|-------|
+| Xcode | 27.2 | The project's tvOS deployment target is 27.2, so older Xcodes cannot build it |
+| Swift | 6.x toolchain | Language mode is still Swift 5 in the template; Phase 1 moves it to Swift 6 |
+| SwiftLint | 0.65+ | `brew install swiftlint` |
+| TMDB account | free | For an *API Read Access Token* (see below) |
 
----
+## Quick start
 
-## 🏗️ Architecture Design
-
-### Vertical Slicing (Horizontal Layers):
-```
-┌─────────────────────────────────────┐
-│     PRESENTATION LAYER              │
-│  ┌─────────┐ ┌───────────┐         │
-│  │ Views   │ │ ViewModels │       │
-│  ↓          ↓              │        │
-├───────────────────────────────────┤
-│      DOMAIN LAYER (No Dependencies)│
-│  ┌──────────────────────────────┐ │
-│  │     Entities & Use Cases     │ │
-│  └──────────────────────────────┘ │
-│         ↓                           │
-├───────────────────────────────────┤
-│      APPLICATION LAYER             │
-│  ┌───────────┐ ┌──────────────┐   │
-│  │ Repositories │ Application Services  │   │
-│  └───────────┘ └──────────────┘   │
-│         ↓                           │
-├───────────────────────────────────┤
-│      INFRASTRUCTURE LAYER          │
-│  ┌───────────┐ ┌──────────────┐   │
-│  │ Network    │ Local Storage  │   │
-│  └───────────┘ └──────────────┘   │
-└─────────────────────────────────────┘
-```
-
-### Horizontal Slicing (Feature-Based SPMs):
-```
-📦 Root Package (SampleTV)
- ├── 🎬 App Library / sampletv.xcodeproj
- │    ├── Application Module
- │    ├── Navigation Layer  
- │    └── Main App Entry Point
- │
- ├── ⚡ API Module / sampletv-api-swift-package
- │    ├── Networking Infrastructure
- │    ├── API Clients
- │    ├── Request Builders
- │    └── Cache Services
- │
- ├── 🏛️ Domain / sampletv-domain-swift-package
- │    ├── Entities Repository
- │    ├── Value Objects  
- │    └── Pure Use Cases (Domain Layer)
- │
- ├── 🎨 Feature: Movie Discovery / sampletv-movie-discovery
- │    ├── ViewModels
- │    ├── View Components  
- │    ├── Repository Abstraction
- │    └── Domain Logic Integration
- │
- ├── 🔍 Feature: Search / sampletv-search-module
- │    ├── Search Query Building
- │    ├── Filtering Logic
- │    └── Result Presentations
- │
- ├── 🎬 Feature: Player / sampletv-player-module
- │    ├── Video Player Implementation
- │    ├── Playback Controls
- │    └── UI Integration
- │
- └── ⚙️ Utilities / sampletv-utils
-     └── Shared helpers, extensions
-```
-
----
-
-## 🔄 Git Workflow (GitHub Flow)
-
-### Standard Process:
-1. **Feature Branch Creation**: `git checkout -b feature/00_api_layer`
-2. **Implementation Phase**: 
-   ```bash
-   # Write code
-   # Run local tests
-   # Commit changes
-   git add .
-   git commit -m "feat(API): Implement network layer with TMDB endpoints"
-   ```
-3. **Pull Request Creation**: Open PR to `main` branch
-   - Include screenshots, API documentation
-   - Add performance benchmarks
-   - List all affected files + reason for changes
-4. **Code Review Process** (Mandatory):
-   - 2 approvers required
-   - Performance & correctness reviews
-   - Security audit for external dependencies
-5. **Merge**: 
-   - Squash merge option with descriptive commit message
-   - Add to CHANGELOG.md under unreleased section
-6. **Release Creation**: Bump version in `Package.swift`
-   ```swift
-   // Before merge
-   // After merge
-   ```
-7. **Tag & Push Release**: 
-   ```bash
-   git tag -a v1.0.0 -m "Initial release"
-   git push origin v1.0.0
-   git push --tags
-   ```
-
----
-
-## 📄 Required Documentation Files
-
-### Root Level:
-- `README.md` (Current)
-- `CONTRIBUTING.md`
-- `ARCHITECTURE.md`
-- `RELEASE_PROCESS.md`
-- `API_SPECS.md`
-- `PR_TEMPLATE.md`
-
-### Domain Layer:
-- `DOMAIN/Entities/Movie.swift` 
-- `DOMAIN/Entities/Show.swift`
-- `DOMAIN/UseCases/{GetMovies, GetDetails, SearchContent}.swift`
-
-### API Module:
-- `NETWORKING/APIClients.{Movie,Tv,Search,Details}.swift`
-- `CACHING/CacheManager.swift`
-
----
-
-## 🛠️ Tech Stack
-
-- **Language**: Swift 6 (Concurrency-first)
-- **UI**: SwiftUI  
-- **Routing**: iOS Navigation Framework 
-- **Dependencies Injection**: SwiftInject / Structured Conformances
-- **Async/Await**: Combine & async-await hybrid approach
-- **Testing**: XCTest, SwiftLint, Clippy checks
-
----
-
-## 📞 API Integration
-
-### TMDB API Configuration:
 ```bash
-# Your tmdb_api_key will be stored here in .env file
-TMDB_API_KEY=your_api_key_here
-API_ENDPOINT_BASE=https://api.themoviedb.org/3
+git clone git@github.com:aakpro/AppleTVSampleApp.git && cd AppleTVSampleApp
+open SampleTV.xcodeproj           # scheme: SampleTV, run on any Apple TV simulator
 ```
 
-### Key Endpoints:
-- `/discover/tv` - Discover TV content
-- `/tv/{id}` - Get show details  
-- `/search?api_key=YOURKEY&q=query` - Search
-- `/recommendation?id={id}&with_genres=...` - Personalized recommendations
+TMDB token (available once Phase 1 has landed the `Config/` folder):
 
----
+1. Create a free account at themoviedb.org, then **Settings → API → API Read Access Token**.
+2. `cp Config/Secrets.xcconfig.example Config/Secrets.xcconfig` and paste the token. This file is git-ignored.
+3. Without a token the app still launches and shows a "token missing" screen.
 
-## 📧 Open Issues & Questions
+Build and test from the command line:
 
-1. Should domain use cases include business logic that affects user experience (e.g., rate limiting)?
-2. What level of local caching do you expect for offline viewing support?
-3. Do we need to handle TMDB API v4 transition?
-4. Should each module have its own unit tests or shared test framework?
+```bash
+UDID=$(xcrun simctl list devices available -j \
+  | jq -r '[.devices[][] | select(.name | startswith("Apple TV"))][0].udid')
 
----
+xcodebuild test -scheme SampleTV -destination "id=$UDID" -skip-testing:SampleTVUITests
+swiftlint lint
+```
 
-## 🚀 Initial Implementation Roadmap
+## Architecture in one page
 
-| Phase | Description | Estimated Time | Target Branch |
-|-------|-------------|----------------|---------------|
-| 1 | Foundation (DI container, DI services) | 2-3 days | `phase_01_foundation` |
-| 2 | TMDB API integration + caching | 5-7 days | `phase_02_api_layer` |
-| 3 | Domain layer (Entities, pure use cases) | 3-5 days | `phase_03_domain_layer` |
-| 4 | Movie Discovery Feature | 7-10 days | `phase_04_movie_discovery` |
-| 5 | Search & Filtering Module | 5-8 days | `phase_05_search_module` |
-| 6 | Video Player Implementation | 8-12 days | `phase_06_player_feature` |
+Dependencies point inward. The Domain knows nothing about TMDB, SwiftUI or AVKit.
 
----
+```
+SampleTV (app target: composition root, navigation, reads the token)
+   │ wires together
+   ├── SampleTVDiscovery ─┐
+   ├── SampleTVSearch    ─┼─► SampleTVUI ─┐
+   ├── SampleTVPlayer     │               ├─► SampleTVDomain   (entities, MediaRepository protocol, use cases)
+   └── SampleTVAPI ───────┴───────────────┘        ▲
+        (TMDB client, DTOs, retry, caching)  ──────┘  implements MediaRepository
+```
 
-*Generated with top-tier software engineering principles in mind. All modules strictly type-safe, fully documented, and CI/CD ready.*
+- **MVVM** in the presentation layer: `@MainActor @Observable` view models, SwiftUI views.
+- **Dependency injection** is plain constructor injection from one composition root (`AppContainer`).
+  No DI framework.
+- **Swift 6 concurrency**: async/await, `Sendable` value types, actors where state is shared. No Combine.
+- **Boundaries are enforced** by `Package.swift` (a package cannot import what it does not declare)
+  and by SwiftLint custom rules, both checked in CI.
+
+Details: [Docs/ARCHITECTURE.md](Docs/ARCHITECTURE.md).
+
+## Documentation
+
+| Document | Purpose |
+|----------|---------|
+| [AGENTS.md](AGENTS.md) | Instructions for AI coding agents working in this repo |
+| [Docs/ARCHITECTURE.md](Docs/ARCHITECTURE.md) | Layers, modules, DI, concurrency, testing |
+| [Docs/API_SPECS.md](Docs/API_SPECS.md) | TMDB endpoints, auth, errors, retry, caching |
+| [Docs/PROJECT_STRUCTURE.md](Docs/PROJECT_STRUCTURE.md) | Target file tree, per-phase deliverables, progress |
+| [Docs/RELEASE_PROCESS.md](Docs/RELEASE_PROCESS.md) | Branching, CI gates, versioning, releases |
+| [Docs/PR_TEMPLATE.md](Docs/PR_TEMPLATE.md) | Pull request template and review checklist |
+| `Docs/Phase0X_*/Documentation/` | One implementation guide per phase |
+| `Docs/templates/` | Verified config templates (SwiftLint, CI, xcconfig, .gitignore) |
+
+## Roadmap
+
+Domain comes before the API layer because the API layer implements a protocol the Domain defines.
+
+| Phase | Scope | Branch |
+|-------|-------|--------|
+| 1 | Foundation: remove template code, Swift 6, config/secrets, `AppContainer`, lint, CI | `feature/phase_01_foundation` |
+| 2 | `SampleTVDomain`: entities, `MediaRepository` port, use cases | `feature/phase_02_domain_layer` |
+| 3 | `SampleTVAPI`: TMDB client, DTO mapping, retry, caching | `feature/phase_03_api_layer` |
+| 4 | `SampleTVUI` + `SampleTVDiscovery`: browse grid, details screen | `feature/phase_04_movie_discovery` |
+| 5 | `SampleTVSearch`: debounced search, filters, pagination | `feature/phase_05_search_module` |
+| 6 | `SampleTVPlayer`: AVKit playback of a sample HLS stream | `feature/phase_06_player_feature` |
+
+## Decisions on earlier open questions
+
+| Question | Decision |
+|----------|----------|
+| Should use cases carry UX concerns such as rate limiting? | No. Use cases hold business rules only (e.g. minimum search length). Rate limiting and retry are transport concerns in `SampleTVAPI`. |
+| How much offline support? | None beyond HTTP caching (`URLCache`). Offline shows an error state with a retry action. |
+| TMDB API v4? | Not needed. v3 endpoints are authenticated with the v4 *Read Access Token* as a Bearer header. |
+| Per-module tests or shared framework? | Each package has its own test target (Swift Testing). No shared test framework until duplication hurts. |
+| Where does video come from? | TMDB has no streams. Playback uses a public sample HLS URL (Phase 6). |
+
+## TMDB attribution
+
+This product uses the TMDB API but is not endorsed or certified by TMDB. TMDB's terms require showing
+that notice (and their logo) in the app; the Phase 4 about/footer view includes it. TMDB's free API tier is
+for non-commercial use.

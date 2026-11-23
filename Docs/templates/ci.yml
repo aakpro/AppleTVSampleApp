@@ -1,0 +1,59 @@
+# Copy to `.github/workflows/ci.yml` once Phase 1 has created `Packages/` and `.swiftlint.yml`.
+# Needs a runner whose Xcode supports the app's tvOS deployment target (see the project settings).
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install SwiftLint
+        run: brew install swiftlint
+      # Fails on errors (including the architecture-boundary rules). Warnings are reported only.
+      - name: SwiftLint
+        run: swiftlint lint --reporter github-actions-logging
+
+  test:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select an Apple TV simulator
+        run: |
+          UDID=$(xcrun simctl list devices available -j \
+            | jq -r '[.devices[][] | select(.name | startswith("Apple TV"))][0].udid')
+          test -n "$UDID" && echo "SIM_UDID=$UDID" >> "$GITHUB_ENV"
+
+      # `swift test` cannot target tvOS, so every package is tested through xcodebuild.
+      # Each package exposes a scheme with the same name as the package.
+      - name: Test packages
+        run: |
+          shopt -s nullglob   # no Packages/ yet (Phase 1) means nothing to do
+          for dir in Packages/*/; do
+            name=$(basename "$dir")
+            echo "::group::$name"
+            (cd "$dir" && xcodebuild test -scheme "$name" \
+              -destination "id=$SIM_UDID" -enableCodeCoverage YES)
+            echo "::endgroup::"
+          done
+
+      - name: Build and test the app
+        run: |
+          xcodebuild test -scheme SampleTV -destination "id=$SIM_UDID" \
+            -skip-testing:SampleTVUITests \
+            -enableCodeCoverage YES -resultBundlePath build/App.xcresult
+
+      # Informational. The 85% target is checked by reviewers, not enforced here.
+      - name: Coverage report
+        if: always()
+        run: xcrun xccov view --report --only-targets build/App.xcresult || true

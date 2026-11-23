@@ -1,137 +1,71 @@
-# PR_TEMPLATE.md - Pull Request Template & Review Guidelines
+# Pull request template and review guide
 
-> 🔍 This document defines the mandatory review process, approval requirements, and validation checks for all PRs in SampleTV.
+Phase 1 copies the block below into `.github/pull_request_template.md`, so GitHub pre-fills every PR with it.
+Delete sections that do not apply instead of leaving them blank. See [RELEASE_PROCESS.md](RELEASE_PROCESS.md) for the
+merge rules.
 
----
+## Template
 
-## 📝 Mandatory PR Fields (Required)
+````markdown
+## Summary
+<!-- One or two sentences: what changes and why. Link the phase or issue: "Phase 3 – API layer", Closes #123 -->
 
-### All PRs must include:
+## Changes
+<!-- Bullet the notable changes. Name the packages/modules touched. -->
+-
 
-```markdown
-## Overview
-[**Short description** of what change this PR makes - max 1 line]  
-Example: Implement Phase03 Domain Layer with pure use cases
+## Architecture check
+- [ ] Dependency direction respected (Domain imports Foundation only; features do not import `SampleTVAPI` or each other)
+- [ ] No new third-party dependencies (or each one is justified below)
+- [ ] Errors surface as `MediaError`; no raw `URLError` reaches the UI
+- [ ] No secrets or tokens in code, tests, fixtures, logs or screenshots
 
-## Architecture Changes
-[List affected layers/modules:]
-- ✅ Domain Layer: Added GetMovies implementation (pure Swift)  
-- ❌ No API changes (domain must remain dependency-free)  
+## Testing
+- [ ] Unit tests added/updated (Swift Testing); network is stubbed
+- [ ] `xcodebuild test` passes for every touched package and for the `SampleTV` scheme
+- [ ] `swiftlint lint` has no errors and I added no new warnings
+- Coverage of touched code: <!-- from `xccov`, e.g. API 88% (was 85%) -->
+- Manually verified on an Apple TV simulator: <!-- what you tried, incl. focus/remote navigation for UI changes -->
 
-## Technical Details
+## UI changes (delete if none)
+<!-- Before/after screenshots or a short screen recording from the tvOS simulator. -->
 
-### Code Quality Checks
-- [ ] Clippy strict type scan passed (no failures)  
-- [ ] SwiftLint violations ≤ 5 (lint-strict mode passed)  
-- [ ] Dependency check shows no circular imports  
+## Breaking changes
+<!-- "None", or describe what breaks and how to migrate (public API of a package, config keys, build settings). -->
 
-### Testing Requirements  
-- [ ] Unit test files created/modified (85%+ coverage target)  
-- [ ] Integration tests run locally before PR submission  
-- [ ] No flaky tests (all deterministic)  
+## Release notes
+<!-- The line for CHANGELOG.md under [Unreleased]. -->
+- [ ] `CHANGELOG.md` updated
+- [ ] Phase status table in `Docs/PROJECT_STRUCTURE.md` updated (phase PRs only)
+````
 
-## UI Changes (if applicable)
-[**Description of visual/UI alterations:]**
-1. Added new View component: MovieListGrid.swift
-2. Modified state flow in ViewModel
-3. Screen size compatibility tested
+## Review guide
 
-## Screenshots Required (If UI Changed)
+Reviewers (or the author, during self-review) check, in this order:
 
-### Before vs After Comparison
-[Screenshot 1: Before - grayed out or diff view]  
-[Screenshot 2: After - feature working correctly]  
-[Screenshot 3: Real-world usage on device]
+1. **Does it build and pass CI?** Do not review style on a red PR.
+2. **Architecture.** Imports and dependencies match the module table in
+   [ARCHITECTURE.md](ARCHITECTURE.md); Domain stays framework-free; views hold no business logic.
+3. **Correctness.** Cancellation handled (`CancellationError` is not an error state), no main-thread blocking, no data
+   races (`Sendable`, `@MainActor` view models), pagination stops at `total_pages`, `MediaID` used instead of bare ints.
+4. **Tests.** Behaviour is asserted, not just executed; failure paths covered; no real network; no sleeps longer than a
+   few milliseconds.
+5. **tvOS UX.** Everything reachable by focus, sensible initial focus, nothing relies on touch, content respects safe areas.
+6. **Security and privacy.** No tokens in the diff, URLs, logs or screenshots; TMDB attribution still visible.
+7. **Docs.** README/Docs/CHANGELOG match the behaviour after this change.
 
-## Performance Metrics  
+## Reasons a PR is sent back
 
-### Code Size Changes
-- Lines added: +450 (mostly tests)
-- Modules touched: 3 (Domain, Presentation, API)
+- CI is red, or the PR disables a lint rule or test to get green.
+- A feature package imports `SampleTVAPI` or another feature; the Domain imports anything but Foundation.
+- Business logic in a SwiftUI view.
+- UI work without screenshots or a note on how it was verified on the simulator.
+- Tests that hit the real network, or depend on timing, ordering or machine state.
+- A secret, token or personal path committed.
+- New dependency without discussion.
+- Unrelated changes bundled in; split them.
 
-### CI/CD Pipeline Status
-- Build Time: ±5s (acceptable variance)  
-- Test Coverage Target: ≥85% achieved: Yes ✅  
+## Approval and merge
 
-## Breaking Changes Required?
-
-Yes/No
-
-If YES - List all changes:
-1. `sampletv-domain-swift-package` exports new entity type: TVShow
-2. API layer protocol updated with new cache parameters
-3. DI container requires migration guide in CHANGELOG.md
-
-## Migration Guide (Required if breaking)
-- Step 1: Update Domain entities to use new base class
-- Step 2: Modify ViewModel dependencies via struct injection  
-- Version bump: minor/patch as appropriate
-
-## Related Issues
-[GitHub Issue(s) linked using #issue-number syntax]
-- #123 - Implement domain layer for pure business logic
-- #456 - Add search query building utilities
-
-## Implementation Status (Phase X specific)
-
-✅ Local Testing Complete  
-✅ All Dependencies Type-Safe  
-✅ DI Protocols Verified  
-✅ Clippy Strict Mode Passed  
-
-## Approvals Required
-
-**Required:**
-- [ ] Main developer review: Architecture & code quality ✅  
-- [ ] Second approver: Security & type safety ✅  
-
-**Minimum 2 reviewers needed + both must approve before merge.
-
-## CI Checks Passing (Automated)
-
-```yaml
-# From GitHub Actions workflow:
-[Build - ✅]   # swift build --release  
-[Lint - ✅]    # swift lint -strict  
-[Clippy - ✅]  # Type safety scan  
-[Test - ✅]    # XCTest suite passes (85%+ coverage)  
-```
-
-**If any CI check FAILS, PR must NOT be merged and author must fix before retrying.
-```
-
----
-
-## 🚫 PR Rejections (Common Reasons)
-
-1. **Circular Dependencies Detected** - Must use dependency injection protocol types instead of passing concrete classes directly
-2. **Type Safety Violations** - Domain layer has Any/AnyObject usage without justification
-3. **Coverage Below 85%** - Unit tests insufficient or flaky
-4. **Architecture Violations** - API layer importing entities from domain or using direct protocol implementations in production code
-5. **No Screenshots** (if UI changed)  
-6. **CI Pipeline Failures** (not all passing before merge)
-
----
-
-## ✅ Merge Approval Process
-
-### Required Approvals:
-
-1. **Phase Lead Review** - Architecture & implementation strategy verified  
-2. **Code Quality Review** - Type safety, linting, CI checks passed  
-
-### After All Checks Pass:
-
-```bash
-# Merge with squash option for clean history
-git merge --squash origin/feature/phase_01_foundation  
-git push origin main  
-# Push tags if milestone phase completed
-git push --tags
-
-# Then bump version in Package.swift accordingly (per RELEASE_PROCESS.md)
-```
-
----
-
-*This PR template and review guidelines document all approvals required before any code is merged to main across SampleTV.*
+- One approval (see RELEASE_PROCESS.md for the solo-maintainer rule), CI green, branch up to date with `main`.
+- Squash-merge on GitHub with a Conventional Commit title, e.g. `feat(api): add TMDB client with retry (#7)`.

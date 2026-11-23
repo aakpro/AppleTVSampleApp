@@ -1,0 +1,11 @@
+# Copy to the repo root as `.gitignore`.
+.DS_Store
+xcuserdata/
+DerivedData/
+.build/
+build/
+*.xcresult
+
+# Secrets
+Config/Secrets.xcconfig
+.env

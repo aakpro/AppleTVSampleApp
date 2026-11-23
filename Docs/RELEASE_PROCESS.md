@@ -1,278 +1,131 @@
-# RELEASE_PROCESS.md - GitHub Workflow & Versioning Guidelines
+# Release process
 
-> 🚀 This document outlines the release process for SampleTV including Git branch management, CI/CD pipelines, version tagging, and PR reviews.
+How work moves from a branch to `main` to a tagged release. The repository is hosted on GitHub
+(`origin`), the default branch is `main`, and CI is `.github/workflows/ci.yml` (installed in Phase 1).
 
----
+## Branching: GitHub Flow
 
-## 🔄 Git Workflow: GitHub Flow (Feature Branches)
-
-### Standard Process Per Phase:
+- `main` is always green and releasable. **Never commit to it directly.**
+- One branch per phase (or per fix): `feature/phase_0X_<name>`, `fix/<short-description>`, `docs/<short-description>`.
+- Branch from an up-to-date `main`, keep branches short-lived, rebase on `main` if it moves.
 
 ```bash
-# 1. Create Feature Branch (from main branch)
-git switch main  
-# Pull latest
-git pull origin main  
-git checkout -b feature/phase_01_foundation  # Or your phase name
-# Push to remote
-git push -u origin feature/phase_01_foundation
-
-# 2. Implement Phase Code + Commit Changes
-# ... (write code, run tests) ...
-git add .  
-# Write meaningful commit messages
-git commit \-m "feat(phase01): [short description]"  
-# Example: feat(phase01): Setup DI container with SwiftInject and local SPMs
-
-# 3. Push to Remote Branch
-git push origin feature/phase_01_foundation
-
-# 4. Create Pull Request to Main Branch
-# - Open PR on GitHub (target: main branch)  
-# - Title & body fields must follow template  
-# - Include screenshots, API documentation, and performance benchmarks
-
-# 5. Code Review Process (Mandatory)
-# - Require minimum 2 approvers for merge
-# - Automated checks:
-#   • Clippy type safety scan (strict mode)  
-#   • SwiftLint compliance check (< 5 violations max)  
-#   • CI/CD pipeline (build, test, coverage ≥ 85% target)
-# - Manual review: Architecture & code quality
-
-# 6. Merge Commit (Squash Option for Phase Updates)
-git merge --squash feature/phase_01_foundation
-git push origin main
-# Tag release if milestone phase merged
-git tag -a v1.0.0 -m "Initial Release"  
-git push --tags
-
-# 7. Create Release on GitHub
-# - Upload binaries (optional)  
-# - Update CHANGELOG.md under [Unreleased] section  
+git switch main && git pull --ff-only origin main
+git switch -c feature/phase_02_domain_layer
+# ... work in small commits ...
+git push -u origin feature/phase_02_domain_layer
 ```
 
----
+Commit messages follow [Conventional Commits](https://www.conventionalcommits.org), scope = package:
+`feat(domain): add SearchQuery validation`, `fix(api): honour Retry-After on 429`, `docs: clarify token setup`.
 
-## 📋 PR Template Requirements
+## Pull requests
 
-### All PRs Must Include:
+1. Open a PR into `main` using the template ([PR_TEMPLATE.md](PR_TEMPLATE.md), installed as
+   `.github/pull_request_template.md`).
+2. CI must pass (lint, package tests, app tests).
+3. **One approval** from someone other than the author. While the project has a single maintainer, the author completes the
+   self-review checklist in the template and merges after CI is green; add a second reviewer once there is one.
+4. **Squash-merge on GitHub** (button or `gh pr merge --squash`). Do not squash locally and push to `main`; that bypasses
+   protection and CI. The squashed commit title must be a Conventional Commit.
+5. Delete the branch after merging.
+
+### Branch protection (set once in GitHub → Settings → Branches → `main`)
+
+- Require a pull request before merging
+- Require status checks: `lint`, `test`
+- Require branches to be up to date
+- Disallow force-pushes and deletions
+
+## CI gates
+
+| Gate | Command | Blocks merge? |
+|------|---------|---------------|
+| SwiftLint | `swiftlint lint` (errors fail, including the architecture-boundary rules) | yes |
+| Package tests | `xcodebuild test -scheme <Package> -destination "id=$UDID"` for each folder in `Packages/` | yes |
+| App build + tests | `xcodebuild test -scheme SampleTV … -skip-testing:SampleTVUITests` | yes |
+| Coverage report | `xcrun xccov view --report --only-targets …` | no, informational |
+| UI tests | run locally before release; they are slow on hosted runners | no |
+
+The coverage target (≥ 85% for Domain, API and view models; ≥ 90% for Domain) is checked by reviewers using the report,
+not enforced by a script. Warnings from SwiftLint do not fail CI, but a PR should not add new ones.
+
+Run the same checks locally before pushing:
+
+```bash
+UDID=$(xcrun simctl list devices available -j \
+  | jq -r '[.devices[][] | select(.name | startswith("Apple TV"))][0].udid')
+swiftlint lint
+for d in Packages/*/; do (cd "$d" && xcodebuild test -scheme "$(basename "$d")" -destination "id=$UDID"); done
+xcodebuild test -scheme SampleTV -destination "id=$UDID" -skip-testing:SampleTVUITests
+```
+
+## Versioning
+
+The app uses [Semantic Versioning](https://semver.org). The version lives in the **Xcode project**
+(`MARKETING_VERSION` for the user-visible version, `CURRENT_PROJECT_VERSION` for the build number), **not** in a
+`Package.swift`. Local packages are not versioned separately; they are released with the app.
+
+| Release | Meaning |
+|---------|---------|
+| `v0.1.0` … `v0.6.0` | One tag after each phase merges (Phase 1 → `v0.1.0`, …) |
+| `v0.x.y` patch | Bug fix between phases |
+| `v1.0.0` | Phase 6 merged, README/Docs final, manual QA done |
+| After 1.0 | MAJOR breaking change, MINOR feature, PATCH fix |
+
+## Cutting a release
+
+After the PR is merged:
+
+```bash
+git switch main && git pull --ff-only origin main
+
+# 1. Bump versions in Xcode (target SampleTV -> General -> Version / Build), or:
+xcrun agvtool new-marketing-version 0.2.0
+xcrun agvtool next-version -all
+
+# 2. Move the "Unreleased" entries in CHANGELOG.md under a new "## [0.2.0] - YYYY-MM-DD" heading
+git add -A && git commit -m "chore(release): v0.2.0"      # via a PR if main is protected
+
+# 3. Tag and publish
+git tag -a v0.2.0 -m "Phase 2: Domain layer"
+git push origin v0.2.0
+gh release create v0.2.0 --title "v0.2.0" --notes-from-tag      # optional
+```
+
+Because `main` is protected, the version-bump commit goes through a small PR like any other change
+(`chore(release): v0.2.0`), and the tag is created on the merge commit afterwards. `agvtool` needs
+`VERSIONING_SYSTEM = apple-generic` in the project; if it is not set, bump in the Xcode UI instead.
+
+Pre-release checklist:
+
+- [ ] CI green on `main`
+- [ ] App runs on an Apple TV simulator with a real token and without one (shows the token screen)
+- [ ] UI tests pass locally
+- [ ] Phase status table, README roadmap and `CHANGELOG.md` updated
+- [ ] No secrets committed: `git ls-files Config` lists only `Shared.xcconfig` and `Secrets.xcconfig.example`
+
+## Changelog
+
+`CHANGELOG.md` at the repo root follows [Keep a Changelog](https://keepachangelog.com). Each PR adds bullets under
+`## [Unreleased]` in the right section (`Added`, `Changed`, `Fixed`, `Removed`). A release moves them under the version heading.
 
 ```markdown
-## Overview
-[Short summary of what this PR implements/changes]
+## [Unreleased]
 
-## Phases Affected
-- Phase X: [Brief description]
-- Module Y: [Changes]
+### Added
+- Search tab with debounced queries and client-side genre filtering (#12)
 
-## Changes Made
-1. Code changes in file(s):
-   - `Domain/Sources/Entities.swift` → Added new type for TVShow  
-2. Test coverage updates: [List test files modified]
-3. CI/CD Pipeline: All pipelines should pass (build, lint, tests)
-
-## Screenshots/UI Changes (if applicable)
-[Image/GIF of UI changes - required if any]
-
-## Performance Metrics
-- Line increase/decrease: ±X%
-- Test coverage before/after: 82.3% → 85.7%  
-- Clippy violations: Before X, After Y  
-
-## Breaking Changes?
-Yes/No  
-If yes: [Describe what changed and migration guide]
-
-## Related Issues (GitHub Links)
-#123 - Implement Phase01 DI Container  
-#456 - Setup TMDB API client layer  
-
-<!-- Required for Phase merges -->
-**Phase X merged - Ready for Release?**  
-→ Approve this PR if phase is complete and codebase meets requirements
+### Fixed
+- Retry honours `Retry-After` on HTTP 429 (#14)
 ```
 
----
+## Hotfixes
 
-## 📦 Phase Completion Requirements
+Branch `fix/<name>` from `main`, same PR rules, then a patch release (`v0.x.(y+1)`). There are no long-lived release branches.
 
-### Before Merging `feature/phase_X`, Must Verify:
+## Distribution
 
-1. **Local Tests Pass** (85%+ coverage per module)
-   - Run all XCTest/Swift tests locally  
-   - Coverage report must be uploaded to PR description  
-
-2. **CI/CD Pipeline Green**  
-   - Build ✅ (no compilation errors)  
-   - SwiftLint ✅ (< 5 violations max, < 1 critical)  
-   - Clippy ✅ (0 failures, type-safe codebase)  
-   - Integration Tests ✅ (no flaky tests)  
-
-3. **Architecture Principles Followed**:
-   ```swift
-   // All added files must conform to:
-   
-   - Domain Layer has NO external imports  
-   - API layer uses ONLY protocol types as dependencies  
-   - DI protocols are defined with clear interfaces  
-   - UseCases implement pure functions (no side effects)  
-   - Tests use proper mocking for all external services  
-   
-   // Must be verified by:  
-   // 1. `swift build --dependency-check` (check dependency graph)  
-   // 2. Run Clippy strict mode on codebase  
-   // 3. CI checks SwiftLint rules  
-   ```
-
-4. **Documentation Complete**
-   - ReadMe for module updated  
-   - CHANGELOG.md entries added to correct phase section  
-   - PR description includes all references + UI screenshots  
-
----
-
-## 📂 Versioning Schema (Semantic Versioning)
-
-### SampleTV Version Format: `MAJOR.MINOR.PATCH`
-
-### Example Release Cycle:
-```bash
-# Current version: v0.2.1 (patch release after Phase 4 implementation)
-
-# Next major features will be in v1.x, e.g., v1.0.0 - "Player Implementation"
-# After all 6 phases complete and integrated
-
-// Version bumping rules:
-- Patch (0.y.z → 0.y+1.z): Bug fixes, non-breaking changes  
-- Minor (0.x.z → 0.y+1.z): Feature additions, API-compatible changes  
-- Major (x.0.0.z): Breaking changes across phases  
-
-// Release tags created after every phase complete and tested
-```
-
----
-
-## 🏷️ Release Tag Creation Process
-
-### After Phase Merge (if it's a Milestone feature like API or Player):
-
-```bash
-# In main branch, bump version for next release
-git checkout main  
-# Bump version in Package.swift  
-# Example: v0.1.2 → v1.0.0 if player phase completed  
-# Update CHANGELOG.md  
-sed -i '' 's/"Unreleased"/"Unreleased \[v1.0.0\]/{/Package.swift
-# Tag release (Git creates branch automatically)  
-git tag -a "v1.0.0 - SampleTV Player Module Release" -m "Complete player feature with MVVM architecture" 
-
-# Push tags to origin repository (required for GitLab/GitHub Actions CI)
-git push --tags
-```
-
----
-
-## 🔍 Quality Gate Requirements (PR Merges Blocker)
-
-### GitHub Actions Workflow:
-
-```yaml
-name: SampleTV Build & Test Pipeline  
-on: [push, pull_request]  
-
-jobs:
-  build-and-test:
-    runs-on: macos-latest  
-
-    steps:
-      # Checkout codebase
-      - name: Checkout Code
-        uses: actions/checkout@v3
-        with: { fetch-depth: 0 }  
-
-      # Bump version if phase completed (optional)  
-      - name: Setup Package.swift
-        run: |
-          swift pkg update || echo "SwiftPM not found"
-
-    # Swift Build  
-    - name: Build Codebase
-      run: 
-        swift build --release 
-
-    # Tests + Coverage Check  
-    - name: Run Tests & Generate Coverage Report
-      run:
-        swift test --generate-xctestcoverage-report | tee coverage.txt
-      
-      - name: Verify Coverage ≥ 85%
-        if: always()
-        run: | 
-          grep -i "percent" coverage.txt 
-          (should show >85, fail if <85)
-
-    # Clippy Type Safety Scan  
-    - name: Run Clippy Strict Mode Check
-      run: |
-        swift build --check-yaml && \
-        git add . && \
-        git commit -q "Clippy check" && \
-        swift build --clean
-        
-    # SwiftLint Compliance  
-    - name: Run SwiftLint (CI Gate)
-      run: |
-        swift build --lint-strict && \
-        echo "SwiftLint violations:" && \
-        swift lint
-
-  release-check: 
-    runs-on: macos-latest
-    if: github.event_name == 'workflow_dispatch'
-    
-    steps:
-      # Version check - only create tag if all phases complete  
-      - name: Bump Version & Create Release Tag
-        id: version-bumper
-        run: |
-          # Read current version from Package.swift
-          grep -oP "\d+\.\d+\.(\d+|\*)/" package.swift > current_version.txt
-          
-          # If all phases merged (0.x.6.x or higher), bump to v1.0.0
-          # Check CHANGELOG.md for "Unreleased" section
-          if [ ! -f "CHANGELOG.md" ]; then false; fi
-```
-
----
-
-## 📝 Release Notes Template (`CHANGELOG.md`)
-
-### Format after Merge:
-```markdown
-# Changelog
-
-## Unreleased (v1.0.0)
-
-### Phase 6: Player Module ✅ Merged
-- Add `VideoPlayerService` protocol for AVKit integration  
-- Implement playback control UI with swipe-up timeline  
-- Add buffer management with retry logic  
-
-### Phase 5: Search Module ✅ Merged  
-- Create `SearchQueryBuilder` with filtering capabilities  
-- Debounced search results feed (debounce interval: 300ms)  
-- Pagination support for large search results sets  
-
-## [Previous Phase]
-
-### Phase 4: Movie Discovery Feature
-- Implement SwiftUI view models with Combine state management  
-- UI integration with navigation patterns  
-
-... and so forth down to `Unreleased` section.
-```
-
----
-
-*This document serves as the official guideline for all PR merges, version bumps, and release tags across SampleTV's GitHub workflows.*
+This sample is not published to the App Store. If it ever is, add: signing and provisioning via Xcode Cloud or
+fastlane, TestFlight, privacy manifest, and replace the embedded TMDB token with a backend proxy (see
+[API_SPECS.md](API_SPECS.md)).

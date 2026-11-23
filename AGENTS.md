@@ -1,350 +1,100 @@
-# AGENTS.md - Agent Structure & Workflow Configuration
+# AGENTS.md
 
-> 💡 This document defines the subagent/autonomous agent structure and workflow for all project phases in SampleTV.
+Instructions for AI coding agents (and a quick orientation for humans) working in this repository.
+Read [README.md](README.md) first for the product and [Docs/ARCHITECTURE.md](Docs/ARCHITECTURE.md) for the design.
 
----
+## Project snapshot
 
-## 🤖 Agent Architecture Overview
+- tvOS app, SwiftUI, Xcode project `SampleTV.xcodeproj`, scheme `SampleTV`
+  (targets: `SampleTV`, `SampleTVTests`, `SampleTVUITests`).
+- Features live in **local Swift packages** under `Packages/` (created phase by phase).
+- Data comes from the TMDB v3 REST API. Video is a public sample HLS stream.
+- **Current state:** Phase 1 not started. The app is still the Xcode template (`Item`, SwiftData,
+  `NavigationSplitView`). Check [Docs/PROJECT_STRUCTURE.md](Docs/PROJECT_STRUCTURE.md) for the live status
+  table before assuming anything exists.
 
-### Hierarchical Agent System:
-```
-┌─────────────────────────────────────┐
-│       Main Supervisor Agent         │
-│  (orchestrates all phase workflows) │
-├─────────────────────────────────────┤
-│  ┌────────────────────────────────┐ │
-│  │  Phase-Specific Autopilot     │ │
-│  └────────────────────────────────┘ │
-├─────────────────────────────────────┤
-│  ┌──────────────────────────────┐  │
-│  │  Implementation Subagent     │  │
-│  │          (Swift Code Gen)    │  │
-│  └──────────────────────────────┘  │
-│  ┌──────────────────────────────┐  │
-│  │     Test/Code Review Agent   │  │
-│  │         (Lint, Tests)        │  │
-│  └──────────────────────────────┘  │
-│  ┌──────────────────────────────┐  │
-│  │      Documentation Agent     │  │
-│  │       (Doc generation)       │  │
-│  └──────────────────────────────┘  │
-├─────────────────────────────────────┤
-│    ─────────────────────────────   │
-│  External Dependencies:            │
-│  - Web Search Agent (API info)     │
-│  - Code Gen Agent (Swift templates)│
-│  - Testing Agent (Unit tests)      │
-└─────────────────────────────────────┘
-```
+## Commands
 
----
-
-## 📋 Phase-by-Phase Agent Assignment
-
-### **Phase 1: Foundation** (`phase_01_foundation`)
-
-#### Primary Agent Tasks:
-1. **DI Container Setup** (SwiftInject/Conformance)
-   - ✅ Configure Application-wide DI registry
-   - ✅ Create DI protocols for all services  
-   - ✅ Build injection points for ViewModels
-   
-2. **Infrastructure Skeleton**  
-   - ✅ Set up local SPM structure
-   - ✅ Initialize `.build` directories
-   - ✅ Setup SwiftLint + Clippy CI pipelines
-
-3. **Environment & Configuration**
-   - ✅ Write `.env.example` with TMDB placeholder API key
-   - ✅ Generate `Package.swift` dependencies
-   - ✅ Create CI/CD configuration files
-
-#### Expected Deliverables:
-```bash
-# After execution, should produce:
-sampletv.xcodeproj/project.pbxproj        # Build config
-Package.privateswift.resolved             # Dependency resolution  
-.swiftlint.yml                            # Linting rules
-Clippy-check.toml                         # Type checks
-.swift-version                           # Language target (Swift 6)
-```
-
----
-
-### **Phase 2: API Layer** (`phase_02_api_layer`)
-
-#### Primary Agent Tasks:
-1. **Network Layer Implementation**
-   - ✅ Implement `APIRepositoryProtocol` 
-   - ✅ Create TV Discovery client with retry logic
-   - ✅ Build Movie Details endpoint handler
-   
-2. **Caching Infrastructure**  
-   - ✅ Design `CacheAdapterProtocol` (Disk + Memory hybrid)
-   - ✅ Implement exponential backoff strategy
-   - ✅ Add caching invalidation mechanism
-
-3. **Error Handling**  
-   - ✅ Map TMDB errors to ApplicationErrors
-   - ✅ Create localized error messages
-   - ✅ Implement graceful network failure handling
-
-#### Expected Deliverables:
-```
-sampletv-api-swift-package/
-├── Sources/
-│   ├── Networking/APIProtocols.swift
-│   ├── TVDiscoveryClient.swift    
-│   └── RateLimiter.swift
-├── Tests/
-│   ├── NetworkTests/
-│   └── APIValidationTests.swift
-```
-
----
-
-### **Phase 3: Domain Layer** (`phase_03_domain_layer`)
-
-#### Primary Agent Tasks:
-1. **Entity Definitions**  
-   - ✅ Define `Movie` and `TVShow` Value Types (immutable)
-   - ✅ Create `ContentItem` base protocol
-   - ✅ Implement Codable + Equatable protocols
-
-2. **Pure Use Cases**  
-   - ✅ `UseCase.GetMoviesBySearchQuery` 
-   - ✅ `UseCase.FilterByGenre` 
-   - ✅ `UseCase.SearchByTitlePattern`
-
-3. **Dependency Separation Verification**  
-   - ✅ Verify no external imports in Domain
-   - ✅ Run Clippy strict mode (type safety)
-
-#### Expected Deliverables:
-```
-sampletv-domain-swift-package/
-├── Sources/
-│   ├── Entities/Movie.swift
-│   ├── Entities/TVShow.swift
-│   ├── ValueObjects/{Genre,Rating}.swift
-│   └── UseCases/.
-```
-
----
-
-### **Phase 4: Movie Discovery Feature** (`phase_04_movie_discovery`)
-
-#### Primary Agent Tasks:
-1. **ViewModel Architecture**  
-   - ✅ Implement `MovieDiscoveryViewModel` with Combine
-   - ✅ Create state management (loading/filter/results)
-   - ✅ Add UI update triggers
-
-2. **View Components**  
-   - ✅ Build custom SwiftUIView for movie list  
-   - ✅ Implement search bar UI component
-   - ✅ Create filtering controls
-   
-3. **Repository Integration**  
-   - ✅ Wire repository abstraction to API client
-   - ✅ Integrate domain use cases in ViewModel
-   - ✅ Add error handling in ViewModels
-
-#### Expected Deliverables:
-```
-sampletv-movie-discovery/
-├── Sources/
-│   ├── Presentation/MovieDiscoveryView.swift
-│   ├── ViewModels/MovieDiscoveryViewModel.swift
-│   └── Components/.
-└── Tests/PresentationTests.swift
-```
-
----
-
-### **Phase 5: Search Module** (`phase_05_search_module`)
-
-#### Primary Agent Tasks:
-1. **Search Query Building**  
-   - ✅ Create `SearchQueryBuilder` protocol
-   - ✅ Implement advanced filtering logic (genre, year)
-   
-2. **Async State Management**  
-   - ✅ Add debouncing for input fields  
-   - ✅ Create pagination support (optional)
-
-3. **UI Updates & Optimizations**  
-    - ✅ Build real-time search results feed  
-    - ✅ Handle infinite scroll scenario
-
-#### Expected Deliverables:
-```
-sampletv-search-module/
-├── Sources/
-│   ├── Querying/{SearchQuery,Builders}.swift
-│   └── Presentation/SearchViewModel.swift
-└── Tests/SearchTests.swift
-```
-
----
-
-### **Phase 6: Player Feature** (`phase_06_player_feature`)
-
-#### Primary Agent Tasks:
-1. **Video Player Infrastructure**  
-   - ✅ Implement `VideoPlayerService` protocol  
-   - ✅ Create player view (native + AVKit integration)
-   
-2. **Playback Controls**  
-   - ✅ Build playback timeline UI
-   - ✅ Add volume/buffering controls
-
-3. **State Integration**  
-   - ✅ Link player to repository (movie selection)
-   - ✅ Add error handling for failed playback
-
-#### Expected Deliverables:
-```
-sampletv-player-module/
-├── Sources/
-│   ├── PlayerControls.swift
-│   └── VideoPlayerService.swift  
-└── Tests/PlayerTests.swift
-```
-
----
-
-## ⚙️ Agent Configuration Template
-
-### For All Phase Autopilot Execution:
-
-```json
-{
-  "agent_name": "Phase-Specific-Autopilot",
-  "agent_type": "implementation_builder", 
-  "capabilities": [
-    "swift_code_generation",
-    "architecture_verification",
-    "unit_test_creation",
-    "swiftlint_compliance"
-  ],
-  
-  "permissions": {
-    "file_access": true,
-    "bash_execution": true, 
-    "web_search": false,
-    "code_generation": true
-  },
-
-  "workflow_steps": [
-    {
-      "step_id": 1,
-      "action": "create_file_structure", 
-      "files": ["Models.swift", "UseCases.swift"],
-      "validation": "SwiftLint compliance check"
-    },
-    {
-      "step_id": 2, 
-      "action": "verify_architecture",
-      "method": "Clippy type safety scan",
-      "failure_threshold": 10 // max violations allowed
-    },
-    {
-      "step_id": 3, 
-      "action": "generate_code",
-      "templates": ["SwiftUIView", "ViewModel"],
-      "output_path": "Presentation/"
-    },
-    {
-      "step_id": 4, 
-      "action": "create_tests", 
-      "coverage_target": 85,
-      "test_framework": "XCTest"
-    },
-    {
-      "step_id": 5, 
-      "action": "commit_push",
-      "branch_prefix": "feature/phase_",
-      "auto_merge_trigger": false
-    }
-  ]
-}
-```
-
----
-
-## 🔄 Agent Execution Loop (Per Phase)
-
-### Standard Autopilot Workflow:
+Resolve a simulator once, then reuse it:
 
 ```bash
-# Phase X execution triggers this full loop:
-
-1. CREATE_BRANCH
-   git checkout -b feature/phase_X
-  
-2. AUTOPILOT_RUN
-   subagent "Phase-X-Agent" \
-     prompt "Implement phase_X with all steps in sequence"
-  
-3. COMMIT_CHANGES
-   git add .
-   git commit -m "feat(phase_x): [specific description]"
-
-4. PUSH_TO_REMOTE
-   git push origin feature/phase_X
-
-5. MERGE_REQUEST_CREATION
-   Trigger GitHub Actions (PR validation, CI pipeline)
-   
-6. CODE_REVIEW
-   Manual review + automated checks  
-   
-7. MERGE_APPROVAL
-   Squash merge after all validations passed
-   
-8. RELEASE_TAGGING
-   Optional: Create version tag if it's a milestone phase
-
-9. PROGRESS_REPORT
-   Update AGENTS.md with completion status
-
-10. NEXT_PHASE_START
-    Prepare for next agent loop when ready
+UDID=$(xcrun simctl list devices available -j \
+  | jq -r '[.devices[][] | select(.name | startswith("Apple TV"))][0].udid')
 ```
 
----
+| Task | Command |
+|------|---------|
+| Build app | `xcodebuild build -scheme SampleTV -destination "id=$UDID"` |
+| Test app | `xcodebuild test -scheme SampleTV -destination "id=$UDID" -skip-testing:SampleTVUITests` |
+| Test one package | `cd Packages/SampleTVDomain && xcodebuild test -scheme SampleTVDomain -destination "id=$UDID"` |
+| Lint | `swiftlint lint` (CI fails on errors; fix warnings you introduce) |
+| Coverage | add `-enableCodeCoverage YES -resultBundlePath build/X.xcresult`, then `xcrun xccov view --report --only-targets build/X.xcresult` |
 
-## 📊 Agent Metrics & Performance Tracking
+`swift build` / `swift test` do **not** work for these packages: they target tvOS, not macOS. Always go
+through `xcodebuild` with a tvOS simulator destination.
 
-### Success Criteria per Phase:
-- ✅ All CI/CD pipelines green  
-- ✅ Code coverage ≥ 85% 
-- ✅ No SwiftLint errors (only warnings)
-- ✅ Type-safe codebase (Clippy clean)
-- ✅ Documentation completeness = 100%
+## Architecture rules (hard constraints)
 
----
+1. **Dependency direction.** `SampleTVDomain` imports Foundation only. `SampleTVAPI` and the feature
+   packages depend on `SampleTVDomain`. Feature packages never import `SampleTVAPI` or each other.
+   Only the app target sees every package.
+2. **Ports and adapters.** The Domain defines `MediaRepository`; `SampleTVAPI` implements it. Views and
+   view models depend on the protocol (or on use cases), never on `TMDBClient`.
+3. **DTOs stay in `SampleTVAPI`.** Map to Domain entities at the boundary. Domain types never carry
+   `CodingKeys` for TMDB's snake_case.
+4. **DI = constructor injection** from `AppContainer` in the app target. Do not add a DI/service-locator library.
+5. **Concurrency.** Swift 6 language mode. View models are `@MainActor @Observable final class`. Models are
+   `Sendable` value types. Use `async/await`; do not introduce Combine or completion handlers.
+6. **Errors.** The data layer maps everything to `MediaError`. Never surface raw `URLError` to the UI.
+   Let `CancellationError` propagate and ignore it in view models.
+7. **Identity.** TMDB movie and TV ids collide. Always use `MediaID(kind:value:)`, never a bare `Int`.
+8. These rules are enforced by `Package.swift` dependency lists plus the custom rules in `.swiftlint.yml`.
+   Do not weaken either to make a change compile; restructure the code instead.
 
-## 🧠 Agent Brainstorming Prompts
+## Conventions
 
-### For Any Phase:
-```swift
-// Prompt template for agent generation:
+- Tests: **Swift Testing** (`import Testing`, `@Test`, `#expect`) for unit tests; XCTest only for UI tests.
+  Stub the network with a fake `HTTPTransport`; unit tests must never hit the real network.
+- Target coverage: ≥ 85% for Domain, API and view models. Views are covered by previews and a UI smoke test.
+- tvOS UI: use focusable controls (`Button` with `.buttonStyle(.card)` or `.plain`), keep content inside the
+  safe area, and test navigation with the Siri Remote model (focus, not touch). tvOS has no volume or brightness
+  UI for apps; the system player already provides transport controls.
+- Commits: [Conventional Commits](https://www.conventionalcommits.org) with the package as scope,
+  e.g. `feat(api): retry on 429 using Retry-After`. One logical change per commit.
+- Branches: `feature/phase_0X_<name>` (see the phase table in the README). Never commit directly to `main`.
+- Code style: SwiftLint is the source of truth. Prefer small files with one primary type.
 
-"You are an iOS developer implementing [phase_name]. 
+## Secrets
 
-Requirements: 
-- Follow Clean Architecture principles strictly
-- Use MVVM in presentation layer  
-- Implement DI with SwiftInject/Structural Conformances
-- All code must be type-safe (no Any/AnyObject outside core)
-- Tests must target 85%+ coverage
-  
-Execute all implementation steps from your AGENTS.md config, 
-commit changes, create PR, and report status."
-```
+- The TMDB token lives in `Config/Secrets.xcconfig` (git-ignored) and reaches the app through an
+  `Info.plist` value. **Never** print, log, commit or paste a token, and never hard-code one in tests.
+- Do not read or write `Config/Secrets.xcconfig` unless the user asks. Use `Config/Secrets.xcconfig.example` as the reference.
+- Live-API tests are opt-in (environment variable `TMDB_READ_ACCESS_TOKEN`) and skipped by default.
 
----
+## Working on a phase
 
-*This document serves as the central reference for all phase-specific agent deployment and workflow execution.*
+1. Read `Docs/Phase0X_*/Documentation/Phase_0X_*.md`. It lists deliverables, verified reference code,
+   and a definition of done.
+2. Confirm the previous phase's definition of done is met (see the status table in `Docs/PROJECT_STRUCTURE.md`).
+3. Create the branch, implement in small commits, keep tests green as you go.
+4. Before opening a PR: build, test, lint, and tick every box in [Docs/PR_TEMPLATE.md](Docs/PR_TEMPLATE.md).
+5. Update the status table in `Docs/PROJECT_STRUCTURE.md` and add a `CHANGELOG.md` entry.
+
+Do **not** mark a phase complete, merge, tag, or push unless the user asked for it.
+
+## Xcode project caveats
+
+- Adding a local package to the app target, changing build settings (Swift language mode, base
+  configuration) and adding Info.plist keys are easiest in the Xcode UI. If you edit the project file
+  directly, inspect `SampleTV.xcodeproj` first, make the smallest possible change, and re-run a build.
+- New source files placed inside the `SampleTV/` folder are picked up automatically only if the target uses
+  folder-based membership. Verify with a build after adding files.
+
+## Pitfalls worth remembering
+
+- `search/*` endpoints cannot filter by genre, rating or year range (except a single `year`); filter results
+  client-side with `MediaFilter.matches(_:)`, and use `discover/*` for server-side filtering.
+- `search/multi` also returns people; drop anything whose `media_type` is not `movie` or `tv`.
+- TMDB paginates up to 500 pages; stop at `total_pages`.
+- Poster/backdrop fields are *paths*; the full URL is built with `ImageURLBuilder` (e.g. `…/t/p/w342/<path>`).
+- TMDB's video endpoint returns YouTube/Vimeo keys, which `AVPlayer` cannot play. Do not wire it to the player.

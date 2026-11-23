@@ -1,359 +1,148 @@
-# ARCHITECTURE.md - Clean Architecture & iOS Enterprise Design Patterns
+# Architecture
 
-> 🏛️ This document describes the architectural principles and patterns followed in SampleTV. All code is strict type-safe, conformable, and CI/CD ready.
+How SampleTV is structured and why. Code in this document and in the phase guides was compiled and its
+tests were run against the tvOS simulator (Swift 6 language mode) before being written down.
 
----
+## Principles
 
-## 🎯 Architectural Philosophy
+1. **Domain first.** Business rules and entities have no dependency on frameworks, the network or UI.
+2. **Dependencies point inward.** Outer layers depend on inner ones, never the reverse.
+3. **Depend on protocols at boundaries.** The Domain owns the interfaces (ports); outer layers implement them.
+4. **Composition over inheritance.** Value types and protocols; no base classes.
+5. **Errors are values.** Failures are modelled (`MediaError`) and shown to the user; nothing crashes on a bad response.
+6. **Swift 6 concurrency.** `Sendable` models, `@MainActor` view models, structured concurrency.
 
-### Core Principles:
-1. **Domain-First** - Business logic lives in Domain Layer with NO external dependencies
-2. **Single Responsibility** - Each module, file, and class does ONE thing well  
-3. **Composition over Inheritance** - Everything composes rather than inherits
-4. **Fail-Safe Design** - Errors are handled gracefully (no unexpected crashes)
-5. **Concurrency-First** - Swift 6 structuring concurrency patterns applied everywhere  
-
----
-
-## 🏗️ Vertical Slicing: Layer Responsibilities
+## Layers
 
 ```
-┌─────────────────────────────────┐
-│   PRESENTATION LAYER            │
-│  ┌────────────────────────────┐ │
-│  │ • SwiftUI Views           │ │
-│  │ • ViewModels (Combine)    │ │
-│  │ • UI State Management     │ │
-│  └────────────────────────────┘ │
-│   ↓ Depends: Application Layer  │
-├─────────────────────────────────┤
-│      APPLICATION LAYER          │
-│  ┌────────────────────────────┐ │
-│  │ • Repository Abstraction    │ │
-│  │ • UseCase Adapters         │ │
-│  │ • Validation Rules          │ │
-│  └────────────────────────────┘ │
-│   ↓ Depends: Domain Layer       │
-├─────────────────────────────────┤
-│      DOMAIN LAYER               │
-│  ┌────────────────────────────┐ │
-│  │  [NO EXTERNAL IMPORTS]     │ │
-│  │ • Entity Value Types       │ │
-│  │ • Pure Use Cases           │ │
-│  │    (no API, no network)    │ │
-│  └────────────────────────────┘ │
-│   ↓ No Dependencies              │
-├─────────────────────────────────┤
-│      INFRASTRUCTURE LAYER       │
-│  ┌───────────┐ ┌─────────────┐ │
-│  │ Network   │  Local Storage │ │
-│  │ Layer     │  (Realm/SQL)  │ │
-│  └───────────┘ └─────────────┘ │
-└─────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────┐
+│ Presentation   SwiftUI views + @Observable view models      │  SampleTVDiscovery, SampleTVSearch,
+│                (depends on Domain, UI)                      │  SampleTVPlayer, SampleTVUI
+├─────────────────────────────────────────────────────────────┤
+│ Domain         entities, use cases, MediaRepository (port)  │  SampleTVDomain  (Foundation only)
+├─────────────────────────────────────────────────────────────┤
+│ Data           TMDB client, DTOs, mapping, retry, caching   │  SampleTVAPI  (implements the port)
+├─────────────────────────────────────────────────────────────┤
+│ App            composition root, navigation, configuration  │  SampleTV target
+└─────────────────────────────────────────────────────────────┘
 ```
 
----
+The Data layer sits *beside* Presentation, not below it: both depend on Domain, neither knows the other.
+Only the App layer knows both and connects them.
 
-## 🔍 Horizontal Slicing: Feature Module Pattern
+## Modules
 
-### Local Swift Package Structure (`sampletv.xcodeproj`):
-```
-📦 Root Package (SampleTV)
- ├── 🏠 Application Module / sampletv-app
- │    ├── Sources/
- │    │   ├── DI Container (SwiftInject setup)
- │    │   ├── AppEntry.swift  
- │    │   └── Navigation Manager
- │    └── Tests/IntegrationTests.swift
- │
- ├── ⚡ API Layer / sampletv-api-swift-package
- │    ├── Sources/
- │    │   ├── Networking/APIProtocols.swift
- │    │   ├── API Clients (REST)
- │    │   ├── CacheManager (Hybrid)
- │    │   └── RateLimiter
- │    └── Tests/NetworkTests.swift
- │
- ├── 🏛️ Domain Layer / sampletv-domain-swift-package
- │    ├── Sources/Entities
- │    │   └── Value Types (Movie, Show)
- │    ├── UseCases/PureLogic.swift
- │    └── Tests/DomainTests.swift  
- │
- ├── 🎬 Movie Discovery / sampletv-movie-discovery
- │    ├── Presentation/Views
- │    ├── ViewModels
- │    │   └── Dependency injection points
- │    └── RepositoryIntegration.swift
- │
- ├── 🔍 Search Module / sampletv-search-module
- │    ├── Querying/Builders
- │    └── Presentations
- │
- ├── 🎬 Player Module / sampletv-player-module
- │    └── AVKit Integration
- │
- └── ⚙️ Utilities / sampletv-utils  
-     └── Shared helpers/convenience functions
-```
+| Package | Depends on | Contains | Phase |
+|---------|-----------|----------|-------|
+| `SampleTVDomain` | Foundation | `MediaItem`, `MediaID`, `MediaKind`, `Genre`, `MediaDetails`, `ResultPage`, `MediaFilter`, `SearchQuery`, `MediaError`, `MediaRepository`, use cases | 2 |
+| `SampleTVAPI` | Domain | `TMDBClient`, `HTTPTransport`, `RetryPolicy`, DTOs, `TMDBMediaRepository` | 3 |
+| `SampleTVUI` | Domain | `MediaCard`, `PosterImage`, `ImageURLBuilder`, shared styling | 4 |
+| `SampleTVDiscovery` | Domain, UI | `DiscoveryViewModel`/`DiscoveryView`, details screen | 4 |
+| `SampleTVSearch` | Domain, UI | `SearchViewModel`/`SearchView`, filter controls | 5 |
+| `SampleTVPlayer` | none | `PlayerView` (AVKit) | 6 |
+| App target `SampleTV` | all of the above | `AppContainer`, `AppConfiguration`, navigation, token loading | 1+ |
 
----
+Rules the build enforces:
 
-## 🔌 Dependency Injection Strategy
+- A package can only import what its `Package.swift` lists. `SampleTVDomain` lists nothing.
+- `.swiftlint.yml` adds custom rules for what SwiftPM cannot express: Domain may import only Foundation;
+  feature packages must not import `SampleTVAPI` or each other.
+- CI runs both, so a violation fails the pull request.
 
-### Approach**: Structural Conformance + DI Container  
+Navigation between features (for example Discovery → Player) lives in the app target, so feature packages never
+need to know about each other.
 
-Each module defines its dependencies as **protocols**, then the Application Container creates instances via dependency injection (no Service Locator!):
+## Dependency injection
 
-#### 1. API Layer - Protocols
+Constructor injection from a single composition root. No DI framework, no service locator.
 
 ```swift
-// sampletv-api-swift-package/Sources/Networking/APIProtocols.swift
-protocol TVRepository<T: Codable> {
-    func getTVList(query: String) async throws -> [T]
-    func getTVDetails(id: Int) async throws -> T
-}
+// App target (excerpt). It starts in Phase 1 with only the configuration and gains the repository (Phase 3)
+// and one factory method per feature. The complete, compiled version is in the Phase 6 guide.
+@MainActor
+final class AppContainer {
+    let configuration: AppConfiguration
+    let repository: any MediaRepository
 
-// Implementation in same module (no circular deps!)
-class TVAPIClientImplementation conformant: TVRepository {
-    // ... network implementation
-}
-```
+    init(configuration: AppConfiguration, repository: any MediaRepository) {
+        self.configuration = configuration
+        self.repository = repository
+    }
 
-#### 2. Domain Layer - Dependencies = Nothing
+    static func live() -> AppContainer {
+        let configuration = AppConfiguration()
+        let client = TMDBClient(
+            configuration: TMDBConfiguration(readAccessToken: configuration.tmdbToken),
+            transport: URLSession.tmdbCached()
+        )
+        return AppContainer(configuration: configuration, repository: TMDBMediaRepository(client: client))
+    }
 
-```swift
-// sampletv-domain-swift-package/Sources/UseCases/GetMovies.swift  
-struct GetMovies {
-    func execute(query: String) throws -> [MovieResult]
-    // ZERO dependencies! Pure Swift function
-}
-```
-
-#### 3. Application Layer - DI Container (SwiftInject Setup)
-
-```swift
-// sampletv-app/Sources/DIContainer.swift
-
-let container = try? DIContainer.makeDependencies { 
-    inject: APIRepositoryProtocol => TVAPIClientImplementation 
-    inject: MovieUseCase => GetMoviesUseAdapter  
-}
-// Auto-wired for ViewModels
-```
-
----
-
-## 💾 Cache & Network Strategy
-
-### Caching Architecture: **Hybrid Disk + Memory**
-
-1. **On-Disk Layer**: AsyncWriteDisk (Realm) - persistent storage with key-value mapping
-2. **Memory Layer**: Dictionary-backed cache (fast, eviction policies via Combine/Publisher)
-
-### Backoff & Rate Limiting
-
-TMDB API uses rate limits (~60 req/min). Implement exponential backoff:
-
-```swift
-class RateLimiter {
-    var maxRate = 60 // min req per minute
-    func getDelay(for retryCount: Int) -> Double {
-        let initialDelay = 1.0
-        return initialDelay.expontialDouble(at: 2, withMultiplier: 1.5)
+    func makeDiscoveryViewModel() -> DiscoveryViewModel {
+        DiscoveryViewModel(discover: DiscoverMedia(repository: repository))
     }
 }
 ```
 
----
+Tests and previews build an `AppContainer` (or just a view model) with a stub `MediaRepository`; nothing needs
+swizzling or global state. Only the app target imports `SampleTVAPI`.
 
-## 🧩 MVVM Pattern Details (Presentation Layer Only)
+## Domain model
 
-### ViewModel Structure (`MovieDiscoveryViewModel.swift`):
+- `MediaItem` represents both movies and TV shows, distinguished by `MediaID.kind`. One type avoids
+  parallel `Movie`/`TVShow` hierarchies for what the UI treats identically.
+- `MediaID` is `(kind, value)` because TMDB movie and TV ids are separate namespaces.
+- Use cases are small structs wrapping the repository and adding rules the repository should not know, such as
+  "search text shorter than 2 characters never reaches the network".
+- Pure logic (`SearchQuery` validation, `MediaFilter.matches`) is plain functions on value types, which makes it
+  trivial to test exhaustively.
 
-```swift
-import Combine
-    
-class MovieDiscoveryViewModel: ObservableObject {
-    // State properties + publishing channels
-    @Published var movies: [Movie] = []  
-    @Published var searchResults: [MovieSearchResult] = []
-    @Published var loading: Bool = false 
-    @Published var errorMessage: String?
-    
-    // View property - optional external data source
-    var searchText: String {
-        didSet { 
-            performSearch() // Trigger UI event  
-        }
-    }
-    
-    // Private dependencies (injectable via DI)
-    private let apiRepository: APIRepositoryProtocol<Movie, TVShow>
-    private let cleanUseCase: GetMoviesUseCase<QueryType, ResultType>
-    
-    init(viewModelDependencies: ViewModelDependencies) {
-        self.apiRepository = viewModelDependencies.apiRepo
-        self.cleanUseCase = viewModelDependencies.useCases.useCase
-    }
-}
+Full code: [Phase 2](Phase02_Domain_Layer/Documentation/Phase_02_Domain_Layer.md).
+
+## Presentation
+
+- View models are `@MainActor @Observable final class`, hold a state enum (`idle | loading | loaded | failed`),
+  and expose `async` methods that views call from `.task`.
+- Views are driven by state only. SwiftUI's `.task(id:)` cancels and restarts work when the id changes, which
+  provides both reloading on filter change and **search debouncing** (a cancellable `Task.sleep`), so no Combine
+  pipeline is needed.
+- tvOS specifics: focus-driven interaction (`Button` with `.buttonStyle(.card)`), large layouts, safe-area insets,
+  no touch. The system player already supplies transport controls, so there is no custom player UI.
+
+## Data layer
+
+- `TMDBClient` builds requests (Bearer auth, `language`), sends them through an injected `HTTPTransport`
+  (`URLSession` in production, a stub in tests), maps HTTP status codes to `MediaError`, and retries
+  `429` / `5xx` / offline with exponential backoff, honouring `Retry-After`.
+- `TMDBMediaRepository` implements `MediaRepository`, translating `MediaFilter`/`SearchQuery` into TMDB
+  parameters and DTOs into entities.
+- Caching is HTTP-level (`URLCache`), configured on the `URLSession`. See [API_SPECS.md](API_SPECS.md).
+
+## Error model
+
+```
+URLError / HTTP status / JSON error  ──►  MediaError  ──►  view model state .failed(MediaError)  ──►  UI message
 ```
 
----
+`MediaError` cases: `offline`, `unauthorized`, `notFound`, `rateLimited(retryAfter:)`, `server(statusCode:)`,
+`decoding`, `unknown`. View models translate them to user-facing text; `unauthorized` is treated as a
+configuration problem (bad token), not something to retry. `CancellationError` is never an error state.
 
-## 🧪 Testing Strategy (85%+ Coverage Target)
+## Testing
 
-### Domain Layer - 100% Coverage (No Test Dependencies)
-```swift
-// Pure Use Case Unit Tests
-class GetMoviesTests {
-    func test_searchWithNoResults() throws {
-        let result = try await executeTest { 
-            // mock inputs  
-        }.get().value
-        // verify expected output
-    }
-}
-```
+| Layer | Approach | Target |
+|-------|----------|--------|
+| Domain | Plain Swift Testing unit tests, no mocks beyond a stub repository | ≥ 90% |
+| Data | Stub `HTTPTransport` returning canned JSON: status mapping, retry, DTO mapping, request shape | ≥ 85% |
+| View models | Stub `MediaRepository`; assert state transitions | ≥ 85% |
+| Views | `#Preview` with stub data; one UI smoke test (launch, focus a card, open details) | smoke |
+| Live API | Opt-in tests that run only when `TMDB_READ_ACCESS_TOKEN` is set | manual |
 
-### API Layer - Integration + Mock Tests
-```swift
-// Network layer with mocked HTTP client  
-struct MockTVAPIClient: TVRepositoryProtocol {
-    // return pre-baked JSON for determinism
-}
-```
+Coverage is reported in CI (`xccov`) and checked by reviewers; it is not a hard gate.
+Run package tests with `xcodebuild test -scheme <Package> -destination "id=$UDID"` (see [AGENTS.md](../AGENTS.md)).
 
-### Presentation Layer - UI Automation Tests
-```swift
-class MovieDiscoveryViewTests {
-    func test_displayLoadedMovies() throws {
-        await TestEnvironment.run {
-            let view = MovieDiscoveryView(state: .loading)
-            // assert UI state
-        }
-    }
-}
-```
+## Out of scope
 
----
-
-## 🦅 Clippy Type Safety & SwiftLint Rules
-
-### SwiftLint Config (`.swiftlint.yml`):
-
-```yaml
-rules:
-  strict: true
-  cyclomatic_complexity: 
-    warning: 15
-    error: 20
-  nesting:
-    warning: 4
-    error: 5
-  line_length:
-    warning: 79
-    error: 100  
-  force_unwrapping: true
-  anyobject_as_any: true
-```
-
-### Clippy Config (`Clippy-check.toml`):
-
-```toml
-[check]
-# Enforce structural type systems for DI protocols
-require_all_fields = true   
-# No Any/AnyObject in Domain or Application layer  
-allow_any_in_domain = false
-# All entities must be Value Types (inmutable + Equatable)  
-requires_value_types = true
-# Type safety check only when compiling 
-strict_type_checks = true
-```
-
----
-
-## 📦 Module Interfaces
-
-### Common Interface Contracts:
-
-#### 1. Entities API
-
-```swift
-// sampletv-domain-swift-package/Sources/Entities/Movie.swift
-
-struct Movie {
-    let id: Int
-    let title: String
-    let year: Int
-    let genres: [Genre]
-    let rating: Double?
-    
-    // Must conform to Codable + Equatable + Hashable
-}
-
-extension Movie: Codable {}  
-extension Movie: Equatable, Hashable {}
-```
-
-#### 2. Repository API
-
-```swift
-// sampletv-api-swift-package/Sources/APIProtocols.swift
-
-protocol MovieRepositoryProtocol {
-    func fetchMovies(query: String) async throws -> [Movie]
-}
-```
-
-#### 3. Repository Implementation Contract (API Layer)
-
-```swift
-class TMDBClientImpl: MovieRepositoryProtocol {
-    // No direct entity access, only protocol types!
-    func fetchMovies(query: String) async throws -> [Movie] { 
-        // Network call → Map to Entity via DTOs
-    }
-}
-```
-
-#### 4. UseCase Interface (Domain Layer)
-
-```swift
-// sampletv-domain-swift-package/Sources/UseCases/GetMovies.swift
-
-protocol GetMoviesUseCaseProtocol {
-    func execute(query: String) throws -> [Movie]  
-}
-
-// Implementation in Domain - pure Swift
-struct GetMoviesImplementation: GetMoviesUseCaseProtocol {
-    func execute(query: String) throws -> [Movie] {
-        return movies.filter { title.contains(query) }
-    }
-}
-```
-
----
-
-## 🔄 Git Branching Strategy
-
-### Phase-Based Approach:
-```bash
-# Initial branch (feature branches only - no direct main commits)
-git checkout -b feature/phase_01_foundation  
-# ... implement phase ...
-git commit -m "feat(phase01): Foundation with DI container and SPM structure"  
-git push origin feature/phase_01_foundation
-
-# Phase 2 (branch creation triggers merge to main or rebase onto main)
-git checkout feature/phase_02_api_layer
-# ... implement phase ...
-git commit -m "feat(phase02): TMDB API layer with caching"  
-# Push & request pull from origin/main
-```
-
----
-
-*This architecture document defines the blueprint for all code generation and validation across SampleTV.*
+User accounts, DRM, real catalogue streaming, offline downloads, and an on-disk database. If persistence is
+needed later (for example "continue watching"), SwiftData is already available in the template and belongs
+behind a Domain protocol like everything else.

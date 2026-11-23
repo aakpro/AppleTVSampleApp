@@ -1,398 +1,145 @@
-# API_SPECS.md - TMDB Integration Specifications
+# API specification (TMDB v3)
 
-> 🌐 This document details the TMDB API integration layer architecture, endpoint specifications, request handling, and caching strategy for SampleTV's data layer.
+The HTTP contract between `SampleTVAPI` and TMDB. Implementation code is in
+[Phase 3](Phase03_API_Layer/Documentation/Phase_03_API_Layer.md). Verify details against the official
+docs (<https://developer.themoviedb.org/reference>) when TMDB changes something.
 
----
+## Configuration
 
-## 🔑 TMDB API Configuration
+| Item | Value |
+|------|-------|
+| Base URL | `https://api.themoviedb.org/3` |
+| Image base URL | `https://image.tmdb.org/t/p/<size><path>` |
+| Auth | `Authorization: Bearer <API Read Access Token>` header. The token is **not** the short v3 `api_key`. |
+| Format | `Accept: application/json` |
+| Language | `language=en-US` on every request (configurable in `TMDBConfiguration`) |
+| Adult content | `include_adult=false` on `discover` and `search` |
+| Timeout | 30 s per request |
 
-### Base URL & Credentials:
-```bash
-# .env file (gitIgnores this!)
-TMDB_API_KEY=your_tmdb_api_key_here  
-API_ENDPOINT_BASE=https://api.themoviedb.org/3
-API_VERSION=v3
-REQ_TIMEOUT_MS=30000 // 30 second timeout for API call
-MAX_RETRY_COUNT=3 // exponential backoff retries
-RATE_LIMIT_WAIT_SECS=15 // wait between requests if rate limited
-```
+The token is supplied at build time through `Config/Secrets.xcconfig` → Info.plist key `TMDBReadAccessToken`
+(see [Phase 1](Phase01_Foundation/Documentation/Phase_01_Foundation.md)). It is embedded in the app bundle, so
+treat it as low-value: acceptable for a sample, not for a shipping product (use a backend proxy there).
+Never put the token in a URL; URLs end up in logs and caches.
 
----
+All endpoints below are **GET**. (Earlier drafts of these docs listed POST and a `/recommendation` endpoint;
+neither exists.)
 
-## 📡 Key Endpoints & Integration Patterns
+## Endpoints used
 
-### **Endpoint 1: Discover TV Shows**  
-**Purpose**: Get a paginated list of shows based on filters  
+| Purpose | Endpoint | Parameters |
+|---------|----------|-----------|
+| Browse / filter TV | `/discover/tv` | `page`, `sort_by`, `with_genres`, `first_air_date.gte`, `first_air_date.lte`, `vote_average.gte`, `vote_count.gte` |
+| Browse / filter movies | `/discover/movie` | `page`, `sort_by`, `with_genres`, `primary_release_date.gte`, `primary_release_date.lte`, `vote_average.gte`, `vote_count.gte` |
+| Search | `/search/tv`, `/search/movie`, `/search/multi` | `query`, `page` |
+| Details + recommendations | `/tv/{id}`, `/movie/{id}` | `append_to_response=recommendations` |
+| Genre names | `/genre/tv/list`, `/genre/movie/list` | – |
+| Config (optional) | `/configuration` | – returns image base URL and sizes |
 
-```bash
-POST /discover/tv
-Authorization-Bearer: ${TMDB_API_KEY}
+Notes:
 
-Query Parameters:
-- page=1 (page number, default 1)
-- api_key=${TMDB_API_KEY}
-- with_genres=9485 // Comedy
-- network_title_filter="HBO Show"
-- sort_by=relevance (popular, rating_desc, popularity, year)
+- `sort_by` values used: `popularity.desc`, `vote_average.desc`, `first_air_date.desc` (TV) /
+  `primary_release_date.desc` (movies).
+- `with_genres`: comma = AND, pipe `|` = OR. The app uses comma.
+- Genre ids differ between movie and TV lists (for example TV *Action & Adventure* is `10759`, movie
+  *Action* is `28`; *Comedy* is `35` in both). Always load them from `/genre/{kind}/list`; never hard-code.
+- Rating filters on `discover` should add `vote_count.gte` (the app uses 50), otherwise titles with one 10/10 vote dominate.
+- **Search cannot filter** by genre or rating, and takes only a single year. Filter search results on the client
+  with `MediaFilter.matches(_:)`; use `discover` when server-side filtering is required.
+- `/search/multi` returns `media_type` of `movie`, `tv` **or `person`**. Drop `person`.
+- Pagination: `page` starts at 1 and is capped at 500 by TMDB. Stop when `page >= total_pages`.
 
-Expected Response:
+## Response shapes (fields the app reads)
+
+List response (`discover`, `search`):
+
+```json
 {
-    "page": 1,
-    "results": [
-        {
-            "id": 12345,
-            "name": show_name,
-            "overview": description,
-            "first_air_date": "2020-12-31",
-            "vote_average": 8.5,
-            "popularity": 99.8,
-            "genres": [76, 10759],
-            "network_id": 4,
-            "poster_path": "/path.jpg"
-        }
-    ],
-    "total_pages": 15,
-    "api_version": "v3"
-}  
-```
-
-#### Implementation (`sampletv-api-swift-package`):
-
-```swift
-// Protocol API
-protocol TVContentRepository: TVContentProtocol {
-    func fetchTVList(page: Int) async throws -> [TVContentPageResult]
-}
-
-// Implementation
-class TMDBTVClientImpl: TVContentRepository {
-    private let apiEndpoint = "\(API_ENDPOINT_BASE)/discover/tv"
-    private let key = ProcessInfo().environment["TMDB_API_KEY"] ?? ""
-    
-    func fetchTVList(page: Int = 1) async throws -> [TVContentPageResult] {
-        // Use URLSession with timeout + rate limiting
-        do {
-            let request = URLRequest(
-                url: URL(string: "\(apiEndpoint)?page=\(page)&with_genres=9485")!
-            )
-            
-            var task = URLSession(dataTaskWith: request) as URLSessionDataTask
-            return try await withCheckContinuation(task, { (result) -> Data in
-                
-                guard let data = result.data else { throw NetworkError.failed }
-                do {
-                    // Decode response using TMDBTVPageResult struct
-                    if let page = try JSONDecoder().decode(TMDBTVPageResult.self, 
-                                                           from: data) {
-                        return page.results.map { movie in Movie(id: $.id, ...) }
-                    } else { throw APIError.invalidResponse }
-                } catch { throw APIError.decodingFailed }
-            })
-        } catch { 
-            // Handle network failure
-            throw NetworkError.failed(error: error)
-        }
+  "page": 1,
+  "total_pages": 3,
+  "total_results": 52,
+  "results": [
+    {
+      "id": 1396,
+      "media_type": "tv",              // only on /search/multi
+      "name": "Breaking Bad",          // TV; movies use "title"
+      "overview": "…",
+      "first_air_date": "2008-01-20",  // TV; movies use "release_date"
+      "genre_ids": [18, 80],
+      "vote_average": 8.9,
+      "poster_path": "/abc.jpg",       // nullable
+      "backdrop_path": "/def.jpg"      // nullable
     }
+  ]
 }
 ```
 
----
+Detail response adds `genres: [{id, name}]` (instead of `genre_ids`), `runtime` (movies) /
+`number_of_seasons` (TV) and, with `append_to_response=recommendations`, a `recommendations` object shaped like
+a list response. Most fields can be `null` or `""`; DTO properties are optional and `MediaDTO.toDomain` fills defaults.
+Unknown `vote_average` arrives as `0`, which the mapper turns into `nil` ("not rated").
 
-### **Endpoint 2: Get TV Details**  
-**Purpose**: Retrieve detailed information for a single show  
+Error body (all non-2xx): `{"status_code": 7, "status_message": "Invalid API key: …", "success": false}`.
 
-```bash
-GET /tv/{id}
-Authorization-Bearer: ${TMDB_API_KEY}
+## Images
 
-Example:
-GET https://api.themoviedb.org/3/tv/12345?api_key=${TMDB_API_KEY}
+`https://image.tmdb.org/t/p/{size}{path}` where `path` already starts with `/`.
 
-Response:
-{
-    "id": 12345,
-    "name": "Show Title",
-    "overview": "Long form description...",
-    "original_language": "en",
-    "number_of_seasons": 5,
-    "first_air_date": "2020-01-01",
-    "last_air_date": "2024-12-31T00:00:00Z",
-    "status": "Ended", // Or "Ongoing"  
-    "seasons": [/* array */],
-    "episodes_averages": [/* array */],
-    "credits": {
-        "cast": [/* cast data */],
-        "crew": [/* crew data */]
-    }
-}
-```
+| Kind | Sizes |
+|------|-------|
+| Poster | `w92`, `w154`, `w185`, `w342`, `w500`, `w780`, `original` |
+| Backdrop | `w300`, `w780`, `w1280`, `original` |
 
----
+Use `w342` for grid cards and `w780` for details on a 1080p tvOS screen; avoid `original`. A `nil` path
+renders a placeholder.
 
-### **Endpoint 3: Search Content**  
-**Purpose**: Full-text search across movies and shows  
+## Errors, rate limits and retry
 
-```bash
-POST /search
-Authorization-Bearer: ${TMDB_API_KEY}
+| HTTP / condition | `MediaError` | Retried? |
+|------------------|--------------|----------|
+| 2xx, undecodable body | `decoding` | no |
+| 401 | `unauthorized` | no (bad or missing token) |
+| 404 | `notFound` | no |
+| 429 | `rateLimited(retryAfter:)` | yes, waits `Retry-After` seconds if sent, else backoff |
+| 5xx | `server(statusCode:)` | yes |
+| No connectivity / transport failure | `offline` | yes |
+| Task cancelled (`URLError.cancelled`) | `CancellationError` (not mapped) | no |
+| anything else (3xx, other 4xx) | `server(statusCode:)` | no |
 
-Query Parameters:
-- page=1
-- with_media_type=movies (or tv = TV only)
-- api_key=${TMDB_API_KEY}
-- query="The Queen's Gambit"
+- TMDB's published limit is roughly 50 requests per second per client; verify the current figure in their
+  docs. The earlier "60 requests/minute" figure was wrong. The app issues far fewer requests than that, so
+  there is no client-side counter; the client reacts to `429` instead.
+- Retry policy: at most 3 attempts, delay `baseDelay × 2^(attempt−1)` (500 ms, 1 s, 2 s) unless `Retry-After` is
+  present. Add jitter if many clients share a network.
+- Cancellation (view disappears, search text changes) must stop the request and must **not** show an error.
 
-Response:
-{
-    "page": 1,
-    "results": [ /* Search Result Array */],
-    "total_pages": 5,
-    "api_version": "v3"
-}
-```
+## Caching
 
----
+- Use the `URLSession` HTTP cache: `URLCache(memoryCapacity: 20 MB, diskCapacity: 100 MB)` with
+  `requestCachePolicy = .useProtocolCachePolicy`, which honours the `Cache-Control` headers TMDB returns
+  (check them with `curl -I` against an authenticated request before tuning).
+- No custom disk database, no Realm, no hand-rolled cache key scheme. HTTP caching keys on the full URL,
+  which already includes page, filters and language.
+- Offline behaviour: cached responses may be served by the system when valid; otherwise the UI shows the
+  `offline` error with a retry button. Full offline mode is out of scope.
 
-### **Endpoint 4: Personalized Recommendations**  
-**Purpose**: Get shows similar to user's viewed content  
+## Testing the API layer
+
+- Unit tests inject a stub `HTTPTransport` that returns canned `(Data, HTTPURLResponse)`. Assert: auth header
+  present, query items correct, status→error mapping, retry count, DTO→entity mapping.
+- Fixtures: keep small JSON fixtures per endpoint under `Tests/SampleTVAPITests/Fixtures/`.
+- Live tests are opt-in: they run only if the `TMDB_READ_ACCESS_TOKEN` environment variable is set and are
+  never part of CI.
+
+Useful manual check (replace `$TOKEN` with your read access token; do not paste it into shared logs):
 
 ```bash
-POST /recommendation
-Authorization-Bearer: ${TMDB_API_KEY}
-
-Query Parameters:
-- id=12345 // target show ID
-- with_genres=76 // limit to specific genres  
-- api_key=${TMDB_API_KEY}
-
-Response:
-{
-    "page": 1, 
-    "results": [/* recommended show data */],
-    "total_pages": 3,
-    "api_version": "v3"
-}  
+curl -s -H "Authorization: Bearer $TOKEN" \
+  "https://api.themoviedb.org/3/discover/tv?language=en-US&page=1&sort_by=popularity.desc" | jq '.results[0]'
 ```
 
----
+Without a token the API answers `401` with `status_code: 7`, which is a quick way to confirm connectivity.
 
-## ⚙️ Request Handling Specifications
+## Terms
 
-### Rate Limiting Implementation
-
-TMDB API uses a simple rate-limit counter (60 requests/min default):  
-
-```swift
-class TMDBRateLimiter {
-    private var requestCount: Int = 0
-    
-    func isAllowed() throws -> (delayInSeconds: TimeInterval, canRetry: Bool) {
-        guard TMDBAPI_MAX_RATE > 0 else { throw RateLimitTooHigh }
-        
-        requestCount += 1
-        
-        if requestCount > TMDBAPI_MAX_RATE {
-            let delay = RequestDelayStrategy.backoff(at: 2, multiplier: 1.5)
-            return (delay, true) // wait and retry later
-        }
-        
-        return (0, false) 
-    }
-    
-    static func resetAfterRequest(completion: @escaping () -> Void) {
-        DispatchQueue.main.asyncafter(deadline: .now() + RequestDelayStrategy.delay(at: 2)) {
-            completion()
-        }
-    }
-}
-```
-
-### Timeout & Error Handling
-
-All network calls use URLSession with configured timeout:  
-
-```swift
-extension URLSession {
-    static var sampleTVClient: URLSessionProtocol {
-        return Self(
-            configuration: .default,
-            maxConcurrencyLimit: 10,
-            timeoutInterval: TimeInterval(REQ_TIMEOUT_MS)
-        )
-    }
-}
-```
-
-### Caching Strategy (`sampletv-api-swift-package`):
-
-#### Hybrid Cache Implementation:
-```swift
-// Memory Layer (in-process dict) + Disk Layer (async-write Realm/JSON file)  
-protocol CacheManager {
-    func getTVListForID(id: Int, page: Int) throws -> TVContentPageResult?
-    func storeMovie(tvMovie: Movie, metadata: MetadataData) throws 
-}
-
-// Memory layer - fast access but evicts on crash/cleanup
-// Disk layer - persists even for app restart  
-```
-
-#### Cache Key Strategy:
-```swift
-// Use a composite key: showID + requestPage + (timestamp if stale check needed)
-class HybridCacheManager {
-    struct CacheKey {
-        let tvId: Int
-        let page: Int
-        
-        var string: String { 
-            "\(tvId)/\(page)" 
-        }
-    }
-    
-    func cache(for key: CacheKey, value: TVContentPageResult) throws -> Void {
-        // Store in memory first (fast access)
-        storeInMemory(key: key.string, value: value)
-        
-        // Persist to disk with async write
-        try await storeToDisk(key: key.string, data: Data(value))
-    }
-    
-    func retrieve<T>(cacheKey: CacheKey) throws -> T {
-        // Try memory cache first
-        guard let result = getFromMemory(forKey: cacheKey.string) else {
-            // Fall back to disk cache (async with timeout, max 1 sec) 
-        }
-    }
-}
-```
-
----
-
-## 🎯 Use Case Interface Specifications
-
-### Pure Domain Use Cases (No Dependencies):
-
-```swift
-// sampletv-domain-swift-package/Sources/UseCases/GetMovies.swift
-    
-protocol GetTVShowUseCaseProtocol {
-    func execute(tvId: Int, filterGenres: [Int]?) throws -> TVShowResult
-}
-
-// Implementation - pure Swift, no external imports allowed  
-struct GetTVImplementation: GetTVShowUseCaseProtocol {
-    func execute(tvId: Int, filterGenres: [Int]?) throws -> TVShowResult {
-        return try await cleanExecution(
-            tvId: tvId,
-            genresFilter: filterGenres ?? []
-        )
-    }
-    
-    private func cleanExecution(tvId: Int, genresFilter: [Int]) throws -> TVShow {
-        // Business logic only - no network/API calls
-        let result = try await UseCaseAPI.execute(
-            apiEndpoint: "/tv/\(tvId)/",
-            id: tvId,
-            with_genres: genresFilter.joined(separator: ",")
-        )
-        
-        return MapDomainResult(result, tvId) { data in
-            // Domain-specific transformation only
-        }
-    }
-}  
-```
-
----
-
-## 🧪 Integration Test Specifications
-
-### Expected API Responses (Test Cases):
-
-#### Test Case 1: Valid Fetch Request (Single Show)
-```
-Input: GET /tv/47085?api_key={API_KEY}
-Status: 200 OK
-Expected Output:
-{
-    "id": 47085,
-    "name": "Breaking Bad", 
-    "overview": "Describing the show...",
-    "status": "Ended", 
-    "number_of_seasons": 5
-}
-```
-
-#### Test Case 2: Invalid Show ID Request
-```
-Input: GET /tv/999999?api_key={API_KEY}  
-Status: 404 Not Found
-Expected Output: APIError.invalidResponse
-```
-
-#### Test Case 3: Rate Limit Exceeded (Repeated Calls)
-```
-Input: Rapid-fire requests over 60 req/min threshold
-Status: Rate limiting active
-Expected Output: NetworkError.throws, wait before retry
-```
-
----
-
-## 🛡️ Error Contract
-
-### TMDB API Errors Mapped to Swift Enum:
-
-```swift
-// sampletv-api-swift-package/Sources/Networking/APIProtocols.swift
-
-enum APIError: Equatable, CustomStringConvertible {
-    case networkFailure(Error)
-    case decodingFailed(Error)
-    case invalidId(Int)
-    case rateLimitExceeded(Error?)
-    case notFound(Int)
-    
-    var description: String { 
-        switch self {
-        case .networkFailure(let error):
-            return "Network error. Check your API key."
-        case .decodingFailed(let error):
-            return "JSON parsing failed."
-        case .invalidId(let id):
-            return "Invalid TV show ID: \(id)"  
-        case .rateLimitExceeded(let error): 
-            return "API rate limit exceeded. Wait before retrying."
-        case .notFound(let id):
-            return "TV Show not found with ID: \(id)"
-        }
-    }
-    
-    // Add localized translations for end-user messages
-}
-
-enum NetworkError: Error, CustomStringConvertible { 
-    case requestTimeout  
-    case connectionFailed(Error)
-    
-    var description: String {
-        switch self {
-        case .requestTimeout: return "Request timed out."
-        case .connectionFailed(let error): return "Network unavailable."
-        }
-    }
-}  
-```
-
----
-
-## 🔒 Security & Privacy Considerations (N/A for Open API)
-
-- ✅ No PII transmitted via API requests
-- ✅ API key stored only in `.env` file (never hard-coded)
-- ✅ No external server-side code - all processing is client-side
-
----
-
-*This document serves as the authoritative specification for all network-related implementations across SampleTV's API layer.*
+TMDB requires attribution (the notice and logo, see the README) and restricts the free API to
+non-commercial use. Images and metadata are not for redistribution.

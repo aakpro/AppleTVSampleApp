@@ -1,0 +1,64 @@
+# Copy to the repo root as `.swiftlint.yml` (Phase 1). Tested with SwiftLint 0.65.
+included:
+  - SampleTV
+  - SampleTVTests
+  - SampleTVUITests
+  - Packages
+
+excluded:
+  - "**/.build"
+  - "**/*.xcassets"
+
+opt_in_rules:
+  - force_unwrapping
+  - implicitly_unwrapped_optional
+  - empty_count
+  - closure_spacing
+
+# Tuned for SwiftUI code, where long view bodies and 120-column lines are normal.
+line_length:
+  warning: 120
+  error: 160
+  ignores_urls: true
+  ignores_comments: true
+
+function_body_length:
+  warning: 50
+  error: 100
+
+type_body_length:
+  warning: 300
+  error: 500
+
+cyclomatic_complexity:
+  warning: 12
+  error: 20
+
+identifier_name:
+  min_length: 2
+  excluded: [id, x, y, i, to]
+
+# Architecture boundaries. Layering is enforced by Package.swift (a target that does not list a
+# dependency cannot import it); these rules add a second, louder net for the rules SwiftPM
+# cannot express, and they print a message that tells the author what to do instead.
+custom_rules:
+  domain_is_framework_free:
+    name: "Domain must stay framework-free"
+    included: "Packages/SampleTVDomain/Sources"
+    regex: '^\s*(@testable\s+)?import\s+(SwiftUI|UIKit|AVKit|AVFoundation|Combine|Observation|SwiftData|SampleTV(API|UI|Discovery|Search|Player))\b'
+    message: "SampleTVDomain may import Foundation only. Define a protocol here and implement it elsewhere."
+    severity: error
+
+  features_do_not_import_api:
+    name: "Feature modules depend on the Domain, not the API layer"
+    included: "Packages/SampleTV(Discovery|Search|Player|UI)/Sources"
+    regex: '^\s*import\s+SampleTVAPI\b'
+    message: "Depend on the MediaRepository protocol from SampleTVDomain; the app target wires in SampleTVAPI."
+    severity: error
+
+  features_do_not_import_each_other:
+    name: "Feature modules must not import each other"
+    included: "Packages/SampleTV(Discovery|Search|Player)/Sources"
+    regex: '^\s*import\s+SampleTV(Discovery|Search|Player)\b'
+    message: "Move shared code into SampleTVUI or SampleTVDomain; navigation between features lives in the app target."
+    severity: error

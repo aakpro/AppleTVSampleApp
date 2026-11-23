@@ -1,205 +1,120 @@
-# PROJECT_STRUCTURE.md - SampleTV Complete File & Phase Inventory
+# Project structure and status
 
-> 📋 Overview: This is the authoritative inventory of all documentation files and phase-specific implementation artifacts for SampleTV.
+What exists today, what each phase adds, and where the supporting files go. Update the **status table** in every
+phase PR; it is the source of truth that [AGENTS.md](../AGENTS.md) points agents to.
 
----
+## Status
 
-## 📦 Root Level Documentation Files (Phase 1-6 Foundation)
+| Phase | Scope | Status |
+|-------|-------|--------|
+| Planning | README, AGENTS, Docs, verified templates | ✅ Done |
+| 1 | Foundation | ⏳ Not started |
+| 2 | Domain layer (`SampleTVDomain`) | ⏳ Not started |
+| 3 | API layer (`SampleTVAPI`) | ⏳ Not started |
+| 4 | Movie discovery (`SampleTVUI`, `SampleTVDiscovery`) | ⏳ Not started |
+| 5 | Search (`SampleTVSearch`) | ⏳ Not started |
+| 6 | Player (`SampleTVPlayer`) | ⏳ Not started |
 
-### Core Project Docs:
+Statuses: ⏳ not started · 🚧 in progress (branch name) · ✅ merged (version tag).
+
+## Today
+
 ```
-SampleTV/
-├── README.md                     # Main project overview & philosophy  
-├── AGENTS.md                     # Agent architecture per phase workflow  
-├── ARCHITECTURE.md              # Clean Architecture vertical/horizontal slicing pattern definition  
-├── API_SPECS.md                 # TMDB API integration specs, endpoints & caching strategy  
-├── RELEASE_PROCESS.md           # GitHub workflow & version tagging guidelines  
-├── PR_TEMPLATE.md               # Mandatory code review requirements per phase  
-├── Package.swift                # SPM manifest configuration  
-└── CHANGELOG.md                 # Unreleased/Phase-specific changelog entries
-```
-
-### Configuration Files:
-```
-SampleTV/
-├── .env.example                  # TMDB_KEY placeholder (gitIgnores .env file)  
-├── .swiftlint.yml                # SwiftLint rules config (strict mode enforced)  
-├── Clippy-check.toml             # Type safety strictness configuration  
-├── .github/workflows/
-│   └── build.yml                 # CI/CD pipeline (Build + Lint + Test + Coverage Check)  
-└── Package.swift                  # SwiftPM Manifest (Phase 1 dependencies only)  
-```
-
----
-
-## 📦 Phase File Inventory (`phase_*/*`)
-
-### **Phase 01: Foundation Files**
-```
-SampleTV/Phase01_Foundation/Documentation/
-├── Phase_01_Foundation.md    # Phase 01 specific guides & success criteria
-│
-# Phase 1 Code Structure (Foundation):
-Example: (if not yet implemented by you, or for reference):
-
-sampletv-app/Sources/
-├── AppEntry.swift        # Application entry point, DI container launch  
-└── DIContainer.swift     # Dependency injection setup, factory methods & protocols
-  
-# Expected CI Pipeline outputs after Phase 01 merge:
-✅ SwiftLint violations ≤ 5 in strict mode
-✅ Clippy type safety scan (zero failures)  
-✅ SPM graph shows no circular dependencies detected
+.
+├── README.md
+├── AGENTS.md
+├── CHANGELOG.md
+├── SampleTV.xcodeproj/          tvOS app project, scheme "SampleTV"
+├── SampleTV/                    Xcode template: SampleTVApp.swift, ContentView.swift, Item.swift, Assets.xcassets
+├── SampleTVTests/               template unit test target
+├── SampleTVUITests/             template UI test target
+└── Docs/                        everything described here
 ```
 
----
+## Target (after Phase 6)
 
-### **Phase 02: API Layer Files**
 ```
-SampleTV/Phase02_API_Layer/Documentation/
-├── Phase_02_API_Layer.md    # TMDB client & caching specifications (reference)
-
-sampletv-api-swift-package/
-├── Package.swift         # API module SPM dependencies + configuration  
-└── Sources/Networking/
-    ├── APIProtocols.swift      # Protocol definitions for all API interfaces  
-    ├── NetworkManager.swift     # URLSession wrapper with timeout config  
-    ├── TVDiscoveryClient.swift  # TMDB client implementation, rate limiter logic  
-    └── RateLimiter.swift        # Exponential backoff strategy implementation
-
-# Expected CI Pipeline outputs after Phase 02 merge:
-✅ Build + Lint passes (SwiftLint < 5 violations)  
-✅ Clippy type safety scan passes (no API violations in Presentation layer)  
-✅ Network tests mockable & deterministic
-```
-
----
-
-### **Phase 03: Domain Layer Files**
-```
-SampleTV/Phase03_Domain_Layer/Documentation/
-├── Phase_03_Domain_Layer.md    # Pure domain entity specifications, UseCase interfaces
-
-sampletv-domain-swift-package/
-├── Package.swift         # Minimal deps (only Foundation + Stdlib)  
-└── Sources/Entities/
-    ├── Movie.swift              # Value type (Codable+Equatable+Hashable)  
-    ├── TVShow.swift             # Value type for TV show info  
-    └── ContentItem.swift        # Base protocol for content abstraction
-
-# Expected CI Pipeline outputs after Phase 03 merge:
-✅ Zero external imports detected in Domain files  
-✅ SwiftLint passes (strict mode compliance)  
-✅ Clippy strict type checks pass (no Any/AnyObject usage in domain)  
-✅ Unit test coverage ≥ 100% (pure function determinism)
+.
+├── README.md  AGENTS.md  CHANGELOG.md
+├── .gitignore                       from Docs/templates/gitignore
+├── .swiftlint.yml                   from Docs/templates/swiftlint.yml
+├── .github/
+│   ├── workflows/ci.yml             from Docs/templates/ci.yml
+│   └── pull_request_template.md     from Docs/PR_TEMPLATE.md
+├── Config/
+│   ├── Shared.xcconfig              base configuration for the app target
+│   ├── Secrets.xcconfig.example     committed placeholder
+│   └── Secrets.xcconfig             git-ignored; holds TMDB_READ_ACCESS_TOKEN
+├── SampleTV.xcodeproj/
+├── SampleTV/                        app target = composition root
+│   ├── SampleTVApp.swift  AppConfiguration.swift  AppContainer.swift  RootView.swift
+│   └── Assets.xcassets/
+├── SampleTVTests/  SampleTVUITests/
+├── Packages/                        local Swift packages, one folder each
+│   ├── SampleTVDomain/              entities, MediaRepository port, use cases        (Phase 2)
+│   ├── SampleTVAPI/                 TMDB client, DTOs, retry, cache                  (Phase 3)
+│   ├── SampleTVUI/                  MediaCard, PosterImage, ImageURLBuilder          (Phase 4)
+│   ├── SampleTVDiscovery/           browse grid, details                             (Phase 4)
+│   ├── SampleTVSearch/              debounced search, filters                        (Phase 5)
+│   └── SampleTVPlayer/              AVKit player                                     (Phase 6)
+└── Docs/
 ```
 
----
+Each package follows the same layout: `Package.swift`, `Sources/<Name>/…`, `Tests/<Name>Tests/…`.
 
-### **Phase 04: Movie Discovery Files**
+### Package dependency graph
+
 ```
-SampleTV/Phase04_Movie_Discovery/Documentation/
-├── Phase_04_Movie_Discovery.md    # MVVM + ViewModel & View specifications
+SampleTVDomain      (Foundation only)
+├── SampleTVAPI
+├── SampleTVUI
+│   ├── SampleTVDiscovery
+│   └── SampleTVSearch
+SampleTVPlayer      (no dependencies)
 
-sampletv-movie-discovery/
-├── Package.swift  
-└── Sources/Presentation/
-    ├── Views/MovieDiscoveryView.swift          # Main UI component for discovery  
-    ├── Components/MovieCard.swift               # Reusable card view  
-    ├── Components/SearchBarComponent.swift       // Search input element
-    
-📍 ViewModels:
-├── ViewModels/MovieDiscoveryViewModel.swift
-
-# Expected CI Pipeline outputs after Phase 04 merge:
-✅ Build + Lint + Clippy passes (all green)  
-✅ ViewModel tests pass with mocked Repository (85%+ coverage target)  
-✅ UI navigation integration verified through SwiftUI patterns
+SampleTV app target imports all of them; nothing imports the app target.
 ```
 
----
+Enforced by `Package.swift` plus the custom rules in `.swiftlint.yml`.
 
-### **Phase 05: Search Module Files**
-```
-SampleTV/Phase05_Search_Module/Documentation/
-├── Phase_05_Search_Module.md    # Query builders & filtering logic specs
+## Docs inventory
 
-sampletv-search-module/
-├── Package.swift  
-└── Sources/Querying/
-    ├── SearchBuilder.swift              # Build query parameters to send to API  
-    ├── GenreQueryBuilder.swift           // Single genre filter builder  
-    ├── YearRangeBuilder.swift             // Min/Max year selection  
-    └── RatingFilterBuilder.swift          // Minimum rating threshold logic
+| File | Purpose |
+|------|---------|
+| `Docs/ARCHITECTURE.md` | Layers, modules, DI, concurrency, testing |
+| `Docs/API_SPECS.md` | TMDB endpoint/error/caching contract |
+| `Docs/PROJECT_STRUCTURE.md` | This file |
+| `Docs/RELEASE_PROCESS.md` | Branching, CI gates, versioning |
+| `Docs/PR_TEMPLATE.md` | PR template, review checklist, rejection reasons |
+| `Docs/Phase01_Foundation/Documentation/Phase_01_Foundation.md` | Phase 1 guide |
+| `Docs/Phase02_Domain_Layer/Documentation/Phase_02_Domain_Layer.md` | Phase 2 guide |
+| `Docs/Phase03_API_Layer/Documentation/Phase_03_API_Layer.md` | Phase 3 guide |
+| `Docs/Phase04_Movie_Discovery/Documentation/Phase_04_Movie_Discovery.md` | Phase 4 guide |
+| `Docs/Phase05_Search_Module/Documentation/Phase_05_Search_Module.md` | Phase 5 guide |
+| `Docs/Phase06_Player_Feature/Documentation/Phase_06_Player_Feature.md` | Phase 6 guide |
 
-📍 Filtering State Management:
-├── Filters/AdvancedFilters.swift               # Combined filtering parameters  
-└── Filters/Debouncer.swift                          // 300-500ms debounce delay pattern implementation
+### Templates (`Docs/templates/`)
 
-# Expected CI Pipeline outputs after Phase 05 merge:
-✅ Build + Lint passes (query builder protocol enforced)  
-✅ Clippy strict type checks pass (no Any in query building)  
-✅ Debounce functionality tested & verified < 500ms threshold  
-✅ Search functionality integrated with repository abstraction pattern
-```
+Each was run and checked before being committed. They are *templates* because tooling expects them elsewhere
+(repo root, `.github/`, `Config/`); Phase 1 copies them into place.
 
----
+| Template | Copy to | Verified by |
+|----------|---------|-------------|
+| `gitignore` | `.gitignore` | – |
+| `swiftlint.yml` | `.swiftlint.yml` | SwiftLint 0.65: clean run, and deliberate Domain/feature import violations are flagged with the custom messages |
+| `ci.yml` | `.github/workflows/ci.yml` | YAML parses; the simulator-selection, `xcodebuild test` and `xccov` commands were run locally against the real project |
+| `Shared.xcconfig` | `Config/Shared.xcconfig` | – (checked in Phase 1 step 4) |
+| `Secrets.xcconfig.example` | `Config/Secrets.xcconfig.example` | – |
 
-### **Phase 06: Player Module Files**
-```
-SampleTV/Phase06_Player_Feature/Documentation/
-├── Phase_06_Player_Feature.md    # AVKit integration & playback state patterns
+### Phase guides: shared structure
 
-sampletv-player-module/
-├── Package.swift  
-└── Sources/PlaybackControl/
-    ├── VideoPlayerService.swift         # Service protocol, AVKit bindings  
-    ├── VideoPlayerControlUI.swift       // SwiftUI controls implementation  
+Each guide has: header table (branch, dependencies, deliverables), file tree, design notes, steps, the code, tests,
+verification commands, definition of done and a pointer to the next phase. The Swift code in them is extracted from
+packages that were compiled in Swift 6 mode and whose tests ran on the tvOS simulator, so it can be pasted as-is.
 
-# Expected CI Pipeline outputs after Phase 06 merge:
-✅ Build + Lint + Clippy passes (avfoundation integration patterns)  
-✅ Unit tests verified with mocked video data (no actual files needed in phase 6 test)  
-✅ Repository state integration functional (last-played position pattern)  
-```
+## Conventions
 
----
-
-## 🔄 Complete Implementation Loop Checklist (All Phases)
-
-### Per Phase Merge Requirements:
-1. ✅ **Local Tests Pass** - `swift test` runs with ≥85% coverage on all modules  
-2. ✅ **CI/CD Pipeline**: All pipelines green (Build + Lint + Clippy type-safe check + Test suite passes)  
-3. ✅ **Clippy Strict Mode** - Zero type safety violations across codebase  
-4. ✅ **SwiftLint Compliance** - < 5 violations in strict mode, all rules passing  
-
----
-
-## 📊 Git Workflow Status (SampleTV Repository)
-
-### Branch Structure:
-```
-origin/master           # Main branch (merged from phase releases)  
-├── feature/phase_01_foundation        # ✅ Merged ✅ Released v0.1.0 (Foundation + DI container setup)  
-    ├── sampletv-app/Sources/AppEntry.swift          # Application entry point  
-    └── sampletv-app/Sources/DIContainer.swift       # Dependency injection configuration
-├── feature/phase_02_api_layer      # ✅ Merged ✅ Released v0.2.0 (TMDB API + caching)  
-├── feature/phase_03_domain_layer    # ✅ Merged ✅ Released v0.3.0 (Domain Entities + UseCases)  
-├── feature/phase_04_movie_discovery   # ⏳ Not yet merged
-├── feature/phase_05_search_module      # ⏳ Not yet merged
-└── feature/phase_06_player_feature     # ⏳ Not yet merged (final phase)  
-```
-
----
-
-## 🎯 Final Release Goals (Post-Phase 6 Merge)
-
-### End-to-End Integration Verification:
-After all phases merged, perform:
-1. ✅ Full build (`swift build --release` - no warnings/errors)
-2. ✅ All CI pipelines green + type-safe checks passing  
-3. ✅ Sample video playback functional (mocked or real for AVKit testing phase 6+)  
-4. ✅ Repository state integration working across all layers
-
----
-
-*This document serves as the master inventory for all documentation & phase files across SampleTV's architecture.*
+- Package names: `SampleTV<Name>`; one library product per package, named the same.
+- Branches: `feature/phase_0X_<name>`; tags: `v0.X.0` after each phase merges, `v1.0.0` when Phase 6 ships.
+- Commits: Conventional Commits, scope = package (`feat(api): …`, `test(domain): …`, `docs: …`).
+- Tests: Swift Testing for unit tests, XCTest for UI tests.
