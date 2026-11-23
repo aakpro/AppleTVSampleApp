@@ -5,15 +5,15 @@ phase PR; it is the source of truth that [AGENTS.md](../AGENTS.md) points agents
 
 ## Status
 
-| Phase | Scope | Status |
-|-------|-------|--------|
-| Planning | README, AGENTS, Docs, verified templates | ✅ Done |
-| 1 | Foundation | ⏳ Not started |
-| 2 | Domain layer (`SampleTVDomain`) | ⏳ Not started |
-| 3 | API layer (`SampleTVAPI`) | ⏳ Not started |
-| 4 | Movie discovery (`SampleTVUI`, `SampleTVDiscovery`) | ⏳ Not started |
-| 5 | Search (`SampleTVSearch`) | ⏳ Not started |
-| 6 | Player (`SampleTVPlayer`) | ⏳ Not started |
+| Phase | Scope | Status | Branch |
+|-------|-------|--------|--------|
+| Planning | README, AGENTS, Docs, verified templates | ✅ Merged | `main` (v0.1.0) |
+| 1 | Foundation: Swift 6, CI, DI skeleton | 🚧 In Progress | `feature/phase_01_foundation` |
+| 2 | Domain layer (`SampleTVDomain`) | ⏳ Not started | - |
+| 3 | API layer (`SampleTVAPI`) | ⏳ Not started | - |
+| 4 | Movie discovery (`SampleTVUI`, `SampleTVDiscovery`) | ⏳ Not started | - |
+| 5 | Search (`SampleTVSearch`) | ⏳ Not started | - |
+| 6 | Player (`SampleTVPlayer`) | ⏳ Not started | - |
 
 Statuses: ⏳ not started · 🚧 in progress (branch name) · ✅ merged (version tag).
 
