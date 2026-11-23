@@ -1,8 +1,20 @@
 {
   "default-configuration": "Release",
   "configurations": [
-    "Debug",
-    "Release",
+    {
+      "name": "Debug",
+      "file": {
+        "anchor": "Config",
+        "relative-path": "Shared.xcconfig"
+      }
+    },
+    {
+      "name": "Release",
+      "file": {
+        "anchor": "Config",
+        "relative-path": "Shared.xcconfig"
+      }
+    },
   ],
   "localizations": {
     "development": "en",
@@ -11,6 +23,7 @@
     ],
   },
   "files": [
+    { "kind": "folder", "path": "Config" },
     { "kind": "folder", "path": "SampleTV", "target-membership": [ "SampleTV" ] },
     { "kind": "folder", "path": "SampleTVTests", "target-membership": [ "SampleTVTests" ] },
     { "kind": "folder", "path": "SampleTVUITests", "target-membership": [ "SampleTVUITests" ] },
@@ -42,6 +55,7 @@
         "CURRENT_PROJECT_VERSION": "1",
         "ENABLE_PREVIEWS": "YES",
         "GENERATE_INFOPLIST_FILE": "YES",
+        "INFOPLIST_FILE": "Config/Info.plist",
         "INFOPLIST_KEY_UILaunchScreen_Generation": "YES",
         "INFOPLIST_KEY_UIUserInterfaceStyle": "Automatic",
         "CODE_SIGN_ENTITLEMENTS": "",
