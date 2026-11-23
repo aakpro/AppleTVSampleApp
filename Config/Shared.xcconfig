@@ -1,0 +1,8 @@
+// Copy to Config/Shared.xcconfig and set it as the base configuration of the SampleTV target
+// (Project > Info > Configurations) for both Debug and Release.
+
+// The leading "?" makes the include optional, so a fresh clone and CI still build without secrets.
+// Secrets.xcconfig defines TMDB_READ_ACCESS_TOKEN, which Info.plist reads through
+// the key TMDBReadAccessToken = $(TMDB_READ_ACCESS_TOKEN). If the file is missing the
+// value is empty and the app must show a "missing token" message instead of crashing.
+#include? "Secrets.xcconfig"

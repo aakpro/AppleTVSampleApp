@@ -1,7 +1,17 @@
-*.build/
-.xcworkspace
-.swiftbuild/
-.swift-version
-Package.resolved
-.env
+# Copy to the repo root as `.gitignore`.
+# Xcode's automatically created "DS_Store" files (macOS doesn't store these anyway).
+.DS_Store
+sampleDS_Store
+
+# User interfaces, Build settings, and other things that may change over time and shouldn't be checked in.
+SampleTV.xcodeproj/xcuserdata
+# xcodebuild -quiet -scheme SampleTV -onlyCheckers/SampleTVTests/Prompts:BuildConfigurations | sort -u > Xcode-Configuration-Snapshot.txt
+xcuserdata/
+DerivedData/
+.build/
+build/
+*.xcresult
+
+# Secrets
 Config/Secrets.xcconfig
+.env
