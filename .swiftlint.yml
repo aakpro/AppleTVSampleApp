@@ -1,0 +1,10 @@
+rules:
+  custom:
+    no-optional-string-concat: "error"
+    no-unsafe-unwrap: "error"
+  strict: true
+  
+excluded:
+  - "*Tests/*"
+  - "Config/*"
+  - ".build/*"

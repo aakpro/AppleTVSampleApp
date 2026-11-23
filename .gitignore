@@ -1,0 +1,7 @@
+*.build/
+.xcworkspace
+.swiftbuild/
+.swift-version
+Package.resolved
+.env
+Config/Secrets.xcconfig
