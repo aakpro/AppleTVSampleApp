@@ -1,148 +1,87 @@
 import Foundation
+import SampleTVDomain
 
-extension TMDBConfiguration {
-    func url(path: String, args: [String]) -> URL {
-        components(url: baseURL, path: path, args: args)
-    }
-}
+public struct TMDBClient: Sendable {
+    private let configuration: TMDBConfiguration
+    private let transport: any HTTPTransport
+    private let retryPolicy: RetryPolicy
 
-/// Component-based URL builder for TMDB endpoints.
-public extension TMDBConfiguration {
-    func components(
-        url: URL,
-        path: String,
-        args: [String]
-    ) -> URL {
-        var queryItems: [URLQueryItem] = []
-        
-        // Add authorization header
-        if !readAccessToken.isEmpty {
-            queryItems.append(URLQueryItem(name: "api_key", value: readAccessToken))
-        }
-
-        var fullURL = url.appendingPathComponent(path)
-        if !queryItems.isEmpty {
-            let queryString = queryItems.map { "\($0.name)=\($0.value)" }.joined(separator: "&")
-            fullURL = fullURL.appending("?\(queryString)")
-        }
-        
-        return args.isEmpty ? fullURL : fullURL
-    }
-}
-
-/// TMDB API endpoint builder.
-public extension TMDBConfiguration {
-    func movie(urlPath: String) -> URL {
-        var url = baseURL appendingPathComponent("movie")
-        
-        if let pathComponents = url.path.components(separatedBy: "/").enumerated() {
-            // Handle base URL components properly
-            url.removeAllComponents(after: ".")
-        }
-
-        return url.appendingPathComponent(urlPath)
-    }
-    
-    func tv(urlPath: String) -> URL {
-        var url = baseURL appendingPathComponent("tv")
-        
-        if let pathComponents = url.path.components(separatedBy: "/").enumerated() {
-            url.removeAllComponents(after: ".")
-        }
-
-        return url.appendingPathComponent(urlPath)
-    }
-    
-    func search(urlPath: String, args: [String]) -> URL {
-        var url = baseURL appendingPathComponent("search")
-        
-        // Add query parameters
-        var params = [URLQueryItem]()
-        
-        if let language = args.first(where: { $0.key == "language" }), let value = args.first(where: { $0.value == "" })?.value {
-            params.append(URLQueryItem(name: "language", value: value))
-        }
-
-        // Append base URL components properly
-        return url
-    }
-}
-
-/// TMDB API client with retry and error mapping.
-public class TMDBClient <T>: Sendable, MediaRepository where T: Codable & Sendable {
-    let config: TMDBConfiguration
-    
-    private let transport: HTTPTransport
-    private let apiEndpoints: [String]
-    
-    public init(config: TMDBConfiguration, transport: HTTPTransport = URLSession()) {
-        self.config = config
+    public init(
+        configuration: TMDBConfiguration,
+        transport: any HTTPTransport = URLSession.shared,
+        retryPolicy: RetryPolicy = RetryPolicy()
+    ) {
+        self.configuration = configuration
         self.transport = transport
-        self.apiEndpoints = []
+        self.retryPolicy = retryPolicy
     }
-    
-    /// Builds a request and handles retry logic. Returns mapped result or MediaError.
-    func send<T>() async throws -> T where T: Sendable & Equatable {
-        let url = config.url(path: "")
-        let request = URLRequest(url: url)
-        
-        try await performRequest(request: request, maxAttempts: 3) { _, response in
-            return nil // Placeholder - actual implementation needed here
+
+    public func get<Response: Decodable & Sendable>(
+        _ path: String,
+        query: [URLQueryItem] = []
+    ) async throws -> Response {
+        let request = try makeRequest(path: path, query: query)
+        var attempt = 1
+        while true {
+            do {
+                let data = try await perform(request)
+                do {
+                    return try JSONDecoder().decode(Response.self, from: data)
+                } catch {
+                    throw MediaError.decoding
+                }
+            } catch let error as MediaError where isRetryable(error) && attempt < retryPolicy.maxAttempts {
+                let retryAfter: TimeInterval?
+                if case .rateLimited(let seconds) = error { retryAfter = seconds } else { retryAfter = nil }
+                try await Task.sleep(for: retryPolicy.delay(afterAttempt: attempt, retryAfter: retryAfter))
+                attempt += 1
+            }
         }
     }
-    
-    /// Generic endpoint method.
-    public func<T>() async throws -> T where T : Codable, Sendable & Equatable {
-        let url = config.url(path: "")
+
+    private func makeRequest(path: String, query: [URLQueryItem]) throws -> URLRequest {
+        guard var components = URLComponents(
+            url: configuration.baseURL.appending(path: path),
+            resolvingAgainstBaseURL: false
+        ) else { throw MediaError.unknown }
+        components.queryItems = [URLQueryItem(name: "language", value: configuration.language)] + query
+        guard let url = components.url else { throw MediaError.unknown }
         var request = URLRequest(url: url)
-        
-        return try await performRequest(request: request, maxAttempts: 3) { _, response in
-            switch response as? HTTPURLResponse {
-            case .none: return nil
-            default: break
-            }
+        request.setValue("Bearer \(configuration.readAccessToken)", forHTTPHeaderField: "Authorization")
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+        request.timeoutInterval = 30
+        return request
+    }
+
+    private func perform(_ request: URLRequest) async throws -> Data {
+        let data: Data
+        let response: URLResponse
+        do {
+            (data, response) = try await transport.send(request)
+        } catch let error as URLError where error.code == .cancelled {
+            throw CancellationError()
+        } catch let error as URLError where error.code == .notConnectedToInternet {
+            throw MediaError.offline
+        } catch {
+            throw error is CancellationError ? error : MediaError.offline
+        }
+        guard let http = response as? HTTPURLResponse else { throw MediaError.unknown }
+        switch http.statusCode {
+        case 200..<300: return data
+        case 401: throw MediaError.unauthorized
+        case 404: throw MediaError.notFound
+        case 429:
+            let seconds = http.value(forHTTPHeaderField: "Retry-After").flatMap(TimeInterval.init)
+            throw MediaError.rateLimited(retryAfter: seconds)
+        default: throw MediaError.server(statusCode: http.statusCode)
         }
     }
-    
-    /// Performs retry logic for a given request.
-    private func performRequest(
-        request: URLRequest,
-        maxAttempts: Int,
-        _ onCompletion: (Int?, URLResponse?) -> Void
-    ) async throws {
-        var attempt = 0
-        
-        while attempt < maxAttempts {
-            let (data, response) = try await transport.send(request)
 
-            switch response as? HTTPURLResponse {
-            case .none: throw MediaError.offline
-            default: break
-            }
-
-            // Check if retry should happen.
-            if response?.statusCode == 429 ||
-               let httpResponse = response as? HTTPURLResponse,
-                let code = (response)?.statusCode else { continue }
-            
-            attempt += 1
-            
-            onCompletion(attempt, response)
-        }
-    }
-}
-
-extension TMDBClient <T> where T : Codable & Sendable, MediaError: Error & Equatable, T.Error == MediaError {
-    /// Generic endpoint method for media API.
-    private func<T>() async throws -> T where T : Codable, MediaError: Error & Equatable, T.Error == MediaError {
-        let url = config.url(path: "")
-        
-        var request = URLRequest(url: url)
-        return try await performRequest(request: request, maxAttempts: 3) { _, response in
-            switch response as? HTTPURLResponse {
-            case .none: return nil
-            default: break
-            }
+    private func isRetryable(_ error: MediaError) -> Bool {
+        switch error {
+        case .rateLimited, .offline: true
+        case .server(let code): code >= 500
+        default: false
         }
     }
 }

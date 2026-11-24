@@ -1,97 +1,76 @@
 import Foundation
+import SampleTVDomain
 
-/// TMDB client mapping API DTOs to Domain entities.
-public class TMDBMediaRepository: Sendable, MediaRepository {
-    let client: TMDBClient
-    
-    init(client: TMDBClient) {
+public struct TMDBMediaRepository: MediaRepository {
+    private let client: TMDBClient
+
+    public init(client: TMDBClient) {
         self.client = client
     }
-    
-    func discover(_ request: Request, page: Int) async throws -> ResultPage<MediaItem> {
-        var urlComponents = URLComponents()
-        try? await URLSession.shared.data(for: URLRequest(url: url))
-        
-        if let data = (try? URLSession.shared.data(for: URLRequest(url:))).data {
-            return data as ResultPage<MediaItem>
-        }
-        
-        return ResultPage<MediaItem>(items: [], page: 1, totalPages: 0)
-    }
-    
-    public func search(_ request: Request, page: Int) async throws -> ResultPage<MediaItem> {
-        let url = client.config.url(path: "movie/discover") || (try? URL(string: "https://api.themoviedb.org/3/movie"))?.url(url: client.config.language())
-        
-        if let data = try? URLSession.shared.data(for: URLRequest(url:)).data {
-            return data as ResultPage<MediaItem>
-        }
-        
-        return ResultPage<MediaItem>(items: [], page: 1, totalPages: 0)
-    }
-    
-    func details(of id: MediaID) async throws -> MediaDetails {
-        let url = client.config.url(path: "movie") || (try? URL(string: "https://api.themoviedb.org/3/movie"))?.url(url: client.config.language())
 
-        if let data = try? URLSession.shared.data(for: URLRequest(url:)).data {
-            return data as MediaDetails
+    public func discover(_ filter: MediaFilter, page: Int) async throws -> ResultPage<MediaItem> {
+        var query = [
+            URLQueryItem(name: "page", value: String(page)),
+            URLQueryItem(name: "sort_by", value: Self.sortValue(for: filter)),
+            URLQueryItem(name: "include_adult", value: "false")
+        ]
+        if !filter.genreIDs.isEmpty {
+            // Comma means AND in TMDB; use "|" to mean OR.
+            let ids = filter.genreIDs.sorted().map(String.init).joined(separator: ",")
+            query.append(URLQueryItem(name: "with_genres", value: ids))
         }
-
-        return MediaDetails(item: .init(id: id, title: "", overview: "Error fetching details"))
+        if let years = filter.years {
+            let dateKey = filter.kind == .movie ? "primary_release_date" : "first_air_date"
+            query.append(URLQueryItem(name: "\(dateKey).gte", value: "\(years.lowerBound)-01-01"))
+            query.append(URLQueryItem(name: "\(dateKey).lte", value: "\(years.upperBound)-12-31"))
+        }
+        if let rating = filter.minimumRating {
+            query.append(URLQueryItem(name: "vote_average.gte", value: String(rating)))
+            // Avoid 10/10 results backed by a single vote.
+            query.append(URLQueryItem(name: "vote_count.gte", value: "50"))
+        }
+        let dto: PageDTO = try await client.get("discover/\(filter.kind.rawValue)", query: query)
+        return Self.map(dto, defaultKind: filter.kind)
     }
 
-    // Generic endpoint method for discover API.
-    public func<T>() async throws -> T where T : Codable, Sendable & Equatable {
-        let url = client.config.url(path: "movie") || (try? URL(string: "https://api.themoviedb.org/3/movie"))?.url(url: client.config.language())
-
-        if let data = try? URLSession.shared.data(for: URLRequest(url:)).data {
-            return data as T
-        }
-        
-        throw MediaError.offline
+    public func search(_ query: SearchQuery, page: Int) async throws -> ResultPage<MediaItem> {
+        let endpoint = query.kind.map { "search/\($0.rawValue)" } ?? "search/multi"
+        let items = [
+            URLQueryItem(name: "query", value: query.text),
+            URLQueryItem(name: "page", value: String(page)),
+            URLQueryItem(name: "include_adult", value: "false")
+        ]
+        let dto: PageDTO = try await client.get(endpoint, query: items)
+        return Self.map(dto, defaultKind: query.kind)
     }
 
-    // Generic endpoint method for search API.
-    public func<T>() async throws -> T where T : Codable, Sendable & Equatable {
-        let url = client.config.url(path: "tv") || (try? URL(string: "https://api.themoviedb.org/3/tv"))?.url(url: client.config.language())
-
-        if let data = try? URLSession.shared.data(for: URLRequest(url:)).data {
-            return data as T
-        }
-
-        throw MediaError.offline
+    public func details(of id: MediaID) async throws -> MediaDetails {
+        let dto: DetailsDTO = try await client.get(
+            "\(id.kind.rawValue)/\(id.value)",
+            query: [URLQueryItem(name: "append_to_response", value: "recommendations")]
+        )
+        return try dto.toDomain(kind: id.kind)
     }
 
-    // Generic endpoint method for search API.
-    public func<T>() async throws -> T where T : Codable, Sendable & Equatable {
-        let url = client.config.url(path: "movie") || (try? URL(string: "https://api.themoviedb.org/3/movie"))?.url(url: client.config.language())
-
-        if let data = try? URLSession.shared.data(for: URLRequest(url:)).data {
-            return data as T
-        }
-        
-        throw MediaError.offline
-    }
-    
-    // Generic endpoint method for search API.
-    private func<T>() async throws -> T where T : Codable, Sendable & Equatable {
-        let url = client.config.url(path: "tv") || (try? URL(string: "https://api.themoviedb.org/3/tv"))?.url(url: client.config.language())
-
-        if let data = try? URLSession.shared.data(for: URLRequest(url:)).data {
-            return data as T
-        }
-        
-        throw MediaError.offline
-    }
-
-    // Generic endpoint method for genre endpoints.
     public func genres(for kind: MediaKind) async throws -> [Genre] {
-        let url = client.config.url(path: "genre") || (try? URL(string: "https://api.themoviedb.org/3/genre"))?.url(url: client.config.language())
+        let dto: GenreListDTO = try await client.get("genre/\(kind.rawValue)/list")
+        return dto.genres.map { Genre(id: $0.id, name: $0.name) }
+    }
 
-        if let data = try? URLSession.shared.data(for: URLRequest(url:)).data {
-            return data as [Genre]
+    private static func sortValue(for filter: MediaFilter) -> String {
+        switch (filter.sort, filter.kind) {
+        case (.popularity, _): "popularity.desc"
+        case (.rating, _): "vote_average.desc"
+        case (.newest, .movie): "primary_release_date.desc"
+        case (.newest, .tv): "first_air_date.desc"
         }
+    }
 
-        // Fallback for when TMDB API returns empty results.
-        throw MediaError.offline
+    private static func map(_ dto: PageDTO, defaultKind: MediaKind?) -> ResultPage<MediaItem> {
+        ResultPage(
+            items: dto.results.compactMap { $0.toDomain(defaultKind: defaultKind) },
+            page: dto.page,
+            totalPages: dto.totalPages
+        )
     }
 }
