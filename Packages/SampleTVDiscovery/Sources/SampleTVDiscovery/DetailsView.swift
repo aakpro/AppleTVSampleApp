@@ -22,6 +22,7 @@ public struct DetailsView: View {
                     Text(details.genres.map(\.name).joined(separator: " · ")).foregroundStyle(.secondary)
                 }
                 Button("Play") { onPlay(viewModel.item) }
+                Spacer()
                 Text("This product uses the TMDB API but is not endorsed or certified by TMDB.")
                     .font(.caption2)
                     .foregroundStyle(.tertiary)

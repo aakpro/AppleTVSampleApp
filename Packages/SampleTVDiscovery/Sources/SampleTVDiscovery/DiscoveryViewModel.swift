@@ -1,8 +1,9 @@
+import Observation
 import SampleTVDomain
-import SwiftUI
 
 @MainActor
-public final class DiscoveryViewModel: ObservableObject {
+@Observable
+public final class DiscoveryViewModel {
     public enum State: Equatable {
         case idle
         case loading
@@ -10,8 +11,8 @@ public final class DiscoveryViewModel: ObservableObject {
         case failed(MediaError)
     }
 
-    @Published public private(set) var state: State = .idle
-    @Published public private(set) var canLoadMore = false
+    public private(set) var state: State = .idle
+    public private(set) var canLoadMore = false
     public var filter: MediaFilter
 
     private let discover: DiscoverMedia

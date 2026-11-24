@@ -1,15 +1,16 @@
+import Observation
 import SampleTVDomain
-import SwiftUI
 
 @MainActor
-public final class DetailsViewModel: ObservableObject {
+@Observable
+public final class DetailsViewModel {
     public enum State: Equatable {
         case loading
         case loaded(MediaDetails)
         case failed(MediaError)
     }
 
-    @Published public private(set) var state: State = .loading
+    public private(set) var state: State = .loading
     public let item: MediaItem
 
     private let getDetails: GetMediaDetails

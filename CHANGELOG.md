@@ -5,8 +5,9 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
-Phase 2: Domain layer (`SampleTVDomain` package) - entities, query types, `MediaRepository`, use cases, comprehensive tests.
-Phase 4: Movie discovery (`SampleTVUI`, `SampleTVDiscovery`) - browse grid and details screen with error handling.
+- Phase 2: Domain layer (`SampleTVDomain` package) - entities, query types, `MediaRepository`, use cases, comprehensive tests.
+- Phase 3: API layer (`SampleTVAPI` package) - TMDB client, media repository implementation, retry logic, error mapping.
+- Phase 4: Movie discovery (`SampleTVUI`, `SampleTVDiscovery`) - browse grid with focusable cards, details modal, TMDB attribution, and wired into `AppContainer` and `RootView` using `@Observable`.
 
 ## [0.1.0] - 2026-11-23
 

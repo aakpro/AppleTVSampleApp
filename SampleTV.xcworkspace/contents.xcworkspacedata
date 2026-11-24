@@ -13,6 +13,12 @@
       <FileRef
          location = "group:SampleTVAPI">
       </FileRef>
+      <FileRef
+         location = "group:SampleTVUI">
+      </FileRef>
+      <FileRef
+         location = "group:SampleTVDiscovery">
+      </FileRef>
    </Group>
    <FileRef
       location = "container:Config">

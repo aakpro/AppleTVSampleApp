@@ -32,7 +32,9 @@ the app target through `Scripts/link_package.rb` appear in Xcode as local packag
 ├── SampleTVUITests/             UI tests (XCTest)
 ├── Packages/
 │   ├── SampleTVDomain/          Phase 2 (verified, 22 tests passing)
-│   └── SampleTVAPI/             Phase 3 (verified, 5 tests passing)
+│   ├── SampleTVAPI/             Phase 3 (verified, 5 tests passing)
+│   ├── SampleTVUI/              Phase 4 (verified, 2 tests passing)
+│   └── SampleTVDiscovery/       Phase 4 (verified, 6 tests passing)
 ├── Scripts/                     link_package.rb (adds a local package to the app target)
 ├── Config/                      Shared.xcconfig, Secrets.xcconfig(.example), Info.plist
 ├── Docs/                        architecture, API spec, phase guides, templates

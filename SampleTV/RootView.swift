@@ -1,11 +1,22 @@
+import SampleTVDiscovery
+import SampleTVDomain
 import SwiftUI
 
 struct RootView: View {
     let container: AppContainer
+    @State private var selection: MediaItem?
 
     var body: some View {
         if container.configuration.hasToken {
-            Text("SampleTV")
+            NavigationStack {
+                DiscoveryView(viewModel: container.makeDiscoveryViewModel()) { selection = $0 }
+                    .navigationTitle("Discover")
+            }
+            .fullScreenCover(item: $selection) { item in
+                DetailsView(viewModel: container.makeDetailsViewModel(for: item)) { _ in
+                    // Play action wired in Phase 6
+                }
+            }
         } else {
             ContentUnavailableView(
                 "TMDB token missing",
