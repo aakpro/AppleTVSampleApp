@@ -2,11 +2,16 @@
 import Foundation
 import SampleTVAPI
 import SampleTVDiscovery
-import SampleTVSearch
 import SampleTVDomain
+import SampleTVSearch
 
 @MainActor
 final class AppContainer {
+    /// Public Apple test stream. TMDB provides metadata only, never video.
+    static let sampleStream = URL(
+        string: "https://devstreaming-cdn.apple.com/videos/streaming/examples/img_bipbop_adv_example_fmp4/master.m3u8"
+    )!
+
     let configuration: AppConfiguration
     let repository: any MediaRepository
 
@@ -34,5 +39,10 @@ final class AppContainer {
 
     func makeDetailsViewModel(for item: MediaItem) -> DetailsViewModel {
         DetailsViewModel(item: item, getDetails: GetMediaDetails(repository: repository))
+    }
+
+    /// Seam for a real catalogue: map a title to its stream. Always the sample stream for now.
+    func playbackURL(for item: MediaItem) -> URL {
+        Self.sampleStream
     }
 }
