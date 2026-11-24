@@ -1,6 +1,7 @@
 import SampleTVDiscovery
-import SampleTVSearch
 import SampleTVDomain
+import SampleTVPlayer
+import SampleTVSearch
 import SwiftUI
 
 struct RootView: View {
@@ -9,28 +10,7 @@ struct RootView: View {
 
     var body: some View {
         if container.configuration.hasToken {
-            TabView {
-                NavigationStack {
-                    DiscoveryView(viewModel: container.makeDiscoveryViewModel()) { selection = $0 }
-                        .navigationTitle("Discover")
-                }
-                .tabItem {
-                    Label("Discover", systemImage: "tv")
-                }
-                
-                NavigationStack {
-                    SearchView(viewModel: container.makeSearchViewModel()) { selection = $0 }
-                        .navigationTitle("Search")
-                }
-                .tabItem {
-                    Label("Search", systemImage: "magnifyingglass")
-                }
-            }
-            .fullScreenCover(item: $selection) { item in
-                DetailsView(viewModel: container.makeDetailsViewModel(for: item)) { _ in
-                    // Play action wired in Phase 6
-                }
-            }
+            tabs
         } else {
             ContentUnavailableView(
                 "TMDB token missing",
@@ -38,5 +18,37 @@ struct RootView: View {
                 description: Text("Copy Config/Secrets.xcconfig.example to Config/Secrets.xcconfig and add your token.")
             )
         }
+    }
+
+    private var tabs: some View {
+        TabView {
+            NavigationStack {
+                DiscoveryView(viewModel: container.makeDiscoveryViewModel()) { selection = $0 }
+                    .navigationTitle("Discover")
+            }
+            .tabItem { Label("Discover", systemImage: "square.grid.2x2") }
+
+            NavigationStack {
+                SearchView(viewModel: container.makeSearchViewModel()) { selection = $0 }
+            }
+            .tabItem { Label("Search", systemImage: "magnifyingglass") }
+        }
+        .fullScreenCover(item: $selection) { item in
+            DetailsScreen(container: container, item: item)
+        }
+    }
+}
+
+/// Details plus the player cover. Presented from the app target so features never import each other.
+private struct DetailsScreen: View {
+    let container: AppContainer
+    let item: MediaItem
+    @State private var playing: MediaItem?
+
+    var body: some View {
+        DetailsView(viewModel: container.makeDetailsViewModel(for: item)) { playing = $0 }
+            .fullScreenCover(item: $playing) { item in
+                PlayerView(url: container.playbackURL(for: item))
+            }
     }
 }
