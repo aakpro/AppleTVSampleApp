@@ -1,4 +1,5 @@
 import SampleTVDomain
+import SampleTVPlaybackProgress
 import SampleTVUI
 import SwiftUI
 
@@ -26,6 +27,19 @@ public struct DiscoveryView: View {
         case .loaded(let items):
             ScrollView {
                 LazyVGrid(columns: [GridItem(.adaptive(minimum: 240), spacing: 40)], spacing: 60) {
+                    // Continue Watching section
+                    if !viewModel.itemsWithContinueWatching().isEmpty {
+                        SectionHeader(title: "Continue Watching")
+                        ForEach(viewModel.itemsWithContinueWatching()) { item in
+                            Button { onSelect(item) } label: { 
+                                MediaCard(item: item)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                            }
+                        }
+                    }
+                    
+                    // Main section for other items
+                    SectionHeader(title: "Discover")
                     ForEach(items) { item in
                         Button { onSelect(item) } label: { 
                             MediaCard(item: item)
@@ -41,5 +55,19 @@ public struct DiscoveryView: View {
                 .padding(60)
             }
         }
+    }
+}
+
+private struct SectionHeader: View {
+    let title: String
+    
+    var body: some View {
+        Text(title)
+            .font(.title2)
+            .fontWeight(.semibold)
+            .foregroundColor(.primary)
+            .padding(.leading, 10)
+            .padding(.top, 30)
+            .padding(.bottom, 15)
     }
 }
