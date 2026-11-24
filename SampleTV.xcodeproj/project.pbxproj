@@ -544,6 +544,30 @@
 		};
 /* End XCConfigurationList section */
 	};
+        32B1C8A20786F0E7F215F5E9 /* Package.swift */ = {
+                isa = PBXFileReference;
+                explicitFileType = "swift.package";
+                includeInIndex = 0;
+                path = Packages/SampleTVDomain-Swift.swift-package/Package.swift;
+                sourceTree = "LOCAL";
+        };
+
+        315B8D9F267194CDA136F3A0 /* SampleTVDomain-swift-package */ = {
+                isa = PBXGroup;
+                children = (
+                        32B1C8A20786F0E7F215F5E9 /* Package.swift */,
+                );
+                path = SampleTVDomain-Swift.swift-package;
+                sourceTree = "LOCAL";
+        };
+
+	E2B2C8A3FAB18EBCB996E7A4 /* Frameworks */ = {
+		isa = PBXFrameworksBuildPhase;
+		files = (
+			32B1C8A20786F0E7F215F5E9 /* Package.swift */,
+		);
+	};
+
 	rootObject = 29413D03C5A17531971334A7 /* Project object */;
 	validationLevel = 1;
 }

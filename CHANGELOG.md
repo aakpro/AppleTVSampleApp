@@ -5,6 +5,8 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+Phase 2: Domain layer (`SampleTVDomain` package) - entities, query types, `MediaRepository`, use cases, comprehensive tests.
+
 ## [0.1.0] - 2026-11-23
 
 ### Changed
