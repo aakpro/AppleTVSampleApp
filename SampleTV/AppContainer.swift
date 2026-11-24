@@ -3,6 +3,7 @@ import Foundation
 import SampleTVAPI
 import SampleTVDiscovery
 import SampleTVDomain
+import SampleTVPlaybackProgress
 import SampleTVSearch
 
 @MainActor
@@ -14,10 +15,12 @@ final class AppContainer {
 
     let configuration: AppConfiguration
     let repository: any MediaRepository
+    let progressStore: any PlaybackProgressStore
 
-    init(configuration: AppConfiguration, repository: any MediaRepository) {
+    init(configuration: AppConfiguration, repository: any MediaRepository, progressStore: any PlaybackProgressStore) {
         self.configuration = configuration
         self.repository = repository
+        self.progressStore = progressStore
     }
 
     static func live() -> AppContainer {
@@ -26,11 +29,16 @@ final class AppContainer {
             configuration: TMDBConfiguration(readAccessToken: configuration.tmdbToken),
             transport: URLSession.tmdbCached()
         )
-        return AppContainer(configuration: configuration, repository: TMDBMediaRepository(client: client))
+        let progressStore = UserDefaultsPlaybackProgressStore()
+        return AppContainer(
+            configuration: configuration, 
+            repository: TMDBMediaRepository(client: client),
+            progressStore: progressStore
+        )
     }
 
     func makeDiscoveryViewModel() -> DiscoveryViewModel {
-        DiscoveryViewModel(discover: DiscoverMedia(repository: repository))
+        DiscoveryViewModel(discover: DiscoverMedia(repository: repository), progressStore: progressStore)
     }
 
     func makeSearchViewModel() -> SearchViewModel {

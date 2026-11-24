@@ -44,11 +44,20 @@ private struct DetailsScreen: View {
     let container: AppContainer
     let item: MediaItem
     @State private var playing: MediaItem?
+    
+    init(container: AppContainer, item: MediaItem) {
+        self.container = container
+        self.item = item
+    }
 
     var body: some View {
         DetailsView(viewModel: container.makeDetailsViewModel(for: item)) { playing = $0 }
             .fullScreenCover(item: $playing) { item in
-                PlayerView(url: container.playbackURL(for: item))
+                Task {
+                    let progress = try? await container.progressStore.loadProgress(for: item.id)
+                    let initialPosition = progress?.position
+                    PlayerView(url: container.playbackURL(for: item), initialPosition: initialPosition)
+                }
             }
     }
 }
