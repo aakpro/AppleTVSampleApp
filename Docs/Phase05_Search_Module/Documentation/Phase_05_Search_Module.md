@@ -33,12 +33,12 @@ No query-builder classes are needed. Earlier drafts planned `SearchQueryBuilder`
   If you need server-side filtering, use `DiscoverMedia` instead; do not fake it with search.
 - **Kind.** `filter.kind` selects `search/movie` or `search/tv`. Offer a Movies/TV segmented control. If you want a
   mixed list, call the use case with `kind: nil`, which maps to `search/multi`.
-- **tvOS.** `.searchable` gives the system keyboard/search layout. The Search tab uses `role: .search`.
+- **tvOS.** `.searchable` gives the system keyboard/search layout. The app deploys to tvOS 17, so the Search tab uses `.tabItem` (the `Tab` type and `role: .search` need tvOS 18; do not use them).
 - **Empty states.** `ContentUnavailableView.search(text:)` for no results, a prompt when idle.
 
 ## Steps
 
-1. Branch; create the package; add it with **Add Local…**; link `SampleTVSearch` to the app target.
+1. Branch; create the package; link it with `ruby Scripts/link_package.rb SampleTVSearch`. Never hand-edit `project.pbxproj`.
 2. Add the code and tests.
 3. Add `makeSearchViewModel()` to `AppContainer`, and a **Search** tab to `RootView` (final code in Phase 6). The search tab
    wraps `SearchView` in its own `NavigationStack` and reuses the same `selection` → details cover as Discovery.
@@ -253,7 +253,7 @@ page 1. Target ≥ 85% coverage.
 
 ```bash
 cd Packages/SampleTVSearch && xcodebuild test -scheme SampleTVSearch -destination "id=$UDID" -enableCodeCoverage YES
-cd ../.. && xcodebuild test -scheme SampleTV -destination "id=$UDID"
+cd ../.. && xcodebuild test -workspace SampleTV.xcworkspace -scheme SampleTV -destination "id=$UDID" -skip-testing:SampleTVUITests
 swiftlint lint --quiet | grep -c "error:"       # 0
 ```
 

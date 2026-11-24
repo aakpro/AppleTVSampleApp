@@ -5,13 +5,11 @@ Read [README.md](README.md) first for the product and [Docs/ARCHITECTURE.md](Doc
 
 ## Project snapshot
 
-- tvOS app, SwiftUI, Xcode project `SampleTV.xcodeproj`, scheme `SampleTV`
+- tvOS app, SwiftUI, open `SampleTV.xcworkspace` (single entry; wraps `SampleTV.xcodeproj` and `Packages/*`), scheme `SampleTV`
   (targets: `SampleTV`, `SampleTVTests`, `SampleTVUITests`).
 - Features live in **local Swift packages** under `Packages/` (created phase by phase).
 - Data comes from the TMDB v3 REST API. Video is a public sample HLS stream.
-- **Current state:** Phase 1 not started. The app is still the Xcode template (`Item`, SwiftData,
-  `NavigationSplitView`). Check [Docs/PROJECT_STRUCTURE.md](Docs/PROJECT_STRUCTURE.md) for the live status
-  table before assuming anything exists.
+- **Current state:** Phases 1, 2, 3, and 3b (Stabilization) are complete and verified green. `SampleTVDomain` and `SampleTVAPI` packages build, pass unit tests, and are linked to the `SampleTV` app target in `SampleTV.xcworkspace`. Next up is **Phase 4: Movie discovery (`SampleTVUI`, `SampleTVDiscovery`)**. See [Docs/PROJECT_STRUCTURE.md](Docs/PROJECT_STRUCTURE.md).
 
 ## Commands
 
@@ -24,8 +22,8 @@ UDID=$(xcrun simctl list devices available -j \
 
 | Task | Command |
 |------|---------|
-| Build app | `xcodebuild build -scheme SampleTV -destination "id=$UDID"` |
-| Test app | `xcodebuild test -scheme SampleTV -destination "id=$UDID" -skip-testing:SampleTVUITests` |
+| Build app | `xcodebuild build -workspace SampleTV.xcworkspace -scheme SampleTV -destination "id=$UDID"` |
+| Test app | `xcodebuild test -workspace SampleTV.xcworkspace -scheme SampleTV -destination "id=$UDID" -skip-testing:SampleTVUITests` |
 | Test one package | `cd Packages/SampleTVDomain && xcodebuild test -scheme SampleTVDomain -destination "id=$UDID"` |
 | Lint | `swiftlint lint` (CI fails on errors; fix warnings you introduce) |
 | Coverage | add `-enableCodeCoverage YES -resultBundlePath build/X.xcresult`, then `xcrun xccov view --report --only-targets build/X.xcresult` |
@@ -82,11 +80,15 @@ through `xcodebuild` with a tvOS simulator destination.
 
 Do **not** mark a phase complete, merge, tag, or push unless the user asked for it.
 
-## Xcode project caveats
+## Xcode project and workspace caveats
 
-- Adding a local package to the app target, changing build settings (Swift language mode, base
-  configuration) and adding Info.plist keys are easiest in the Xcode UI. If you edit the project file
-  directly, inspect `SampleTV.xcodeproj` first, make the smallest possible change, and re-run a build.
+- **Never hand-edit `project.pbxproj`.** Link a local package to the app target with
+  `ruby Scripts/link_package.rb <PackageName>` (idempotent, uses the `xcodeproj` gem). Build settings and
+  Info.plist keys not covered by a script are a human task: stop and report instead of editing the file.
+- **Local package registration in workspace:** `SampleTV.xcworkspace` wraps `SampleTV.xcodeproj`, `Packages/`,
+  `Config/`, `Docs/`, `Scripts/`, and root documentation. When creating a new package under `Packages/`,
+  add a `<FileRef location="group:<PackageName>">` entry inside `<Group location="container:Packages" name="Packages">`
+  in `SampleTV.xcworkspace/contents.xcworkspacedata`, then link it to the app target with `ruby Scripts/link_package.rb <PackageName>`.
 - New source files placed inside the `SampleTV/` folder are picked up automatically only if the target uses
   folder-based membership. Verify with a build after adding files.
 

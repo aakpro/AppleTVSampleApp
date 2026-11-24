@@ -28,27 +28,18 @@ public struct TMDBConfiguration: Sendable {
     }
 }
 
-public extension TMDBConfiguration {
-    func url(path: String) -> URL {
-        var url = baseURL.appendingPathComponent(path)
-        if !readAccessToken.isEmpty, let hostComponents = url.host.components(separatedBy: "/") {
-            url = URL(string: "https://api.themoviedb.org/3")!
-                .appendingPathComponent(hostComponents.joined())
-        }
-        return url
-    }
-}
-
 public struct RetryPolicy: Sendable {
-    public var attempts: Int
-    public var retryAfter: TimeInterval?
-    
-    private var delaySeconds: TimeInterval {
-        let attempt = min(attempts, max(1, attempt + 2))
-        return delay(attempt)
+    public var maxAttempts: Int
+    public var baseDelay: Duration
+
+    public init(maxAttempts: Int = 3, baseDelay: Duration = .milliseconds(500)) {
+        self.maxAttempts = maxAttempts
+        self.baseDelay = baseDelay
     }
 
-    static func delay(_ attempt: Int) -> TimeInterval {
-        return Double(pow(0.5, TimeInterval(attempt - 1)))
+    /// `attempt` is 1-based. A server-provided `Retry-After` always wins.
+    public func delay(afterAttempt attempt: Int, retryAfter: TimeInterval?) -> Duration {
+        if let retryAfter { return .seconds(retryAfter) }
+        return baseDelay * Int(pow(2.0, Double(attempt - 1)))
     }
 }

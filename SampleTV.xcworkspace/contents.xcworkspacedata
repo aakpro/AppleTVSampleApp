@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Workspace
+   version = "1.0">
+   <FileRef
+      location = "container:SampleTV.xcodeproj">
+   </FileRef>
+   <Group
+      location = "container:Packages"
+      name = "Packages">
+      <FileRef
+         location = "group:SampleTVDomain">
+      </FileRef>
+      <FileRef
+         location = "group:SampleTVAPI">
+      </FileRef>
+   </Group>
+   <FileRef
+      location = "container:Config">
+   </FileRef>
+   <FileRef
+      location = "container:Docs">
+   </FileRef>
+   <FileRef
+      location = "container:Scripts">
+   </FileRef>
+   <FileRef
+      location = "container:README.md">
+   </FileRef>
+   <FileRef
+      location = "container:AGENTS.md">
+   </FileRef>
+   <FileRef
+      location = "container:CHANGELOG.md">
+   </FileRef>
+   <FileRef
+      location = "container:PHASE_SUMMARY.md">
+   </FileRef>
+   <FileRef
+      location = "container:.swiftlint.yml">
+   </FileRef>
+</Workspace>

@@ -6,6 +6,11 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		0A594D9B2450380180D6719D /* SampleTVDomain in Frameworks */ = {isa = PBXBuildFile; productRef = 747D7AD06339B245FE9EA39E /* SampleTVDomain */; };
+		739BBC91B2A48B69F667FE2F /* SampleTVAPI in Frameworks */ = {isa = PBXBuildFile; productRef = 3A7F50880FD30128FA33109D /* SampleTVAPI */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		423F36F6565CBDC333CDF12C /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -32,21 +37,29 @@
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		0B6F1D255F83935B8738C4EC /* SampleTVUITests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+			);
 			path = SampleTVUITests;
 			sourceTree = "<group>";
 		};
 		179AD818B125AB719681F381 /* SampleTVTests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+			);
 			path = SampleTVTests;
 			sourceTree = "<group>";
 		};
 		246CFD95586E97823AD8C113 /* Config */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+			);
 			path = Config;
 			sourceTree = "<group>";
 		};
 		31345B7B42A80EF4CAF66FA2 /* SampleTV */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+			);
 			path = SampleTV;
 			sourceTree = "<group>";
 		};
@@ -56,6 +69,8 @@
 		27E8169950616CDAB9AAD742 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			files = (
+				0A594D9B2450380180D6719D /* SampleTVDomain in Frameworks */,
+				739BBC91B2A48B69F667FE2F /* SampleTVAPI in Frameworks */,
 			);
 		};
 		DC34C32D6DEA5E771B3E9508 /* Frameworks */ = {
@@ -105,10 +120,16 @@
 			);
 			buildRules = (
 			);
+			dependencies = (
+			);
 			fileSystemSynchronizedGroups = (
 				31345B7B42A80EF4CAF66FA2 /* SampleTV */,
 			);
 			name = SampleTV;
+			packageProductDependencies = (
+				747D7AD06339B245FE9EA39E /* SampleTVDomain */,
+				3A7F50880FD30128FA33109D /* SampleTVAPI */,
+			);
 			productName = SampleTV;
 			productReference = A25B4F7E30B4AF6B0037624F /* SampleTV.app */;
 			productType = "com.apple.product-type.application";
@@ -182,6 +203,10 @@
 			);
 			mainGroup = A632399E075B7BDE0A3032DC;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				E9312D3FB12E516AF4EE4F92 /* XCLocalSwiftPackageReference "SampleTVDomain" */,
+				6AC7F580E9C769B930835440 /* XCLocalSwiftPackageReference "SampleTVAPI" */,
+			);
 			preferredProjectObjectVersion = 110;
 			productRefGroup = ECD8776C73450FC18EEB95B3 /* Products */;
 			projectDirPath = "";
@@ -244,7 +269,7 @@
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
-		55C284EA398B9D30D7BFC6FF /* Debug configuration for PBXNativeTarget "SampleTVUITests" */ = {
+		55C284EA398B9D30D7BFC6FF /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
@@ -263,7 +288,7 @@
 			};
 			name = Debug;
 		};
-		69869B4D0A75985A485AFCA5 /* Release configuration for PBXNativeTarget "SampleTVTests" */ = {
+		69869B4D0A75985A485AFCA5 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
@@ -284,7 +309,7 @@
 			};
 			name = Release;
 		};
-		723F9D19D6ED2ED201224302 /* Debug configuration for PBXNativeTarget "SampleTV" */ = {
+		723F9D19D6ED2ED201224302 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = "App Icon & Top Shelf Image";
@@ -314,7 +339,7 @@
 			};
 			name = Debug;
 		};
-		8D4FDDF32CC741BFE3CAE46E /* Debug configuration for PBXProject "SampleTV" */ = {
+		8D4FDDF32CC741BFE3CAE46E /* Debug */ = {
 			isa = XCBuildConfiguration;
 			baseConfigurationReferenceAnchor = 246CFD95586E97823AD8C113 /* Config */;
 			baseConfigurationReferenceRelativePath = Shared.xcconfig;
@@ -379,7 +404,7 @@
 			};
 			name = Debug;
 		};
-		962A1D8B8C63B1836AA87E14 /* Release configuration for PBXNativeTarget "SampleTVUITests" */ = {
+		962A1D8B8C63B1836AA87E14 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
@@ -398,7 +423,7 @@
 			};
 			name = Release;
 		};
-		C606F7F3E7F11C713A9E0490 /* Debug configuration for PBXNativeTarget "SampleTVTests" */ = {
+		C606F7F3E7F11C713A9E0490 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
@@ -419,7 +444,7 @@
 			};
 			name = Debug;
 		};
-		CF0A203873DFE67563E6314E /* Release configuration for PBXProject "SampleTV" */ = {
+		CF0A203873DFE67563E6314E /* Release */ = {
 			isa = XCBuildConfiguration;
 			baseConfigurationReferenceAnchor = 246CFD95586E97823AD8C113 /* Config */;
 			baseConfigurationReferenceRelativePath = Shared.xcconfig;
@@ -477,7 +502,7 @@
 			};
 			name = Release;
 		};
-		D776181F4B4890E18F33C1B9 /* Release configuration for PBXNativeTarget "SampleTV" */ = {
+		D776181F4B4890E18F33C1B9 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = "App Icon & Top Shelf Image";
@@ -513,61 +538,58 @@
 		33B5E75EF9547E2896720FD1 /* Build configuration list for PBXNativeTarget "SampleTVUITests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				55C284EA398B9D30D7BFC6FF /* Debug configuration for PBXNativeTarget "SampleTVUITests" */,
-				962A1D8B8C63B1836AA87E14 /* Release configuration for PBXNativeTarget "SampleTVUITests" */,
+				55C284EA398B9D30D7BFC6FF /* Debug */,
+				962A1D8B8C63B1836AA87E14 /* Release */,
 			);
 			defaultConfigurationName = Release;
 		};
 		5F73C25091926A6B6E6BA478 /* Build configuration list for PBXNativeTarget "SampleTVTests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				C606F7F3E7F11C713A9E0490 /* Debug configuration for PBXNativeTarget "SampleTVTests" */,
-				69869B4D0A75985A485AFCA5 /* Release configuration for PBXNativeTarget "SampleTVTests" */,
+				C606F7F3E7F11C713A9E0490 /* Debug */,
+				69869B4D0A75985A485AFCA5 /* Release */,
 			);
 			defaultConfigurationName = Release;
 		};
 		75FD6BBD69E8542BFFDDADC2 /* Build configuration list for PBXNativeTarget "SampleTV" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				723F9D19D6ED2ED201224302 /* Debug configuration for PBXNativeTarget "SampleTV" */,
-				D776181F4B4890E18F33C1B9 /* Release configuration for PBXNativeTarget "SampleTV" */,
+				723F9D19D6ED2ED201224302 /* Debug */,
+				D776181F4B4890E18F33C1B9 /* Release */,
 			);
 			defaultConfigurationName = Release;
 		};
 		A4FAD08308ACCD4B9E88C190 /* Build configuration list for PBXProject "SampleTV" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				8D4FDDF32CC741BFE3CAE46E /* Debug configuration for PBXProject "SampleTV" */,
-				CF0A203873DFE67563E6314E /* Release configuration for PBXProject "SampleTV" */,
+				8D4FDDF32CC741BFE3CAE46E /* Debug */,
+				CF0A203873DFE67563E6314E /* Release */,
 			);
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		6AC7F580E9C769B930835440 /* XCLocalSwiftPackageReference "SampleTVAPI" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Packages/SampleTVAPI;
+		};
+		E9312D3FB12E516AF4EE4F92 /* XCLocalSwiftPackageReference "SampleTVDomain" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Packages/SampleTVDomain;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		3A7F50880FD30128FA33109D /* SampleTVAPI */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = SampleTVAPI;
+		};
+		747D7AD06339B245FE9EA39E /* SampleTVDomain */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = SampleTVDomain;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
-        32B1C8A20786F0E7F215F5E9 /* Package.swift */ = {
-                isa = PBXFileReference;
-                explicitFileType = "swift.package";
-                includeInIndex = 0;
-                path = Packages/SampleTVDomain-Swift.swift-package/Package.swift;
-                sourceTree = "LOCAL";
-        };
-
-        315B8D9F267194CDA136F3A0 /* SampleTVDomain-swift-package */ = {
-                isa = PBXGroup;
-                children = (
-                        32B1C8A20786F0E7F215F5E9 /* Package.swift */,
-                );
-                path = SampleTVDomain-Swift.swift-package;
-                sourceTree = "LOCAL";
-        };
-
-	E2B2C8A3FAB18EBCB996E7A4 /* Frameworks */ = {
-		isa = PBXFrameworksBuildPhase;
-		files = (
-			32B1C8A20786F0E7F215F5E9 /* Package.swift */,
-		);
-	};
-
 	rootObject = 29413D03C5A17531971334A7 /* Project object */;
-	validationLevel = 1;
 }

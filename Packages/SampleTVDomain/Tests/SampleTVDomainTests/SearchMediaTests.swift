@@ -3,15 +3,26 @@ import Testing
 
 private final class SpyRepository: MediaRepository, @unchecked Sendable {
     private(set) var searchCalls = 0
+    private(set) var discoverCalls = 0
+    private(set) var lastFilter: MediaFilter?
+    private(set) var lastPage: Int?
 
-    func discover(_ filter: MediaFilter, page: Int) async throws -> ResultPage<MediaItem> { .empty }
+    func discover(_ filter: MediaFilter, page: Int) async throws -> ResultPage<MediaItem> {
+        discoverCalls += 1
+        lastFilter = filter
+        lastPage = page
+        return .empty
+    }
+
     func search(_ query: SearchQuery, page: Int) async throws -> ResultPage<MediaItem> {
         searchCalls += 1
         return .empty
     }
+
     func details(of id: MediaID) async throws -> MediaDetails {
-        return MediaDetails(item: MediaItem(id: id, title: "x"))
+        MediaDetails(item: MediaItem(id: id, title: "x"))
     }
+
     func genres(for kind: MediaKind) async throws -> [Genre] { [] }
 }
 
@@ -49,26 +60,33 @@ struct SearchMediaTests {
     @Test func invalidPageClampsToMin() async throws {
         let repository = SpyRepository()
         _ = try await SearchMedia(repository: repository)("dark", kind: .tv, page: -5)
-        // Should clamp to min page and still make the search call once
         #expect(repository.searchCalls == 1)
-    }
-
-    @Test func pageIsClampedToMinimumOne() async throws {
-        let repository = SpyRepository()
-        _ = try await DiscoverMedia(repository: repository)(.movie, genreIDs: [])("dark", page: -10)
-        #expect(repository.searchCalls == 1)
-    }
-
-    @Test func invalidPageIsNeverPassedThroughToRepo() async throws {
-        let repository = SpyRepository()
-        let page = try await DiscoverMedia(repository: repository)(.movie, genreIDs: [])("dark", page: -5)
-        // Invalid pages are clamped internally; should not touch the repo for invalid pages
-        #expect(repository.searchCalls == 0)
     }
 
     @Test func emptyTextMakesEmptyResultImmediately() async throws {
         let repository = SpyRepository()
         _ = try await SearchMedia(repository: repository)(" ")
         #expect(repository.searchCalls == 0)
+    }
+
+    @Test func discoverPageIsClampedToMinimumOne() async throws {
+        let repository = SpyRepository()
+        _ = try await DiscoverMedia(repository: repository)(MediaFilter(kind: .movie), page: -10)
+        #expect(repository.discoverCalls == 1)
+        #expect(repository.lastPage == 1)
+    }
+
+    @Test func resultPageHasNextPageWorks() {
+        let pageWithMore = ResultPage(items: [1], page: 1, totalPages: 5)
+        #expect(pageWithMore.hasNextPage)
+
+        let lastPage = ResultPage(items: [1], page: 5, totalPages: 5)
+        #expect(!lastPage.hasNextPage)
+    }
+
+    @Test func getMediaDetailsDelegatesToRepository() async throws {
+        let repository = SpyRepository()
+        let details = try await GetMediaDetails(repository: repository)(MediaID(kind: .movie, value: 42))
+        #expect(details.item.id == MediaID(kind: .movie, value: 42))
     }
 }

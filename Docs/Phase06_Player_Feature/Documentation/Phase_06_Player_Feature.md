@@ -43,7 +43,7 @@ SampleTV/SampleTVApp.swift             unchanged from Phase 1
 
 ## Steps
 
-1. Branch; create `SampleTVPlayer`; add it with **Add Local…**; link it to the app target.
+1. Branch; create `SampleTVPlayer`; link it with `ruby Scripts/link_package.rb SampleTVPlayer`. Never hand-edit `project.pbxproj`.
 2. Add `PlayerView.swift`.
 3. Replace `AppContainer` and `RootView` with the final versions below (they include everything from Phases 3-5).
 4. Test on the simulator: open a title, press Play, the stream starts; press Menu to return.
@@ -198,17 +198,16 @@ struct RootView: View {
 
     private var tabs: some View {
         TabView {
-            Tab("Discover", systemImage: "square.grid.2x2") {
-                NavigationStack {
-                    DiscoveryView(viewModel: container.makeDiscoveryViewModel()) { selection = $0 }
-                        .navigationTitle("Discover")
-                }
+            NavigationStack {
+                DiscoveryView(viewModel: container.makeDiscoveryViewModel()) { selection = $0 }
+                    .navigationTitle("Discover")
             }
-            Tab("Search", systemImage: "magnifyingglass", role: .search) {
-                NavigationStack {
-                    SearchView(viewModel: container.makeSearchViewModel()) { selection = $0 }
-                }
+            .tabItem { Label("Discover", systemImage: "square.grid.2x2") }
+
+            NavigationStack {
+                SearchView(viewModel: container.makeSearchViewModel()) { selection = $0 }
             }
+            .tabItem { Label("Search", systemImage: "magnifyingglass") }
         }
         .fullScreenCover(item: $selection) { item in
             DetailsScreen(container: container, item: item)
@@ -231,7 +230,7 @@ private struct DetailsScreen: View {
 }
 ```
 
-These two files, together with `PlayerView`, the Domain, API, UI, Discovery and Search packages, were built
+The tab bar uses `.tabItem` because the `Tab` type needs tvOS 18 and the app deploys to tvOS 17. These two files, together with `PlayerView`, the Domain, API, UI, Discovery and Search packages, were built
 together in Swift 6 mode against the tvOS simulator SDK. `AppConfiguration` and `SampleTVApp` are unchanged from Phase 1.
 
 ## Tests
@@ -246,7 +245,7 @@ together in Swift 6 mode against the tvOS simulator SDK. `AppConfiguration` and 
 
 ```bash
 cd Packages/SampleTVPlayer && xcodebuild build -scheme SampleTVPlayer -destination "id=$UDID"
-cd ../.. && xcodebuild test -scheme SampleTV -destination "id=$UDID"
+cd ../.. && xcodebuild test -workspace SampleTV.xcworkspace -scheme SampleTV -destination "id=$UDID"
 swiftlint lint --quiet | grep -c "error:"              # 0
 curl -sI "https://devstreaming-cdn.apple.com/videos/streaming/examples/img_bipbop_adv_example_fmp4/master.m3u8" | head -1
 ```
