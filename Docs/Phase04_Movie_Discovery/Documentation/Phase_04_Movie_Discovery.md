@@ -44,17 +44,18 @@ Packages/SampleTVDiscovery/
 
 ## Steps
 
-1. Branch; create both packages; add them with **Add Local…**; link `SampleTVDiscovery` to the app target
-   (`SampleTVUI` comes along transitively).
+1. Branch (after [Phase 3b](../../Phase03_API_Layer/Documentation/Phase_03b_Stabilization.md) is done); create both packages;
+   link `SampleTVDiscovery` to the app target with `ruby Scripts/link_package.rb SampleTVDiscovery`
+   (`SampleTVUI` comes along transitively). Never hand-edit `project.pbxproj`.
 2. Add the code and tests below.
 3. Extend `AppContainer` with `makeDiscoveryViewModel()` and `makeDetailsViewModel(for:)` (the final container is in
    [Phase 6](../../Phase06_Player_Feature/Documentation/Phase_06_Player_Feature.md)).
 4. In `RootView`, show `DiscoveryView` inside a `NavigationStack`. Set a `@State var selection: MediaItem?` from
    `onSelect` and present `DetailsView` with `.fullScreenCover(item: $selection)`. On tvOS the Menu button dismisses it.
    Leave the Play button inert until Phase 6.
-5. **TMDB attribution.** Show "This product uses the TMDB API but is not endorsed or certified by TMDB." with the
-   TMDB logo (download it from TMDB's brand assets page) in the details footer or an About screen. This is a
-   requirement of TMDB's terms.
+5. **TMDB attribution.** Show "This product uses the TMDB API but is not endorsed or certified by TMDB." as text in the
+   details footer or an About screen. This is a requirement of TMDB's terms. (The TMDB logo is a manual follow-up: it
+   must be downloaded from TMDB's brand assets page and added by a human.)
 6. Optional stretch: a genre row using `repository.genres(for:)` that mutates `viewModel.filter.genreIDs`.
 
 ## Code
@@ -496,7 +497,7 @@ repositories in a test-only/`#if DEBUG` location in the app target so production
 for p in SampleTVUI SampleTVDiscovery; do
   (cd Packages/$p && xcodebuild test -scheme $p -destination "id=$UDID" -enableCodeCoverage YES)
 done
-xcodebuild test -scheme SampleTV -destination "id=$UDID"        # includes the UI test
+xcodebuild test -workspace SampleTV.xcworkspace -scheme SampleTV -destination "id=$UDID"   # includes the UI test
 swiftlint lint --quiet | grep -c "error:"                       # 0
 ```
 
@@ -508,7 +509,7 @@ page 2, airplane-mode shows "You're Offline" with Try Again, a bad token shows t
 - [ ] Discovery grid and details screen work against live TMDB data and against a stub (previews/UI test).
 - [ ] Errors are shown for offline, unauthorized and server failures; retry works where it makes sense.
 - [ ] No feature package imports `SampleTVAPI` or another feature package (lint rules green).
-- [ ] TMDB attribution is visible in the app.
+- [ ] TMDB attribution text is visible in the app.
 - [ ] Package tests pass; coverage ≥ 85% for view models; CI green; docs and changelog updated.
 
 ## Next

@@ -9,27 +9,41 @@ phase PR; it is the source of truth that [AGENTS.md](../AGENTS.md) points agents
 |-------|-------|--------|--------|
 | Planning | README, AGENTS, Docs, verified templates | ✅ Merged | `main` |
 | 1 | Foundation: Swift 6, CI, DI skeleton | ✅ Merged | `main` (v0.1.0) |
-| 2 | Domain layer (`SampleTVDomain`) | 🚧 In Progress | `feature/phase_02_domain_layer` |
-| 3 | API layer (`SampleTVAPI`) | ⏳ Not started | - |
-| 4 | Movie discovery (`SampleTVUI`, `SampleTVDiscovery`) | ⏳ Not started | - |
+| 2 | Domain layer (`SampleTVDomain`) | ✅ Complete & Verified | `main` / `feature/add-workspace` |
+| 3 | API layer (`SampleTVAPI`) | ✅ Complete & Verified | `main` / `feature/add-workspace` |
+| 3b | [Stabilization](Phase03_API_Layer/Documentation/Phase_03b_Stabilization.md): fix 2/3, link packages to the app | ✅ Complete & Verified | `feature/add-workspace` |
+| 4 | [Movie discovery](Phase04_Movie_Discovery/Documentation/Phase_04_Movie_Discovery.md) (`SampleTVUI`, `SampleTVDiscovery`) | ⏳ Next up | `feature/phase_04_movie_discovery` |
 | 5 | Search (`SampleTVSearch`) | ⏳ Not started | - |
 | 6 | Player (`SampleTVPlayer`) | ⏳ Not started | - |
 
-Statuses: ⏳ not started · 🚧 in progress (branch name) · ✅ merged (version tag).
+Statuses: ⏳ not started · 🚧 in progress (branch name) · ✅ complete / merged (version tag).
 
 ## Today
 
+**Open `SampleTV.xcworkspace`, not `SampleTV.xcodeproj`.** The workspace is the single entry point; packages linked to
+the app target through `Scripts/link_package.rb` appear in Xcode as local packages with their schemes and tests.
+
 ```
 .
-├── README.md
-├── AGENTS.md
-├── CHANGELOG.md
+├── SampleTV.xcworkspace/        single entry point (open this)
 ├── SampleTV.xcodeproj/          tvOS app project, scheme "SampleTV"
-├── SampleTV/                    Xcode template: SampleTVApp.swift, ContentView.swift, Item.swift, Assets.xcassets
-├── SampleTVTests/               template unit test target
-├── SampleTVUITests/             template UI test target
-└── Docs/                        everything described here
+├── SampleTV/                    app target = composition root (SampleTVApp, AppConfiguration, AppContainer, RootView)
+├── SampleTVTests/               unit tests (Swift Testing)
+├── SampleTVUITests/             UI tests (XCTest)
+├── Packages/
+│   ├── SampleTVDomain/          Phase 2 (verified, 22 tests passing)
+│   └── SampleTVAPI/             Phase 3 (verified, 5 tests passing)
+├── Scripts/                     link_package.rb (adds a local package to the app target)
+├── Config/                      Shared.xcconfig, Secrets.xcconfig(.example), Info.plist
+├── Docs/                        architecture, API spec, phase guides, templates
+├── .github/  .swiftlint.yml  .gitignore
+└── README.md  AGENTS.md  CHANGELOG.md  PHASE_SUMMARY.md
 ```
+
+**Adding a package (each phase):**
+1. Create the package folder under `Packages/<Name>/`.
+2. Add `<FileRef location="group:<Name>">` to the `Packages` group in `SampleTV.xcworkspace/contents.xcworkspacedata`.
+3. Run `ruby Scripts/link_package.rb <Name>` to link the package product to the app target. Never hand-edit `project.pbxproj`.
 
 ## Target (after Phase 6)
 
@@ -45,6 +59,8 @@ Statuses: ⏳ not started · 🚧 in progress (branch name) · ✅ merged (versi
 │   ├── Shared.xcconfig              base configuration for the app target
 │   ├── Secrets.xcconfig.example     committed placeholder
 │   └── Secrets.xcconfig             git-ignored; holds TMDB_READ_ACCESS_TOKEN
+├── SampleTV.xcworkspace/            single entry point (open this)
+├── Scripts/link_package.rb          links a local package to the app target
 ├── SampleTV.xcodeproj/
 ├── SampleTV/                        app target = composition root
 │   ├── SampleTVApp.swift  AppConfiguration.swift  AppContainer.swift  RootView.swift
@@ -84,6 +100,8 @@ Enforced by `Package.swift` plus the custom rules in `.swiftlint.yml`.
 | `Docs/ARCHITECTURE.md` | Layers, modules, DI, concurrency, testing |
 | `Docs/API_SPECS.md` | TMDB endpoint/error/caching contract |
 | `Docs/PROJECT_STRUCTURE.md` | This file |
+| `Docs/Phase03_API_Layer/Documentation/Phase_03b_Stabilization.md` | Repairs Phases 2-3 and links packages; do before Phase 4 |
+| `Docs/QWEN_PROMPT.md` | Prompt for running the remaining phases with a local coding model |
 | `Docs/RELEASE_PROCESS.md` | Branching, CI gates, versioning |
 | `Docs/PR_TEMPLATE.md` | PR template, review checklist, rejection reasons |
 | `Docs/Phase01_Foundation/Documentation/Phase_01_Foundation.md` | Phase 1 guide |

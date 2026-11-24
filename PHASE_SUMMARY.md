@@ -1,11 +1,14 @@
 # SampleTV Implementation Summary
 
+> **Status (2026-11-24):** Phases 1, 2, 3, and 3b (Stabilization) are complete and fully verified. `SampleTVDomain` (22/22 unit tests passing) and `SampleTVAPI` (5/5 unit tests passing) are cleanly linked to the `SampleTV` app target. `SampleTV.xcworkspace` builds and executes tests with 100% pass rate. Next phase is **Phase 4: Movie discovery**.
+
 ## Overview
-Three phases of the Clean Architecture implementation have been completed:
+Phases 1-3b of the Clean Architecture implementation have been completed:
 
 1. **Phase 1: Foundation** - Template removal, Swift 6, CI skeleton ✅
-2. **Phase 2: Domain Layer** - Entities, Query types, Repository protocol ✅  
-3. **Phase 3: TMDB API Client** - HTTP transport, DTOs, client implementation ✅
+2. **Phase 2: Domain Layer** - Entities, Query types, Repository protocol, Use cases ✅
+3. **Phase 3: TMDB API Client** - HTTP transport, DTOs, client implementation, retry policy ✅
+4. **Phase 3b: Stabilization** - Fixed test and client compilation, linked packages, workspace build & test verification ✅
 
 ---
 

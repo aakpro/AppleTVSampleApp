@@ -26,7 +26,7 @@ struct MediaFilterTests {
 
     @Test func emptyGenreSetAcceptsAnyItemOfSameKind() {
         let filter = MediaFilter(kind: .movie)
-        #expect(filter.matches(item(kind: .movie, genreIDs: [100])))
+        #expect(filter.matches(item(kind: .movie, genres: [100])))
     }
 
     @Test func nonEmptyGenreSetRequiresMatchingGenre() {
@@ -55,10 +55,10 @@ struct MediaFilterTests {
 
     @Test func missingRatingIsRejectedWhenMinimumIsSet() {
         let filter = MediaFilter(minimumRating: 8.0)
-        #expect(!filter.matches(item(rating: nil, genreIDs: [])))
+        #expect(!filter.matches(item(genres: [], rating: nil)))
     }
 
-    @Test func yearRangeIsClosed(bothBoundsInclusive) {
+    @Test func yearRangeIsClosedOnBothBounds() {
         let filter = MediaFilter(years: 2010...2025)
         #expect(filter.matches(item(year: 2010, genres: [])))
         #expect(filter.matches(item(year: 2025, genres: [])))
@@ -66,18 +66,18 @@ struct MediaFilterTests {
 
     @Test func minimumRatingIsInclusive() {
         let filter = MediaFilter(minimumRating: 8.5)
-        #expect(filter.matches(item(rating: 8.5, genreIDs: [])))
+        #expect(filter.matches(item(genres: [], rating: 8.5)))
     }
 
     @Test func mismatchedKindRejectsEvenWithValidOtherCriteria() {
         let filter = MediaFilter(genreIDs: [35])
-        #expect(!filter.matches(item(genres: [35], kind: .movie)))
+        #expect(!filter.matches(item(kind: .movie, genres: [35])))
     }
 
     @Test func multipleConditionsWorkTogether() {
         let filter = MediaFilter(
             genreIDs: [18, 35], years: 2015...2020, minimumRating: 7.5
         )
-        #expect(filter.matches(item(year: 2018, rating: 7.5, genres: [35])))
+        #expect(filter.matches(item(year: 2018, genres: [35], rating: 7.5)))
     }
 }

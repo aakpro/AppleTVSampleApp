@@ -21,7 +21,7 @@ supports search and filtering, and plays a sample HLS stream with the system pla
 
 ```bash
 git clone git@github.com:aakpro/AppleTVSampleApp.git && cd AppleTVSampleApp
-open SampleTV.xcodeproj           # scheme: SampleTV, run on any Apple TV simulator
+open SampleTV.xcworkspace          # single entry: app + packages + docs; scheme: SampleTV, run on any Apple TV simulator
 ```
 
 TMDB token (available once Phase 1 has landed the `Config/` folder):
@@ -36,7 +36,7 @@ Build and test from the command line:
 UDID=$(xcrun simctl list devices available -j \
   | jq -r '[.devices[][] | select(.name | startswith("Apple TV"))][0].udid')
 
-xcodebuild test -scheme SampleTV -destination "id=$UDID" -skip-testing:SampleTVUITests
+xcodebuild test -workspace SampleTV.xcworkspace -scheme SampleTV -destination "id=$UDID" -skip-testing:SampleTVUITests
 swiftlint lint
 ```
 
