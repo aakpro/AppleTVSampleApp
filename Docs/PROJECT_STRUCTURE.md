@@ -12,7 +12,7 @@ phase PR; it is the source of truth that [AGENTS.md](../AGENTS.md) points agents
 | 2 | Domain layer (`SampleTVDomain`) | ✅ Complete & Verified | `main` / `feature/add-workspace` |
 | 3 | API layer (`SampleTVAPI`) | ✅ Complete & Verified | `main` / `feature/add-workspace` |
 | 3b | [Stabilization](Phase03_API_Layer/Documentation/Phase_03b_Stabilization.md): fix 2/3, link packages to the app | ✅ Complete & Verified | `feature/add-workspace` |
-| 4 | [Movie discovery](Phase04_Movie_Discovery/Documentation/Phase_04_Movie_Discovery.md) (`SampleTVUI`, `SampleTVDiscovery`) | ⏳ Next up | `feature/phase_04_movie_discovery` |
+| 4 | [Movie discovery](Phase04_Movie_Discovery/Documentation/Phase_04_Movie_Discovery.md) (`SampleTVUI`, `SampleTVDiscovery`) | ✅ Complete & Verified | `feature/phase_04_movie_discovery` |
 | 5 | Search (`SampleTVSearch`) | ⏳ Not started | - |
 | 6 | Player (`SampleTVPlayer`) | ⏳ Not started | - |
 
