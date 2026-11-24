@@ -6,7 +6,6 @@ import SwiftUI
 struct RootView: View {
     let container: AppContainer
     @State private var selection: MediaItem?
-    @State private var searchSelection: MediaItem?
 
     var body: some View {
         if container.configuration.hasToken {
@@ -20,7 +19,7 @@ struct RootView: View {
                 }
                 
                 NavigationStack {
-                    SearchView(viewModel: container.makeSearchViewModel()) { searchSelection = $0 }
+                    SearchView(viewModel: container.makeSearchViewModel()) { selection = $0 }
                         .navigationTitle("Search")
                 }
                 .tabItem {
@@ -28,11 +27,6 @@ struct RootView: View {
                 }
             }
             .fullScreenCover(item: $selection) { item in
-                DetailsView(viewModel: container.makeDetailsViewModel(for: item)) { _ in
-                    // Play action wired in Phase 6
-                }
-            }
-            .fullScreenCover(item: $searchSelection) { item in
                 DetailsView(viewModel: container.makeDetailsViewModel(for: item)) { _ in
                     // Play action wired in Phase 6
                 }

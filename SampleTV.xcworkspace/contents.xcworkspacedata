@@ -19,6 +19,9 @@
       <FileRef
          location = "group:SampleTVDiscovery">
       </FileRef>
+      <FileRef
+         location = "group:SampleTVSearch">
+      </FileRef>
    </Group>
    <FileRef
       location = "container:Config">
