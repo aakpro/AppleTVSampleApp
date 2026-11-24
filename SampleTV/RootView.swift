@@ -1,4 +1,5 @@
 import SampleTVDiscovery
+import SampleTVSearch
 import SampleTVDomain
 import SwiftUI
 
@@ -8,9 +9,22 @@ struct RootView: View {
 
     var body: some View {
         if container.configuration.hasToken {
-            NavigationStack {
-                DiscoveryView(viewModel: container.makeDiscoveryViewModel()) { selection = $0 }
-                    .navigationTitle("Discover")
+            TabView {
+                NavigationStack {
+                    DiscoveryView(viewModel: container.makeDiscoveryViewModel()) { selection = $0 }
+                        .navigationTitle("Discover")
+                }
+                .tabItem {
+                    Label("Discover", systemImage: "tv")
+                }
+                
+                NavigationStack {
+                    SearchView(viewModel: container.makeSearchViewModel()) { selection = $0 }
+                        .navigationTitle("Search")
+                }
+                .tabItem {
+                    Label("Search", systemImage: "magnifyingglass")
+                }
             }
             .fullScreenCover(item: $selection) { item in
                 DetailsView(viewModel: container.makeDetailsViewModel(for: item)) { _ in
