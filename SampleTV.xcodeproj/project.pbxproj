@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		0A594D9B2450380180D6719D /* SampleTVDomain in Frameworks */ = {isa = PBXBuildFile; productRef = 747D7AD06339B245FE9EA39E /* SampleTVDomain */; };
 		1D366058445EAADA7BAC8838 /* SampleTVUI in Frameworks */ = {isa = PBXBuildFile; productRef = 6DD385B3952955F72B6BB84B /* SampleTVUI */; };
+		39CC026332FBC665BF0C5D47 /* SampleTVSearch in Frameworks */ = {isa = PBXBuildFile; productRef = A9496809659ECA0D08A762E3 /* SampleTVSearch */; };
 		739BBC91B2A48B69F667FE2F /* SampleTVAPI in Frameworks */ = {isa = PBXBuildFile; productRef = 3A7F50880FD30128FA33109D /* SampleTVAPI */; };
 		916919BD63AB86522061910D /* SampleTVDiscovery in Frameworks */ = {isa = PBXBuildFile; productRef = 76C012D9DB8DC8A51AACA714 /* SampleTVDiscovery */; };
 /* End PBXBuildFile section */
@@ -75,6 +76,7 @@
 				739BBC91B2A48B69F667FE2F /* SampleTVAPI in Frameworks */,
 				1D366058445EAADA7BAC8838 /* SampleTVUI in Frameworks */,
 				916919BD63AB86522061910D /* SampleTVDiscovery in Frameworks */,
+				39CC026332FBC665BF0C5D47 /* SampleTVSearch in Frameworks */,
 			);
 		};
 		DC34C32D6DEA5E771B3E9508 /* Frameworks */ = {
@@ -135,6 +137,7 @@
 				3A7F50880FD30128FA33109D /* SampleTVAPI */,
 				6DD385B3952955F72B6BB84B /* SampleTVUI */,
 				76C012D9DB8DC8A51AACA714 /* SampleTVDiscovery */,
+				A9496809659ECA0D08A762E3 /* SampleTVSearch */,
 			);
 			productName = SampleTV;
 			productReference = A25B4F7E30B4AF6B0037624F /* SampleTV.app */;
@@ -214,6 +217,7 @@
 				6AC7F580E9C769B930835440 /* XCLocalSwiftPackageReference "SampleTVAPI" */,
 				438741596C1F2B9D1BF6AFD4 /* XCLocalSwiftPackageReference "SampleTVUI" */,
 				1BF99D9A95D462AFBFAD659B /* XCLocalSwiftPackageReference "SampleTVDiscovery" */,
+				3C012D74E9F24E6E72C57044 /* XCLocalSwiftPackageReference "SampleTVSearch" */,
 			);
 			preferredProjectObjectVersion = 110;
 			productRefGroup = ECD8776C73450FC18EEB95B3 /* Products */;
@@ -582,6 +586,10 @@
 			isa = XCLocalSwiftPackageReference;
 			relativePath = Packages/SampleTVDiscovery;
 		};
+		3C012D74E9F24E6E72C57044 /* XCLocalSwiftPackageReference "SampleTVSearch" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Packages/SampleTVSearch;
+		};
 		438741596C1F2B9D1BF6AFD4 /* XCLocalSwiftPackageReference "SampleTVUI" */ = {
 			isa = XCLocalSwiftPackageReference;
 			relativePath = Packages/SampleTVUI;
@@ -612,6 +620,10 @@
 		76C012D9DB8DC8A51AACA714 /* SampleTVDiscovery */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = SampleTVDiscovery;
+		};
+		A9496809659ECA0D08A762E3 /* SampleTVSearch */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = SampleTVSearch;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

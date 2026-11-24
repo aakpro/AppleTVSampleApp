@@ -2,6 +2,7 @@
 import Foundation
 import SampleTVAPI
 import SampleTVDiscovery
+import SampleTVSearch
 import SampleTVDomain
 
 @MainActor
@@ -25,6 +26,10 @@ final class AppContainer {
 
     func makeDiscoveryViewModel() -> DiscoveryViewModel {
         DiscoveryViewModel(discover: DiscoverMedia(repository: repository))
+    }
+
+    func makeSearchViewModel() -> SearchViewModel {
+        SearchViewModel(search: SearchMedia(repository: repository))
     }
 
     func makeDetailsViewModel(for item: MediaItem) -> DetailsViewModel {
