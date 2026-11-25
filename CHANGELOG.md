@@ -12,6 +12,7 @@ All notable changes to this project are documented here. The format follows
 - Phase 8: Authentication (`SampleTVAuth`) - mock login UI, session management, and authentication state persistence.
 - Phase 9: Profile (`SampleTVProfile`) - profile switcher, user preferences, and My List.
 - Phase 10: Categories (`SampleTVDiscovery`) - genre shelves on Discover, a dedicated Categories tab, progress overlay on `MediaCard`, and category/kind filter controls in `SampleTVSearch` 
+- Phase 11: Trailers & Playback (`SampleTVAPI`, `SampleTVDiscovery`, `SampleTVPlayer`) - TMDB `/videos` decoding, `PlaybackResourceResolver` mapping titles/genres to distinct public HLS/MP4 streams, **Play** / **Resume** / **Watch Trailer** CTAs, Recommendations on `DetailsView`, and player metadata.
 
 ## [0.1.0] - 2026-11-23
 

@@ -6,6 +6,8 @@ import SwiftUI
 /// audio/subtitle pickers and Siri Remote handling; don't rebuild them.
 public struct PlayerView: View {
     private let url: URL
+    private let title: String?
+    private let subtitle: String?
     private let initialPosition: TimeInterval?
     private let onProgress: (@MainActor @Sendable (TimeInterval, TimeInterval) -> Void)?
     @State private var player: AVPlayer
@@ -13,13 +15,18 @@ public struct PlayerView: View {
 
     public init(
         url: URL,
+        title: String? = nil,
+        subtitle: String? = nil,
         initialPosition: TimeInterval? = nil,
         onProgress: (@MainActor @Sendable (TimeInterval, TimeInterval) -> Void)? = nil
     ) {
         self.url = url
+        self.title = title
+        self.subtitle = subtitle
         self.initialPosition = initialPosition
         self.onProgress = onProgress
-        _player = State(initialValue: AVPlayer(url: url))
+        let player = AVPlayer(url: url)
+        _player = State(initialValue: player)
     }
 
     public var body: some View {

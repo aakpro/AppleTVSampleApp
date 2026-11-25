@@ -16,6 +16,7 @@ struct RootView: View {
     @State private var selection: MediaItem?
     @State private var authenticatedAccount: UserAccount?
     @State private var categoryDestination: CategoryDestination?
+    @State private var playingResource: PlayableResource?
 
     var body: some View {
         Group {
@@ -87,6 +88,9 @@ struct RootView: View {
         .fullScreenCover(item: $selection) { item in
             DetailsScreen(container: container, item: item)
         }
+        .fullScreenCover(item: $playingResource) { resource in
+            PlayerScreen(container: container, resource: resource)
+        }
     }
 }
 
@@ -94,19 +98,29 @@ struct RootView: View {
 private struct DetailsScreen: View {
     let container: AppContainer
     let item: MediaItem
-    @State private var playing: MediaItem?
+    @State private var playingResource: PlayableResource?
 
     var body: some View {
-        DetailsView(viewModel: container.makeDetailsViewModel(for: item)) { playing = $0 }
-            .fullScreenCover(item: $playing) { item in
-                PlayerScreen(container: container, item: item)
+        DetailsView(viewModel: container.makeDetailsViewModel(for: item)) { item in
+            Task {
+                // Get the playable resource for this item
+                if let resource = try? await container.makeDetailsViewModel(for: item).resolvePlayableResource(kind: .feature) {
+                    playingResource = resource
+                }
             }
+        } onSelectRecommendation: { recommendation in
+            // Navigate to the recommendation details
+            selection = recommendation
+        }
+        .fullScreenCover(item: $playingResource) { resource in
+            PlayerScreen(container: container, resource: resource)
+        }
     }
 }
 
 private struct PlayerScreen: View {
     let container: AppContainer
-    let item: MediaItem
+    let resource: PlayableResource
     @State private var initialPosition: TimeInterval?
     @State private var isReady = false
 
@@ -114,16 +128,21 @@ private struct PlayerScreen: View {
         Group {
             if isReady {
                 PlayerView(
-                    url: container.playbackURL(for: item),
+                    url: resource.url,
+                    title: resource.title,
+                    subtitle: resource.subtitle,
                     initialPosition: initialPosition
                 ) { position, duration in
-                    let progress = PlaybackProgress(
-                        mediaID: item.id,
-                        position: position,
-                        duration: duration
-                    )
-                    Task {
-                        try? await container.progressStore.saveProgress(progress)
+                    // Only save progress if trackProgress is true
+                    if resource.trackProgress {
+                        let progress = PlaybackProgress(
+                            mediaID: resource.id ?? MediaID(kind: .movie, value: 0), // We need to handle this better
+                            position: position,
+                            duration: duration
+                        )
+                        Task {
+                            try? await container.progressStore.saveProgress(progress)
+                        }
                     }
                 }
             } else {
@@ -131,9 +150,12 @@ private struct PlayerScreen: View {
             }
         }
         .task {
-            let saved = try? await container.progressStore.loadProgress(for: item.id)
-            if let saved, !saved.isWatched {
-                initialPosition = saved.position
+            // Only load saved progress if trackProgress is true
+            if resource.trackProgress {
+                let saved = try? await container.progressStore.loadProgress(for: resource.id ?? MediaID(kind: .movie, value: 0))
+                if let saved, !saved.isWatched {
+                    initialPosition = saved.position
+                }
             }
             isReady = true
         }

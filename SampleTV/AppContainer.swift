@@ -20,19 +20,22 @@ final class AppContainer {
     let progressStore: any PlaybackProgressStore
     let authRepository: any AuthRepository
     let profileRepository: any ProfileRepository
+    let resourceResolver: any PlaybackResourceResolver
 
     init(
         configuration: AppConfiguration,
         repository: any MediaRepository,
         progressStore: any PlaybackProgressStore,
         authRepository: any AuthRepository,
-        profileRepository: any ProfileRepository
+        profileRepository: any ProfileRepository,
+        resourceResolver: any PlaybackResourceResolver
     ) {
         self.configuration = configuration
         self.repository = repository
         self.progressStore = progressStore
         self.authRepository = authRepository
         self.profileRepository = profileRepository
+        self.resourceResolver = resourceResolver
     }
 
     static func live() -> AppContainer {
@@ -49,13 +52,15 @@ final class AppContainer {
         } catch {
             fatalError("Failed to initialize SwiftDataProfileRepository: \(error)")
         }
+        let resourceResolver = CatalogPlaybackResourceResolver()
 
         return AppContainer(
             configuration: configuration,
             repository: TMDBMediaRepository(client: client),
             progressStore: progressStore,
             authRepository: authRepository,
-            profileRepository: profileRepository
+            profileRepository: profileRepository,
+            resourceResolver: resourceResolver
         )
     }
 
@@ -76,7 +81,12 @@ final class AppContainer {
     }
 
     func makeDetailsViewModel(for item: MediaItem) -> DetailsViewModel {
-        DetailsViewModel(item: item, getDetails: GetMediaDetails(repository: repository))
+        DetailsViewModel(
+            item: item,
+            getDetails: GetMediaDetails(repository: repository),
+            progressStore: progressStore,
+            resourceResolver: resourceResolver
+        )
     }
 
     /// Seam for a real catalogue: map a title to its stream. Always the sample stream for now.
