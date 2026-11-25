@@ -15,6 +15,8 @@ public final class DetailsViewModel {
     public private(set) var playableResources: [PlayableResource] = []
     public let item: MediaItem
 
+    public private(set) var isInWatchlist = false
+
     public var resumeLabel: String {
         guard let savedProgress, !savedProgress.isWatched, savedProgress.position > 0 else {
             return "Play"
@@ -36,17 +38,23 @@ public final class DetailsViewModel {
     private let getDetails: GetMediaDetails
     private let progressStore: (any PlaybackProgressStore)?
     private let resourceResolver: (any PlaybackResourceResolver)?
+    private let watchlistStore: (any WatchlistStore)?
+    private let profileID: String
 
     public init(
         item: MediaItem,
         getDetails: GetMediaDetails,
         progressStore: (any PlaybackProgressStore)? = nil,
-        resourceResolver: (any PlaybackResourceResolver)? = nil
+        resourceResolver: (any PlaybackResourceResolver)? = nil,
+        watchlistStore: (any WatchlistStore)? = nil,
+        profileID: String = "main"
     ) {
         self.item = item
         self.getDetails = getDetails
         self.progressStore = progressStore
         self.resourceResolver = resourceResolver
+        self.watchlistStore = watchlistStore
+        self.profileID = profileID
     }
 
     public func load() async {
@@ -61,10 +69,34 @@ public final class DetailsViewModel {
                     genreIDs: details.item.genreIDs
                 )) ?? []
             }
+
+            if let watchlistStore {
+                do {
+                    isInWatchlist = try await watchlistStore.contains(item.id, in: profileID)
+                } catch is CancellationError {
+                    throw CancellationError()
+                } catch {
+                    isInWatchlist = false
+                }
+            } else {
+                isInWatchlist = false
+            }
         } catch is CancellationError {
             return
         } catch {
             state = .failed(error as? MediaError ?? .unknown)
+        }
+    }
+
+    public func toggleWatchlist() async {
+        guard let watchlistStore else { return }
+
+        do {
+            isInWatchlist = try await watchlistStore.toggle(item, for: profileID)
+        } catch is CancellationError {
+            return
+        } catch {
+            // Keep current watchlist state if persistence fails.
         }
     }
 

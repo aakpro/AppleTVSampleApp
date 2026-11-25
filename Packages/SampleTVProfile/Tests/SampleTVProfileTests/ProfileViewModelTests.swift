@@ -80,10 +80,91 @@ import Testing
         #expect(didSignOut == true)
     }
 
+    @Test func loadLoadsWatchlistItems() async {
+        let profileRepo = StubProfileRepository()
+        let savedItem = MediaItem(
+            id: MediaID(kind: .movie, value: 123),
+            title: "Test Movie",
+            releaseYear: 2023,
+            rating: 8.5,
+            posterPath: "/path.jpg"
+        )
+        let watchlistStore = StubWatchlistStore(itemsByProfile: ["main": [savedItem]])
+        let viewModel = makeViewModel(
+            profileRepo: profileRepo,
+            watchlistStore: watchlistStore
+        )
+
+        await viewModel.load()
+
+        #expect(viewModel.watchlistItems == [savedItem])
+    }
+
+    @Test func loadLeavesWatchlistEmptyWithoutStore() async {
+        let viewModel = makeViewModel()
+
+        await viewModel.load()
+
+        #expect(viewModel.watchlistItems.isEmpty)
+    }
+
+    @Test func switchToProfileLoadsWatchlistItemsForNewProfile() async {
+        let profileRepo = StubProfileRepository()
+        let mainMovie = MediaItem(
+            id: MediaID(kind: .movie, value: 123),
+            title: "Main Profile Movie",
+            releaseYear: 2023,
+            rating: 8.5,
+            posterPath: "/main.jpg"
+        )
+        let kidsShow = MediaItem(
+            id: MediaID(kind: .tv, value: 456),
+            title: "Kids Profile Show",
+            releaseYear: 2023,
+            rating: 8.5,
+            posterPath: "/kids.jpg"
+        )
+        let watchlistStore = StubWatchlistStore(itemsByProfile: [
+            "main": [mainMovie],
+            "kids": [kidsShow]
+        ])
+        let viewModel = makeViewModel(
+            profileRepo: profileRepo,
+            watchlistStore: watchlistStore
+        )
+
+        await viewModel.load()
+        #expect(viewModel.watchlistItems == [mainMovie])
+
+        await viewModel.switchToProfile("kids")
+        #expect(viewModel.watchlistItems == [kidsShow])
+    }
+
+    @Test func switchToProfileWithEmptyWatchlistClearsItems() async {
+        let profileRepo = StubProfileRepository()
+        let mainMovie = MediaItem(
+            id: MediaID(kind: .movie, value: 123),
+            title: "Main Profile Movie",
+            releaseYear: 2023
+        )
+        let watchlistStore = StubWatchlistStore(itemsByProfile: ["main": [mainMovie]])
+        let viewModel = makeViewModel(
+            profileRepo: profileRepo,
+            watchlistStore: watchlistStore
+        )
+
+        await viewModel.load()
+        #expect(viewModel.watchlistItems == [mainMovie])
+
+        await viewModel.switchToProfile("kids")
+        #expect(viewModel.watchlistItems.isEmpty)
+    }
+
     private func makeViewModel(
         profileRepo: StubProfileRepository = StubProfileRepository(),
         authRepo: StubAuthRepository = StubAuthRepository(),
         progressStore: StubProgressStore = StubProgressStore(),
+        watchlistStore: StubWatchlistStore? = nil,
         onSignOut: @MainActor @Sendable @escaping () -> Void = {}
     ) -> ProfileViewModel {
         ProfileViewModel(
@@ -94,6 +175,7 @@ import Testing
             switchProfile: SwitchProfile(repository: profileRepo),
             signOut: SignOut(repository: authRepo),
             progressStore: progressStore,
+            watchlistStore: watchlistStore,
             onSignOut: onSignOut
         )
     }
@@ -188,5 +270,44 @@ private actor StubProgressStore: PlaybackProgressStore {
 
     func recentlyWatched(maxCount: Int) async throws -> [PlaybackProgress] {
         Array(items.values.prefix(maxCount))
+    }
+}
+
+private actor StubWatchlistStore: WatchlistStore {
+    private var itemsByProfile: [String: [MediaItem]]
+
+    init(itemsByProfile: [String: [MediaItem]] = [:]) {
+        self.itemsByProfile = itemsByProfile
+    }
+
+    func items(for profileID: String) async throws -> [MediaItem] {
+        itemsByProfile[profileID] ?? []
+    }
+
+    func contains(_ mediaID: MediaID, in profileID: String) async throws -> Bool {
+        (itemsByProfile[profileID] ?? []).contains { $0.id == mediaID }
+    }
+
+    func add(_ item: MediaItem, to profileID: String) async throws {
+        var items = itemsByProfile[profileID] ?? []
+        guard !items.contains(where: { $0.id == item.id }) else { return }
+        items.append(item)
+        itemsByProfile[profileID] = items
+    }
+
+    func remove(_ mediaID: MediaID, from profileID: String) async throws {
+        var items = itemsByProfile[profileID] ?? []
+        items.removeAll { $0.id == mediaID }
+        itemsByProfile[profileID] = items
+    }
+
+    func toggle(_ item: MediaItem, for profileID: String) async throws -> Bool {
+        if try await contains(item.id, in: profileID) {
+            try await remove(item.id, from: profileID)
+            return false
+        } else {
+            try await add(item, to: profileID)
+            return true
+        }
     }
 }

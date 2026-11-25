@@ -27,6 +27,52 @@ private struct StubResourceResolver: PlaybackResourceResolver {
     }
 }
 
+private actor StubWatchlistStore: WatchlistStore {
+    private var itemsByProfile: [String: [MediaItem]]
+    private let shouldThrow: Bool
+
+    init(itemsByProfile: [String: [MediaItem]] = [:], shouldThrow: Bool = false) {
+        self.itemsByProfile = itemsByProfile
+        self.shouldThrow = shouldThrow
+    }
+
+    func items(for profileID: String) async throws -> [MediaItem] {
+        if shouldThrow { throw MediaError.unknown }
+        return itemsByProfile[profileID] ?? []
+    }
+
+    func contains(_ mediaID: MediaID, in profileID: String) async throws -> Bool {
+        if shouldThrow { throw MediaError.unknown }
+        return (itemsByProfile[profileID] ?? []).contains { $0.id == mediaID }
+    }
+
+    func add(_ item: MediaItem, to profileID: String) async throws {
+        if shouldThrow { throw MediaError.unknown }
+        var items = itemsByProfile[profileID] ?? []
+        guard !items.contains(where: { $0.id == item.id }) else { return }
+        items.append(item)
+        itemsByProfile[profileID] = items
+    }
+
+    func remove(_ mediaID: MediaID, from profileID: String) async throws {
+        if shouldThrow { throw MediaError.unknown }
+        var items = itemsByProfile[profileID] ?? []
+        items.removeAll { $0.id == mediaID }
+        itemsByProfile[profileID] = items
+    }
+
+    func toggle(_ item: MediaItem, for profileID: String) async throws -> Bool {
+        if shouldThrow { throw MediaError.unknown }
+        if try await contains(item.id, in: profileID) {
+            try await remove(item.id, from: profileID)
+            return false
+        } else {
+            try await add(item, to: profileID)
+            return true
+        }
+    }
+}
+
 @MainActor
 struct DetailsPlaybackTests {
     private let item = MediaItem(
@@ -102,6 +148,87 @@ struct DetailsPlaybackTests {
         #expect(resolvedFeature == feature)
         #expect(resolvedTrailer == trailer)
         #expect(allResources.count == 2)
+    }
+
+    @Test func loadInitialWatchlistState() async {
+        let repository = PlaybackDetailsRepository(details: MediaDetails(item: item))
+        let watchlistStore = StubWatchlistStore(itemsByProfile: ["main": [item]])
+        let model = DetailsViewModel(
+            item: item,
+            getDetails: GetMediaDetails(repository: repository),
+            watchlistStore: watchlistStore
+        )
+
+        await model.load()
+        #expect(model.isInWatchlist == true)
+    }
+
+    @Test func loadInitialWatchlistStateIsScopedToProfile() async {
+        let repository = PlaybackDetailsRepository(details: MediaDetails(item: item))
+        let watchlistStore = StubWatchlistStore(itemsByProfile: ["main": [item]])
+        let model = DetailsViewModel(
+            item: item,
+            getDetails: GetMediaDetails(repository: repository),
+            watchlistStore: watchlistStore,
+            profileID: "kids"
+        )
+
+        await model.load()
+        #expect(model.isInWatchlist == false)
+    }
+
+    @Test func toggleWatchlistAddsAndRemovesItem() async throws {
+        let repository = PlaybackDetailsRepository(details: MediaDetails(item: item))
+        let watchlistStore = StubWatchlistStore()
+        let model = DetailsViewModel(
+            item: item,
+            getDetails: GetMediaDetails(repository: repository),
+            watchlistStore: watchlistStore,
+            profileID: "kids"
+        )
+
+        await model.load()
+        #expect(model.isInWatchlist == false)
+
+        await model.toggleWatchlist()
+        #expect(model.isInWatchlist == true)
+        #expect(try await watchlistStore.contains(item.id, in: "kids") == true)
+        #expect(try await watchlistStore.contains(item.id, in: "main") == false)
+
+        await model.toggleWatchlist()
+        #expect(model.isInWatchlist == false)
+        #expect(try await watchlistStore.contains(item.id, in: "kids") == false)
+    }
+
+    @Test func loadKeepsDetailsWhenWatchlistStoreThrows() async {
+        let details = MediaDetails(item: item)
+        let repository = PlaybackDetailsRepository(details: details)
+        let watchlistStore = StubWatchlistStore(shouldThrow: true)
+        let model = DetailsViewModel(
+            item: item,
+            getDetails: GetMediaDetails(repository: repository),
+            watchlistStore: watchlistStore
+        )
+
+        await model.load()
+        #expect(model.state == .loaded(details))
+        #expect(model.isInWatchlist == false)
+    }
+
+    @Test func toggleWatchlistKeepsStateWhenStoreThrows() async {
+        let repository = PlaybackDetailsRepository(details: MediaDetails(item: item))
+        let watchlistStore = StubWatchlistStore(shouldThrow: true)
+        let model = DetailsViewModel(
+            item: item,
+            getDetails: GetMediaDetails(repository: repository),
+            watchlistStore: watchlistStore
+        )
+
+        await model.load()
+        #expect(model.isInWatchlist == false)
+
+        await model.toggleWatchlist()
+        #expect(model.isInWatchlist == false)
     }
 }
 
