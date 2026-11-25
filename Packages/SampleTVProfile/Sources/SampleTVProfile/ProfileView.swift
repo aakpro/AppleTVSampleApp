@@ -4,11 +4,11 @@ import SwiftUI
 
 public struct ProfileView: View {
     @State private var isSignOutConfirmationPresented = false
-    let viewModel: ProfileViewModel
+    @State private var viewModel: ProfileViewModel
     private let onSelectItem: ((MediaItem) -> Void)?
 
     public init(viewModel: ProfileViewModel, onSelectItem: ((MediaItem) -> Void)? = nil) {
-        self.viewModel = viewModel
+        _viewModel = State(initialValue: viewModel)
         self.onSelectItem = onSelectItem
     }
 

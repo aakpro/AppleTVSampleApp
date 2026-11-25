@@ -21,6 +21,7 @@ final class AppContainer {
     let authRepository: any AuthRepository
     let profileRepository: any ProfileRepository
     let resourceResolver: any PlaybackResourceResolver
+    let watchlistStore: any WatchlistStore
 
     init(
         configuration: AppConfiguration,
@@ -28,7 +29,8 @@ final class AppContainer {
         progressStore: any PlaybackProgressStore,
         authRepository: any AuthRepository,
         profileRepository: any ProfileRepository,
-        resourceResolver: any PlaybackResourceResolver
+        resourceResolver: any PlaybackResourceResolver,
+        watchlistStore: any WatchlistStore
     ) {
         self.configuration = configuration
         self.repository = repository
@@ -36,6 +38,7 @@ final class AppContainer {
         self.authRepository = authRepository
         self.profileRepository = profileRepository
         self.resourceResolver = resourceResolver
+        self.watchlistStore = watchlistStore
     }
 
     static func live() -> AppContainer {
@@ -45,7 +48,11 @@ final class AppContainer {
             transport: URLSession.tmdbCached()
         )
         let progressStore = UserDefaultsPlaybackProgressStore()
-        let authRepository = MockAuthRepository()
+        let sessionStore = KeychainSessionStore()
+        if ProcessInfo.processInfo.arguments.contains("-reset-auth") {
+            sessionStore.clear()
+        }
+        let authRepository = MockAuthRepository(sessionStore: sessionStore)
         let profileRepository: any ProfileRepository
         do {
             profileRepository = try SwiftDataProfileRepository()
@@ -53,6 +60,12 @@ final class AppContainer {
             fatalError("Failed to initialize SwiftDataProfileRepository: \(error)")
         }
         let resourceResolver = CatalogPlaybackResourceResolver()
+        let watchlistStore: any WatchlistStore
+        do {
+            watchlistStore = try SwiftDataWatchlistStore()
+        } catch {
+            fatalError("Failed to initialize SwiftDataWatchlistStore: \(error)")
+        }
 
         return AppContainer(
             configuration: configuration,
@@ -60,7 +73,8 @@ final class AppContainer {
             progressStore: progressStore,
             authRepository: authRepository,
             profileRepository: profileRepository,
-            resourceResolver: resourceResolver
+            resourceResolver: resourceResolver,
+            watchlistStore: watchlistStore
         )
     }
 
@@ -80,12 +94,14 @@ final class AppContainer {
         )
     }
 
-    func makeDetailsViewModel(for item: MediaItem) -> DetailsViewModel {
+    func makeDetailsViewModel(for item: MediaItem, profileID: String = "main") -> DetailsViewModel {
         DetailsViewModel(
             item: item,
             getDetails: GetMediaDetails(repository: repository),
             progressStore: progressStore,
-            resourceResolver: resourceResolver
+            resourceResolver: resourceResolver,
+            watchlistStore: watchlistStore,
+            profileID: profileID
         )
     }
 
@@ -111,6 +127,7 @@ final class AppContainer {
             switchProfile: SwitchProfile(repository: profileRepository),
             signOut: SignOut(repository: authRepository),
             progressStore: progressStore,
+            watchlistStore: watchlistStore,
             onSignOut: onSignOut
         )
     }
