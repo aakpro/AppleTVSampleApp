@@ -1,101 +1,113 @@
+import Foundation
 import SampleTVDomain
 import SampleTVUI
 import SwiftUI
 
-struct LoginView: View {
-    @StateObject private var viewModel: LoginViewModel
-    
-    init(viewModel: LoginViewModel) {
-        self._viewModel = StateObject(wrappedValue: viewModel)
+public struct LoginView: View {
+    @State private var viewModel: LoginViewModel
+
+    public init(viewModel: LoginViewModel) {
+        _viewModel = State(initialValue: viewModel)
     }
-    
-    var body: some View {
+
+    public var body: some View {
         VStack(spacing: 40) {
-            // App title/branding
-            VStack {
+            VStack(spacing: 16) {
                 Image(systemName: "play.rectangle.on.rectangle")
-                    .font(.system(size: 60, weight: .thin))
-                    .foregroundColor(.blue)
-                    .symbolRenderingMode(.multicolor)
-                    .padding(.bottom, 20)
-                
+                    .font(.system(size: 64, weight: .thin))
+                    .foregroundStyle(.tint)
+
                 Text("SampleTV")
                     .font(.largeTitle)
-                    .fontWeight(.medium)
-                    .foregroundColor(.primary)
+                    .fontWeight(.semibold)
             }
-            .frame(maxWidth: .infinity, alignment: .center)
-            
-            // Form fields
+
             VStack(spacing: 24) {
                 TextField("Email", text: $viewModel.email)
-                    .textFieldStyle(RoundedBorderTextFieldStyle())
-                    .autocapitalization(.none)
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled()
                     .keyboardType(.emailAddress)
-                
+
                 SecureField("Password", text: $viewModel.password)
-                    .textFieldStyle(RoundedBorderTextFieldStyle())
-                    .autocapitalization(.none)
-                    .keyboardType(.default)
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled()
             }
-            .frame(maxWidth: 400)
-            
-            // Action buttons
+            .frame(maxWidth: 500)
+
             VStack(spacing: 16) {
                 Button("Sign In") {
-                    viewModel.submit()
+                    Task { await viewModel.submit() }
                 }
                 .buttonStyle(.borderedProminent)
-                .disabled(viewModel.state == .authenticating || viewModel.email.isEmpty || viewModel.password.isEmpty)
-                .frame(maxWidth: 200)
-                
+                .disabled(viewModel.state == .authenticating)
+
                 Button("Continue with Demo Account") {
-                    viewModel.continueAsDemo()
+                    Task { await viewModel.continueAsDemo() }
                 }
                 .buttonStyle(.bordered)
-                .frame(maxWidth: 200)
+                .disabled(viewModel.state == .authenticating)
             }
-            
-            // Error message
+
             if case .failed(let error) = viewModel.state {
-                Text(error.localizedDescription)
-                    .font(.caption)
-                    .foregroundColor(.red)
+                Text(error.message)
+                    .font(.callout)
+                    .foregroundStyle(.red)
                     .multilineTextAlignment(.center)
             }
-            
-            // Loading indicator
+
             if viewModel.state == .authenticating {
                 ProgressView()
-                    .scaleEffect(1.5)
             }
         }
-        .padding()
+        .padding(60)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .safeAreaInset(edge: .bottom) {
-            // Extra padding to avoid overlapping with the bottom bar
-            Rectangle().frame(height: 20)
-        }
     }
 }
 
-extension AuthError: LocalizedError {
-    public var errorDescription: String? {
+private extension AuthError {
+    var message: String {
         switch self {
         case .emptyFields:
-            return "Email and password are required"
+            "Email and password are required."
         case .invalidCredentials:
-            return "Invalid email or password"
+            "Invalid email or password."
         case .sessionExpired:
-            return "Session expired, please sign in again"
+            "Session expired. Please sign in again."
         }
     }
 }
 
 #Preview {
-    LoginView(viewModel: LoginViewModel(
-        signIn: SignIn(repository: MockAuthRepository()),
-        signInDemo: SignInDemo(repository: MockAuthRepository()),
-        onAuthenticated: { _ in }
-    ))
+    struct PreviewRepo: AuthRepository {
+        func currentAccount() async -> UserAccount? { nil }
+        func signIn(email: String, password: String) async throws -> UserAccount {
+            UserAccount(
+                id: "1",
+                email: email,
+                displayName: "Preview",
+                avatarSystemName: "person.circle",
+                isDemo: false,
+                createdAt: .now
+            )
+        }
+        func signInDemo() async throws -> UserAccount {
+            UserAccount(
+                id: "demo",
+                email: "demo@sampletv.app",
+                displayName: "Alex Mercer",
+                avatarSystemName: "person.circle",
+                isDemo: true,
+                createdAt: .now
+            )
+        }
+        func signOut() async {}
+    }
+    let repo = PreviewRepo()
+    return LoginView(
+        viewModel: LoginViewModel(
+            signIn: SignIn(repository: repo),
+            signInDemo: SignInDemo(repository: repo),
+            onAuthenticated: { _ in }
+        )
+    )
 }

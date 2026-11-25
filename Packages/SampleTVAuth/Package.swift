@@ -7,24 +7,27 @@ let package = Package(
     products: [
         .library(
             name: "SampleTVAuth",
-            targets: ["SampleTVAuth"]),
+            targets: ["SampleTVAuth"]
+        )
     ],
     dependencies: [
         .package(path: "../SampleTVDomain"),
-        .package(path: "../SampleTVUI"),
+        .package(path: "../SampleTVUI")
     ],
     targets: [
         .target(
             name: "SampleTVAuth",
             dependencies: [
                 .product(name: "SampleTVDomain", package: "SampleTVDomain"),
-                .product(name: "SampleTVUI", package: "SampleTVUI"),
-            ]),
+                .product(name: "SampleTVUI", package: "SampleTVUI")
+            ]
+        ),
         .testTarget(
             name: "SampleTVAuthTests",
             dependencies: [
-                .target(name: "SampleTVAuth"),
-                .product(name: "SampleTVDomain", package: "SampleTVDomain"),
-            ]),
+                "SampleTVAuth",
+                .product(name: "SampleTVDomain", package: "SampleTVDomain")
+            ]
+        )
     ]
 )
