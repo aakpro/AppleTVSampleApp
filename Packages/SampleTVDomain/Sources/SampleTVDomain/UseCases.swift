@@ -1,5 +1,18 @@
 import Foundation
 
+public enum AuthError: Error, Equatable, Sendable {
+    case emptyFields
+    case invalidCredentials
+    case sessionExpired
+}
+
+public protocol AuthRepository: Sendable {
+    func currentAccount() async -> UserAccount?
+    func signIn(email: String, password: String) async throws -> UserAccount
+    func signInDemo() async throws -> UserAccount
+    func signOut() async
+}
+
 public struct DiscoverMedia: Sendable {
     private let repository: any MediaRepository
 
@@ -42,5 +55,53 @@ public struct GetMediaDetails: Sendable {
 
     public func callAsFunction(_ id: MediaID) async throws -> MediaDetails {
         try await repository.details(of: id)
+    }
+}
+
+public struct SignIn: Sendable {
+    private let repository: any AuthRepository
+
+    public init(repository: any AuthRepository) {
+        self.repository = repository
+    }
+
+    public func callAsFunction(email: String, password: String) async throws -> UserAccount {
+        try await repository.signIn(email: email, password: password)
+    }
+}
+
+public struct SignInDemo: Sendable {
+    private let repository: any AuthRepository
+
+    public init(repository: any AuthRepository) {
+        self.repository = repository
+    }
+
+    public func callAsFunction() async throws -> UserAccount {
+        try await repository.signInDemo()
+    }
+}
+
+public struct SignOut: Sendable {
+    private let repository: any AuthRepository
+
+    public init(repository: any AuthRepository) {
+        self.repository = repository
+    }
+
+    public func callAsFunction() async {
+        await repository.signOut()
+    }
+}
+
+public struct LoadCurrentAccount: Sendable {
+    private let repository: any AuthRepository
+
+    public init(repository: any AuthRepository) {
+        self.repository = repository
+    }
+
+    public func callAsFunction() async -> UserAccount? {
+        await repository.currentAccount()
     }
 }

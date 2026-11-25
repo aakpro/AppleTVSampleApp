@@ -1,3 +1,4 @@
+import SampleTVAuth
 import SampleTVDiscovery
 import SampleTVDomain
 import SampleTVPlayer
@@ -7,16 +8,29 @@ import SwiftUI
 struct RootView: View {
     let container: AppContainer
     @State private var selection: MediaItem?
+    @State private var authenticatedAccount: UserAccount?
 
     var body: some View {
-        if container.configuration.hasToken {
-            tabs
-        } else {
-            ContentUnavailableView(
-                "TMDB token missing",
-                systemImage: "key.slash",
-                description: Text("Copy Config/Secrets.xcconfig.example to Config/Secrets.xcconfig and add your token.")
-            )
+        Group {
+            if authenticatedAccount != nil {
+                tabs
+            } else if container.configuration.hasToken {
+                LoginView(viewModel: container.makeLoginViewModel(onAuthenticated: { account in
+                    authenticatedAccount = account
+                }))
+            } else {
+                ContentUnavailableView(
+                    "TMDB token missing",
+                    systemImage: "key.slash",
+                    description: Text("Copy Config/Secrets.xcconfig.example to Config/Secrets.xcconfig and add your token.")
+                )
+            }
+        }
+        .task {
+            // Load current account on launch
+            if let account = await container.authRepository.currentAccount() {
+                authenticatedAccount = account
+            }
         }
     }
 

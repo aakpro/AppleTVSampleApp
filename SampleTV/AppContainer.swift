@@ -1,6 +1,7 @@
 /// Composition root. Phases 2-6 add the repository and one factory method per feature.
 import Foundation
 import SampleTVAPI
+import SampleTVAuth
 import SampleTVDiscovery
 import SampleTVDomain
 import SampleTVPlaybackProgress
@@ -16,11 +17,18 @@ final class AppContainer {
     let configuration: AppConfiguration
     let repository: any MediaRepository
     let progressStore: any PlaybackProgressStore
+    let authRepository: any AuthRepository
 
-    init(configuration: AppConfiguration, repository: any MediaRepository, progressStore: any PlaybackProgressStore) {
+    init(
+        configuration: AppConfiguration, 
+        repository: any MediaRepository, 
+        progressStore: any PlaybackProgressStore,
+        authRepository: any AuthRepository
+    ) {
         self.configuration = configuration
         self.repository = repository
         self.progressStore = progressStore
+        self.authRepository = authRepository
     }
 
     static func live() -> AppContainer {
@@ -30,10 +38,12 @@ final class AppContainer {
             transport: URLSession.tmdbCached()
         )
         let progressStore = UserDefaultsPlaybackProgressStore()
+        let authRepository = MockAuthRepository()
         return AppContainer(
             configuration: configuration, 
             repository: TMDBMediaRepository(client: client),
-            progressStore: progressStore
+            progressStore: progressStore,
+            authRepository: authRepository
         )
     }
 
@@ -56,5 +66,13 @@ final class AppContainer {
     /// Seam for a real catalogue: map a title to its stream. Always the sample stream for now.
     func playbackURL(for item: MediaItem) -> URL {
         Self.sampleStream
+    }
+    
+    func makeLoginViewModel(onAuthenticated: @MainActor @Sendable @escaping (UserAccount) -> Void) -> LoginViewModel {
+        LoginViewModel(
+            signIn: SignIn(repository: authRepository),
+            signInDemo: SignInDemo(repository: authRepository),
+            onAuthenticated: onAuthenticated
+        )
     }
 }

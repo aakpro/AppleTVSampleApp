@@ -28,6 +28,9 @@
       <FileRef
          location = "group:SampleTVPlaybackProgress">
       </FileRef>
+      <FileRef
+         location = "group:SampleTVAuth">
+      </FileRef>
    </Group>
    <FileRef
       location = "container:Config">
