@@ -12,6 +12,27 @@ struct PageDTO: Decodable, Sendable {
     }
 }
 
+struct VideoDTO: Decodable, Sendable {
+    let id: String
+    let key: String
+    let name: String
+    let site: String
+    let type: String
+    let iso6391: String?
+
+    enum CodingKeys: String, CodingKey {
+        case id, key, name, site, type
+        case iso6391 = "iso_639_1"
+    }
+
+    var videoKind: VideoKind {
+        switch type.lowercased() {
+        case "trailer": .trailer
+        default: .feature
+        }
+    }
+}
+
 /// One DTO for both kinds: movies use `title`/`release_date`, TV uses `name`/`first_air_date`.
 struct MediaDTO: Decodable, Sendable {
     let id: Int
@@ -76,15 +97,20 @@ struct RecommendationsDTO: Decodable, Sendable {
     let results: [MediaDTO]
 }
 
+struct VideosResponseDTO: Decodable, Sendable {
+    let results: [VideoDTO]
+}
+
 struct DetailsDTO: Decodable, Sendable {
     let media: MediaDTO
     let genres: [GenreDTO]
     let runtime: Int?
     let numberOfSeasons: Int?
     let recommendations: RecommendationsDTO?
+    let videos: VideosResponseDTO?
 
     enum CodingKeys: String, CodingKey {
-        case genres, runtime, recommendations
+        case genres, runtime, recommendations, videos
         case numberOfSeasons = "number_of_seasons"
     }
 
@@ -96,6 +122,7 @@ struct DetailsDTO: Decodable, Sendable {
         runtime = try container.decodeIfPresent(Int.self, forKey: .runtime)
         numberOfSeasons = try container.decodeIfPresent(Int.self, forKey: .numberOfSeasons)
         recommendations = try container.decodeIfPresent(RecommendationsDTO.self, forKey: .recommendations)
+        videos = try container.decodeIfPresent(VideosResponseDTO.self, forKey: .videos)
     }
 
     func toDomain(kind: MediaKind) throws -> MediaDetails {
@@ -111,7 +138,17 @@ struct DetailsDTO: Decodable, Sendable {
             genres: genres.map { Genre(id: $0.id, name: $0.name) },
             runtimeMinutes: runtime,
             seasonCount: numberOfSeasons,
-            recommendations: (recommendations?.results ?? []).compactMap { $0.toDomain(defaultKind: kind) }
+            recommendations: (recommendations?.results ?? []).compactMap { $0.toDomain(defaultKind: kind) },
+            videos: (videos?.results ?? []).map {
+                MediaVideo(
+                    id: $0.id,
+                    kind: $0.videoKind,
+                    name: $0.name,
+                    site: $0.site,
+                    key: $0.key,
+                    language: $0.iso6391 ?? "en"
+                )
+            }
         )
     }
 }

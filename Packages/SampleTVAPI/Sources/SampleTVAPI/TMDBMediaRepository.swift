@@ -47,7 +47,7 @@ public struct TMDBMediaRepository: MediaRepository {
     public func details(of id: MediaID) async throws -> MediaDetails {
         let dto: DetailsDTO = try await client.get(
             "\(id.kind.rawValue)/\(id.value)",
-            query: [URLQueryItem(name: "append_to_response", value: "recommendations")]
+            query: [URLQueryItem(name: "append_to_response", value: "recommendations,videos")]
         )
         return try dto.toDomain(kind: id.kind)
     }
