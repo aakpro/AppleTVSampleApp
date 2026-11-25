@@ -31,6 +31,9 @@
       <FileRef
          location = "group:SampleTVAuth">
       </FileRef>
+      <FileRef
+         location = "group:SampleTVProfile">
+      </FileRef>
    </Group>
    <FileRef
       location = "container:Config">

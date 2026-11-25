@@ -2,6 +2,7 @@ import SampleTVAuth
 import SampleTVDiscovery
 import SampleTVDomain
 import SampleTVPlayer
+import SampleTVProfile
 import SampleTVSearch
 import SwiftUI
 
@@ -22,7 +23,9 @@ struct RootView: View {
                 ContentUnavailableView(
                     "TMDB token missing",
                     systemImage: "key.slash",
-                    description: Text("Copy Config/Secrets.xcconfig.example to Config/Secrets.xcconfig and add your token.")
+                    description: Text(
+                        "Copy Config/Secrets.xcconfig.example to Config/Secrets.xcconfig and add your token."
+                    )
                 )
             }
         }
@@ -46,6 +49,14 @@ struct RootView: View {
                 SearchView(viewModel: container.makeSearchViewModel()) { selection = $0 }
             }
             .tabItem { Label("Search", systemImage: "magnifyingglass") }
+
+            NavigationStack {
+                ProfileView(viewModel: container.makeProfileViewModel(onSignOut: {
+                    selection = nil
+                    authenticatedAccount = nil
+                }))
+            }
+            .tabItem { Label("Profile", systemImage: "person.circle") }
         }
         .fullScreenCover(item: $selection) { item in
             DetailsScreen(container: container, item: item)

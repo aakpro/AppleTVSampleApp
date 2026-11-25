@@ -15,6 +15,7 @@
 		8158B4703F3EF8DAB833C677 /* SampleTVAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 024BBD63A0A78C7B954D669F /* SampleTVAuth */; };
 		916919BD63AB86522061910D /* SampleTVDiscovery in Frameworks */ = {isa = PBXBuildFile; productRef = 76C012D9DB8DC8A51AACA714 /* SampleTVDiscovery */; };
 		B572EB3F619F8D6AB7A955E9 /* SampleTVPlaybackProgress in Frameworks */ = {isa = PBXBuildFile; productRef = 75D07D476645DFF915E016C8 /* SampleTVPlaybackProgress */; };
+		C4BF2FAC8427D5595718F57D /* SampleTVProfile in Frameworks */ = {isa = PBXBuildFile; productRef = CDBDF764017BBEF89F9720A3 /* SampleTVProfile */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -83,6 +84,7 @@
 				108C9C98610A91906D2C3203 /* SampleTVPlayer in Frameworks */,
 				B572EB3F619F8D6AB7A955E9 /* SampleTVPlaybackProgress in Frameworks */,
 				8158B4703F3EF8DAB833C677 /* SampleTVAuth in Frameworks */,
+				C4BF2FAC8427D5595718F57D /* SampleTVProfile in Frameworks */,
 			);
 		};
 		DC34C32D6DEA5E771B3E9508 /* Frameworks */ = {
@@ -147,6 +149,7 @@
 				1022BED424AF4234B951CC6B /* SampleTVPlayer */,
 				75D07D476645DFF915E016C8 /* SampleTVPlaybackProgress */,
 				024BBD63A0A78C7B954D669F /* SampleTVAuth */,
+				CDBDF764017BBEF89F9720A3 /* SampleTVProfile */,
 			);
 			productName = SampleTV;
 			productReference = A25B4F7E30B4AF6B0037624F /* SampleTV.app */;
@@ -230,6 +233,7 @@
 				BE61E111650D011E1F5AF7EA /* XCLocalSwiftPackageReference "SampleTVPlayer" */,
 				61AF6140CDEB846618FC25CB /* XCLocalSwiftPackageReference "SampleTVPlaybackProgress" */,
 				EBAA13B139DE4CCE1B5BBEF6 /* XCLocalSwiftPackageReference "SampleTVAuth" */,
+				10FA6B46D03A0D9F8896C349 /* XCLocalSwiftPackageReference "SampleTVProfile" */,
 			);
 			preferredProjectObjectVersion = 110;
 			productRefGroup = ECD8776C73450FC18EEB95B3 /* Products */;
@@ -594,6 +598,10 @@
 /* End XCConfigurationList section */
 
 /* Begin XCLocalSwiftPackageReference section */
+		10FA6B46D03A0D9F8896C349 /* XCLocalSwiftPackageReference "SampleTVProfile" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Packages/SampleTVProfile;
+		};
 		1BF99D9A95D462AFBFAD659B /* XCLocalSwiftPackageReference "SampleTVDiscovery" */ = {
 			isa = XCLocalSwiftPackageReference;
 			relativePath = Packages/SampleTVDiscovery;
@@ -660,6 +668,10 @@
 		A9496809659ECA0D08A762E3 /* SampleTVSearch */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = SampleTVSearch;
+		};
+		CDBDF764017BBEF89F9720A3 /* SampleTVProfile */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = SampleTVProfile;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
