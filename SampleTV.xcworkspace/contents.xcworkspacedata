@@ -25,6 +25,9 @@
       <FileRef
          location = "group:SampleTVPlayer">
       </FileRef>
+      <FileRef
+         location = "group:SampleTVPlaybackProgress">
+      </FileRef>
    </Group>
    <FileRef
       location = "container:Config">

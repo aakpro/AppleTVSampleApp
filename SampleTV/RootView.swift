@@ -44,20 +44,47 @@ private struct DetailsScreen: View {
     let container: AppContainer
     let item: MediaItem
     @State private var playing: MediaItem?
-    
-    init(container: AppContainer, item: MediaItem) {
-        self.container = container
-        self.item = item
-    }
 
     var body: some View {
         DetailsView(viewModel: container.makeDetailsViewModel(for: item)) { playing = $0 }
             .fullScreenCover(item: $playing) { item in
-                Task {
-                    let progress = try? await container.progressStore.loadProgress(for: item.id)
-                    let initialPosition = progress?.position
-                    PlayerView(url: container.playbackURL(for: item), initialPosition: initialPosition)
-                }
+                PlayerScreen(container: container, item: item)
             }
+    }
+}
+
+private struct PlayerScreen: View {
+    let container: AppContainer
+    let item: MediaItem
+    @State private var initialPosition: TimeInterval?
+    @State private var isReady = false
+
+    var body: some View {
+        Group {
+            if isReady {
+                PlayerView(
+                    url: container.playbackURL(for: item),
+                    initialPosition: initialPosition
+                ) { position, duration in
+                    let progress = PlaybackProgress(
+                        mediaID: item.id,
+                        position: position,
+                        duration: duration
+                    )
+                    Task {
+                        try? await container.progressStore.saveProgress(progress)
+                    }
+                }
+            } else {
+                ProgressView()
+            }
+        }
+        .task {
+            let saved = try? await container.progressStore.loadProgress(for: item.id)
+            if let saved, !saved.isWatched {
+                initialPosition = saved.position
+            }
+            isReady = true
+        }
     }
 }

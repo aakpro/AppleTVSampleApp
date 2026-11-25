@@ -1,5 +1,4 @@
 import SampleTVDomain
-import SampleTVPlaybackProgress
 import SampleTVUI
 import SwiftUI
 
@@ -14,7 +13,11 @@ public struct DiscoveryView: View {
 
     public var body: some View {
         content
-            .task(id: viewModel.filter) { await viewModel.reload() }
+            .task(id: viewModel.filter) {
+                async let reloadTask: Void = viewModel.reload()
+                async let continueTask: Void = viewModel.loadContinueWatching()
+                _ = await (reloadTask, continueTask)
+            }
     }
 
     @ViewBuilder
@@ -26,28 +29,32 @@ public struct DiscoveryView: View {
             ErrorView(error: error) { Task { await viewModel.reload() } }
         case .loaded(let items):
             ScrollView {
-                LazyVGrid(columns: [GridItem(.adaptive(minimum: 240), spacing: 40)], spacing: 60) {
-                    // Continue Watching section
-                    if !viewModel.itemsWithContinueWatching().isEmpty {
+                VStack(alignment: .leading, spacing: 40) {
+                    if !viewModel.continueWatchingItems.isEmpty {
                         SectionHeader(title: "Continue Watching")
-                        ForEach(viewModel.itemsWithContinueWatching()) { item in
-                            Button { onSelect(item) } label: { 
-                                MediaCard(item: item)
-                                    .frame(maxWidth: .infinity, alignment: .leading)
+                        ScrollView(.horizontal) {
+                            LazyHStack(spacing: 40) {
+                                ForEach(viewModel.continueWatchingItems) { item in
+                                    Button { onSelect(item) } label: {
+                                        MediaCard(item: item)
+                                    }
+                                    .buttonStyle(.card)
+                                }
                             }
                         }
                     }
-                    
-                    // Main section for other items
+
                     SectionHeader(title: "Discover")
-                    ForEach(items) { item in
-                        Button { onSelect(item) } label: { 
-                            MediaCard(item: item)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                        }
-                        .task {
-                            if item == items.last, viewModel.canLoadMore {
-                                await viewModel.loadNextPage()
+                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 240), spacing: 40)], spacing: 60) {
+                        ForEach(items) { item in
+                            Button { onSelect(item) } label: {
+                                MediaCard(item: item)
+                            }
+                            .buttonStyle(.card)
+                            .task {
+                                if item == items.last, viewModel.canLoadMore {
+                                    await viewModel.loadNextPage()
+                                }
                             }
                         }
                     }
@@ -60,14 +67,11 @@ public struct DiscoveryView: View {
 
 private struct SectionHeader: View {
     let title: String
-    
+
     var body: some View {
         Text(title)
             .font(.title2)
             .fontWeight(.semibold)
-            .foregroundColor(.primary)
-            .padding(.leading, 10)
-            .padding(.top, 30)
-            .padding(.bottom, 15)
+            .foregroundStyle(.primary)
     }
 }

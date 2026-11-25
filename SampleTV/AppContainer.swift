@@ -38,7 +38,11 @@ final class AppContainer {
     }
 
     func makeDiscoveryViewModel() -> DiscoveryViewModel {
-        DiscoveryViewModel(discover: DiscoverMedia(repository: repository), progressStore: progressStore)
+        DiscoveryViewModel(
+            discover: DiscoverMedia(repository: repository),
+            getDetails: GetMediaDetails(repository: repository),
+            progressStore: progressStore
+        )
     }
 
     func makeSearchViewModel() -> SearchViewModel {

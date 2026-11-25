@@ -7,12 +7,15 @@ import SwiftUI
 public struct PlayerView: View {
     private let url: URL
     private let initialPosition: TimeInterval?
-    private let onProgress: ((TimeInterval, TimeInterval) -> Void)?
+    private let onProgress: (@MainActor @Sendable (TimeInterval, TimeInterval) -> Void)?
     @State private var player: AVPlayer
     @State private var failure: String?
-    @State private var progressTimer: Task<Void, Never>?
 
-    public init(url: URL, initialPosition: TimeInterval? = nil, onProgress: ((TimeInterval, TimeInterval) -> Void)? = nil) {
+    public init(
+        url: URL,
+        initialPosition: TimeInterval? = nil,
+        onProgress: (@MainActor @Sendable (TimeInterval, TimeInterval) -> Void)? = nil
+    ) {
         self.url = url
         self.initialPosition = initialPosition
         self.onProgress = onProgress
@@ -31,49 +34,56 @@ public struct PlayerView: View {
                     )
                 }
             }
-            .task { 
-                await observeStatus() 
-                // Set initial position after player is ready
-                if let initialPosition {
-                    player.seek(to: CMTime(seconds: initialPosition, preferredTimescale: 1000))
-                }
-                scheduleProgressUpdates()
+            .task {
+                async let statusTask: Void = observeStatus()
+                async let progressTask: Void = runProgressLoop()
+                _ = await (statusTask, progressTask)
             }
-            .onAppear { 
-                player.play() 
+            .onAppear {
+                player.play()
             }
-            .onDisappear { 
+            .onDisappear {
                 player.pause()
-                progressTimer?.cancel()
-                // Notify that the player disappeared so it can save final state or clear
-                onProgress?(player.currentTime().seconds, player.currentItem?.duration.seconds ?? 0)
+                reportCurrentProgress()
             }
     }
 
-    /// `AVPlayerItem.status` flips to `.failed` for bad URLs, DRM and network errors.
+    /// Observes `AVPlayerItem.status` for readiness (initial seek) and failures.
     private func observeStatus() async {
         guard let item = player.currentItem else { return }
-        for await status in item.publisher(for: \.status).values where status == .failed {
-            failure = item.error?.localizedDescription ?? "Unknown error"
-            return
-        }
-    }
-    
-    /// Periodically report progress to the delegate
-    private func scheduleProgressUpdates() {
-        progressTimer = Task { [weak player] in
-            guard let player else { return }
-            
-            // Report progress every 5 seconds
-            while !Task.isCancelled {
-                try? await Task.sleep(nanoseconds: 5_000_000_000) 
-                
-                if let currentItem = player.currentItem {
-                    let position = currentItem.currentTime().seconds
-                    let duration = currentItem.duration.seconds
-                    onProgress?(position, duration)
+        var didSeek = false
+        for await status in item.publisher(for: \.status).values {
+            switch status {
+            case .readyToPlay:
+                if !didSeek, let initialPosition, initialPosition > 0 {
+                    didSeek = true
+                    await player.seek(to: CMTime(seconds: initialPosition, preferredTimescale: 1000))
                 }
+            case .failed:
+                failure = item.error?.localizedDescription ?? "Unknown error"
+                return
+            case .unknown:
+                break
+            @unknown default:
+                break
             }
         }
+    }
+
+    /// Periodically reports playback progress every 5 seconds until the view disappears.
+    private func runProgressLoop() async {
+        while !Task.isCancelled {
+            try? await Task.sleep(for: .seconds(5))
+            guard !Task.isCancelled else { return }
+            reportCurrentProgress()
+        }
+    }
+
+    private func reportCurrentProgress() {
+        guard let item = player.currentItem else { return }
+        let position = item.currentTime().seconds
+        let duration = item.duration.seconds
+        guard position.isFinite, position >= 0, duration.isFinite, duration > 0 else { return }
+        onProgress?(position, duration)
     }
 }
