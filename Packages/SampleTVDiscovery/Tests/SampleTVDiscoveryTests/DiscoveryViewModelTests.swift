@@ -4,6 +4,7 @@ import Testing
 
 private struct StubRepository: MediaRepository {
     var result: Result<ResultPage<MediaItem>, MediaError>
+    var genresResult: [Genre] = []
     var detailsByID: [MediaID: MediaDetails] = [:]
 
     func discover(_ filter: MediaFilter, page: Int) async throws -> ResultPage<MediaItem> { try result.get() }
@@ -12,7 +13,7 @@ private struct StubRepository: MediaRepository {
         if let details = detailsByID[id] { return details }
         throw MediaError.notFound
     }
-    func genres(for kind: MediaKind) async throws -> [Genre] { [] }
+    func genres(for kind: MediaKind) async throws -> [Genre] { genresResult }
 }
 
 private actor StubProgressStore: PlaybackProgressStore {
@@ -44,12 +45,31 @@ private actor StubProgressStore: PlaybackProgressStore {
 struct DiscoveryViewModelTests {
     private let item = MediaItem(id: MediaID(kind: .tv, value: 1), title: "Show")
 
-    @Test func reloadPublishesItems() async {
+    @Test func reloadPublishesItemsAndPagination() async {
         let page = ResultPage(items: [item], page: 1, totalPages: 2)
-        let model = DiscoveryViewModel(discover: DiscoverMedia(repository: StubRepository(result: .success(page))))
+        let model = DiscoveryViewModel(
+            discover: DiscoverMedia(repository: StubRepository(result: .success(page))),
+            filter: MediaFilter(kind: .tv)
+        )
         await model.reload()
-        #expect(model.state == .loaded([item]))
+        #expect(model.state == .loaded([MediaShelf(id: "popular-tv", title: "Popular TV Shows", items: [item])]))
         #expect(model.canLoadMore)
+    }
+
+    @Test func reloadWithGetDiscoveryShelvesLoadsMultipleShelves() async {
+        let page = ResultPage(items: [item], page: 1, totalPages: 1)
+        let repo = StubRepository(result: .success(page), genresResult: [Genre(id: 18, name: "Drama")])
+        let model = DiscoveryViewModel(
+            discover: DiscoverMedia(repository: repo),
+            getDiscoveryShelves: GetDiscoveryShelves(repository: repo),
+            filter: MediaFilter(kind: .movie)
+        )
+        await model.reload()
+        if case .loaded(let shelves) = model.state {
+            #expect(shelves.map(\.title) == ["Popular", "Top Rated", "New Releases", "Drama"])
+        } else {
+            Issue.record("Expected loaded state")
+        }
     }
 
     @Test func failureSurfacesDomainError() async {
@@ -60,7 +80,7 @@ struct DiscoveryViewModelTests {
         #expect(model.state == .failed(.offline))
     }
 
-    @Test func loadContinueWatchingResolvesUnfinishedItemsInOrder() async {
+    @Test func loadContinueWatchingResolvesUnfinishedItemsAndProgress() async {
         let loadedItem = MediaItem(id: MediaID(kind: .tv, value: 1), title: "Show 1")
         let fetchedItem = MediaItem(id: MediaID(kind: .movie, value: 2), title: "Movie 2")
         let watchedItem = MediaItem(id: MediaID(kind: .movie, value: 3), title: "Movie 3")
@@ -74,9 +94,9 @@ struct DiscoveryViewModelTests {
         )
         let store = StubProgressStore(recent: [
             PlaybackProgress(mediaID: fetchedItem.id, position: 120, duration: 600),
-            PlaybackProgress(mediaID: watchedItem.id, position: 580, duration: 600), // >= 90%, excluded
+            PlaybackProgress(mediaID: watchedItem.id, position: 580, duration: 600),
             PlaybackProgress(mediaID: loadedItem.id, position: 45, duration: 600),
-            PlaybackProgress(mediaID: MediaID(kind: .movie, value: 999), position: 30, duration: 600) // missing details
+            PlaybackProgress(mediaID: MediaID(kind: .movie, value: 999), position: 30, duration: 600)
         ])
 
         let model = DiscoveryViewModel(
@@ -89,6 +109,14 @@ struct DiscoveryViewModelTests {
         await model.loadContinueWatching()
 
         #expect(model.continueWatchingItems == [fetchedItem, loadedItem])
+        #expect(model.progressByID[fetchedItem.id] == 0.2)
+    }
+
+    @Test func kindSwitchingSyncsFilterKind() {
+        let model = DiscoveryViewModel(discover: DiscoverMedia(repository: StubRepository(result: .success(.empty))))
+        #expect(model.kind == .movie)
+        model.kind = .tv
+        #expect(model.filter.kind == .tv)
     }
 }
 

@@ -13,10 +13,20 @@ public struct DiscoveryView: View {
 
     public var body: some View {
         content
-            .task(id: viewModel.filter) {
+            .task(id: viewModel.kind) {
                 async let reloadTask: Void = viewModel.reload()
                 async let continueTask: Void = viewModel.loadContinueWatching()
                 _ = await (reloadTask, continueTask)
+            }
+            .toolbar {
+                ToolbarItem(placement: .principal) {
+                    Picker("Media Type", selection: $viewModel.kind) {
+                        Text("Movies").tag(MediaKind.movie)
+                        Text("TV Shows").tag(MediaKind.tv)
+                    }
+                    .pickerStyle(.segmented)
+                    .frame(width: 260)
+                }
             }
     }
 
@@ -27,7 +37,7 @@ public struct DiscoveryView: View {
             ProgressView()
         case .failed(let error):
             ErrorView(error: error) { Task { await viewModel.reload() } }
-        case .loaded(let items):
+        case .loaded(let shelves):
             ScrollView {
                 VStack(alignment: .leading, spacing: 40) {
                     if !viewModel.continueWatchingItems.isEmpty {
@@ -36,7 +46,10 @@ public struct DiscoveryView: View {
                             LazyHStack(spacing: 40) {
                                 ForEach(viewModel.continueWatchingItems) { item in
                                     Button { onSelect(item) } label: {
-                                        MediaCard(item: item)
+                                        MediaCard(
+                                            item: item,
+                                            playbackProgress: viewModel.progressByID[item.id]
+                                        )
                                     }
                                     .buttonStyle(.card)
                                 }
@@ -44,16 +57,18 @@ public struct DiscoveryView: View {
                         }
                     }
 
-                    SectionHeader(title: "Discover")
-                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 240), spacing: 40)], spacing: 60) {
-                        ForEach(items) { item in
-                            Button { onSelect(item) } label: {
-                                MediaCard(item: item)
-                            }
-                            .buttonStyle(.card)
-                            .task {
-                                if item == items.last, viewModel.canLoadMore {
-                                    await viewModel.loadNextPage()
+                    ForEach(shelves) { shelf in
+                        SectionHeader(title: shelf.title)
+                        ScrollView(.horizontal) {
+                            LazyHStack(spacing: 40) {
+                                ForEach(shelf.items) { item in
+                                    Button { onSelect(item) } label: {
+                                        MediaCard(
+                                            item: item,
+                                            playbackProgress: viewModel.progressByID[item.id]
+                                        )
+                                    }
+                                    .buttonStyle(.card)
                                 }
                             }
                         }

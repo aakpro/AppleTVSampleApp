@@ -13,15 +13,54 @@ public struct SearchView: View {
 
     private struct Key: Equatable {
         let text: String
+        let selectedKind: MediaKind?
         let filter: MediaFilter
     }
 
     public var body: some View {
-        results
-            .searchable(text: $viewModel.text)
-            .task(id: Key(text: viewModel.text, filter: viewModel.filter)) {
-                await viewModel.performSearch()
+        VStack(spacing: 24) {
+            filterBar
+            results
+        }
+        .searchable(text: $viewModel.text)
+        .task(id: viewModel.selectedKind) {
+            await viewModel.loadGenres()
+        }
+        .task(id: Key(text: viewModel.text, selectedKind: viewModel.selectedKind, filter: viewModel.filter)) {
+            await viewModel.performSearch()
+        }
+    }
+
+    private var filterBar: some View {
+        HStack(spacing: 24) {
+            Picker("Type", selection: $viewModel.selectedKind) {
+                Text("All").tag(MediaKind?.none)
+                Text("Movies").tag(MediaKind?.some(.movie))
+                Text("TV Shows").tag(MediaKind?.some(.tv))
             }
+            .pickerStyle(.segmented)
+            .frame(maxWidth: 420)
+
+            if !viewModel.availableGenres.isEmpty {
+                Menu {
+                    Button("All Genres") {
+                        viewModel.filter.genreIDs = []
+                    }
+                    ForEach(viewModel.availableGenres) { genre in
+                        Button(genre.name) {
+                            viewModel.filter.genreIDs = [genre.id]
+                        }
+                    }
+                } label: {
+                    let selectedName = viewModel.availableGenres
+                        .first { viewModel.filter.genreIDs.contains($0.id) }?.name ?? "All Genres"
+                    Label(selectedName, systemImage: "line.3.horizontal.decrease.circle")
+                }
+            }
+
+            Spacer()
+        }
+        .padding(.horizontal, 60)
     }
 
     @ViewBuilder
