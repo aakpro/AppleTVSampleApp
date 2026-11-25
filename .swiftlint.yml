@@ -51,14 +51,14 @@ custom_rules:
 
   features_do_not_import_api:
     name: "Feature modules depend on the Domain, not the API layer"
-    included: "Packages/SampleTV(Discovery|Search|Player|UI)/Sources"
+    included: "Packages/SampleTV(Discovery|Search|Player|Auth)/Sources"
     regex: '^\s*import\s+SampleTVAPI\b'
     message: "Depend on the MediaRepository protocol from SampleTVDomain; the app target wires in SampleTVAPI."
     severity: error
 
   features_do_not_import_each_other:
     name: "Feature modules must not import each other"
-    included: "Packages/SampleTV(Discovery|Search|Player)/Sources"
-    regex: '^\s*import\s+SampleTV(Discovery|Search|Player)\b'
+    included: "Packages/SampleTV(Discovery|Search|Player|Auth)/Sources"
+    regex: '^\s*import\s+SampleTV(Discovery|Search|Player|Auth)\b'
     message: "Move shared code into SampleTVUI or SampleTVDomain; navigation between features lives in the app target."
     severity: error
