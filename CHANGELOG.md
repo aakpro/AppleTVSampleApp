@@ -9,6 +9,9 @@ All notable changes to this project are documented here. The format follows
 - Phase 3: API layer (`SampleTVAPI` package) - TMDB client, media repository implementation, retry logic, error mapping.
 - Phase 4: Movie discovery (`SampleTVUI`, `SampleTVDiscovery`) - browse grid with focusable cards, details modal, TMDB attribution, and wired into `AppContainer` and `RootView` using `@Observable`.
 - Phase 5: Search (`SampleTVSearch`) - debounced search, filters, pagination.
+- Phase 8: Authentication (`SampleTVAuth`) - mock login UI, session management, and authentication state persistence.
+- Phase 9: Profile (`SampleTVProfile`) - profile switcher, user preferences, and My List.
+- Phase 10: Categories (`SampleTVDiscovery`) - genre shelves on Discover, a dedicated Categories tab, progress overlay on `MediaCard`, and category/kind filter controls in `SampleTVSearch` 
 
 ## [0.1.0] - 2026-11-23
 
