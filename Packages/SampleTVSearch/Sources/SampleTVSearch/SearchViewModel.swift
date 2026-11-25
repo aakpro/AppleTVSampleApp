@@ -12,20 +12,40 @@ public final class SearchViewModel {
 
     public private(set) var state: State = .idle
     public private(set) var canLoadMore = false
+    public private(set) var availableGenres: [Genre] = []
     public var text = ""
+    public var selectedKind: MediaKind? {
+        didSet {
+            if let selectedKind {
+                filter.kind = selectedKind
+            }
+        }
+    }
     public var filter = MediaFilter(kind: .tv)
 
     private let search: SearchMedia
+    private let getGenres: GetGenres?
     private let debounce: Duration
     private var items: [MediaItem] = []
     private var nextPage = 1
 
-    public init(search: SearchMedia, debounce: Duration = .milliseconds(300)) {
+    public init(
+        search: SearchMedia,
+        getGenres: GetGenres? = nil,
+        debounce: Duration = .milliseconds(300)
+    ) {
         self.search = search
+        self.getGenres = getGenres
         self.debounce = debounce
     }
 
-    /// Drive from `.task(id: SearchKey(text:filter:))`. SwiftUI cancels the previous task when the
+    public func loadGenres() async {
+        guard let getGenres else { return }
+        let kind = selectedKind ?? .movie
+        availableGenres = (try? await getGenres(for: kind)) ?? []
+    }
+
+    /// Drive from `.task(id: Key(...))`. SwiftUI cancels the previous task when the
     /// input changes, so the sleep is the debounce and no Combine pipeline is needed.
     public func performSearch() async {
         do {
@@ -45,8 +65,8 @@ public final class SearchViewModel {
             return
         }
         do {
-            let page = try await search(text, kind: filter.kind, page: nextPage)
-            items += page.items.filter(filter.matches)
+            let page = try await search(text, kind: selectedKind, page: nextPage)
+            items += page.items.filter(matchesCurrentFilter)
             nextPage = page.page + 1
             canLoadMore = page.hasNextPage
             state = .loaded(items)
@@ -55,5 +75,15 @@ public final class SearchViewModel {
         } catch {
             state = .failed(error as? MediaError ?? .unknown)
         }
+    }
+
+    private func matchesCurrentFilter(_ item: MediaItem) -> Bool {
+        if selectedKind != nil {
+            return filter.matches(item)
+        }
+        if !filter.genreIDs.isEmpty, filter.genreIDs.isDisjoint(with: item.genreIDs) {
+            return false
+        }
+        return true
     }
 }

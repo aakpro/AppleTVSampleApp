@@ -17,9 +17,9 @@ phase PR; it is the source of truth that [AGENTS.md](../AGENTS.md) points agents
 | 6 | Player (`SampleTVPlayer`) | ✅ Complete & Verified | `feature/phase_06_player` |
 | 7 | [Continue Watching](Phase07_Continue_Watching/Documentation/Phase_07_Continue_Watching.md) (`SampleTVPlaybackProgress`) | ✅ Complete & Verified | `feature/phase_07_continue_watching` |
 | 7b | [Stabilization](Phase07_Continue_Watching/Documentation/Phase_07b_Stabilization.md): Domain progress contracts, player/view wiring | ✅ Complete & Verified | `bugfix/phase_07_continue_watching` |
-| 8 | [Authentication](Phase08_Authentication/Documentation/Phase_08_Authentication.md) (`SampleTVAuth`, mock auth) | ⏳ Not started | - |
-| 9 | [Profile](Phase09_Profile/Documentation/Phase_09_Profile.md) (`SampleTVProfile`, switcher & preferences) | ⏳ Not started | - |
-| 10 | [Categories](Phase10_Categories/Documentation/Phase_10_Categories.md) (genre shelves, Categories tab, search filters) | ⏳ Not started | - |
+| 8 | [Authentication](Phase08_Authentication/Documentation/Phase_08_Authentication.md) (`SampleTVAuth`, mock auth) | ✅ Complete & Verified | `feature/phase_08_authentication` |
+| 9 | [Profile](Phase09_Profile/Documentation/Phase_09_Profile.md) (`SampleTVProfile`, switcher & preferences) | ✅ Complete & Verified | `feature/phase_09_profile` |
+| 10 | [Categories](Phase10_Categories/Documentation/Phase_10_Categories.md) (genre shelves, Categories tab, search filters) | ✅ Complete & Verified | `feature/phase_10_categories` |
 | 11 | [Trailers & Playback](Phase11_Trailers_And_Playback/Documentation/Phase_11_Trailers_And_Playback.md) (videos, distinct streams, recommendations) | ⏳ Not started | - |
 | 12 | [Watchlist & Release](Phase12_Watchlist_And_Release/Documentation/Phase_12_Watchlist_And_Release.md) (My List, UI smoke tests, `v2.0.0`) | ⏳ Not started | - |
 

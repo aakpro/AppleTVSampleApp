@@ -6,6 +6,7 @@ extension DiscoveryViewModel {
     public func loadContinueWatching() async {
         guard let progressStore else {
             continueWatchingItems = []
+            progressByID = [:]
             return
         }
 
@@ -14,10 +15,17 @@ extension DiscoveryViewModel {
                 .filter { !$0.isWatched && $0.position > 0 }
             guard !records.isEmpty else {
                 continueWatchingItems = []
+                progressByID = [:]
                 return
             }
 
-            let loadedByID = Dictionary(uniqueKeysWithValues: items.map { ($0.id, $0) })
+            var fractions: [MediaID: Double] = [:]
+            for record in records where record.duration > 0 {
+                fractions[record.mediaID] = record.position / record.duration
+            }
+            progressByID = fractions
+
+            let loadedByID = Dictionary(items.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
             var resolvedByID: [MediaID: MediaItem] = [:]
 
             for record in records where loadedByID[record.mediaID] != nil {
@@ -46,6 +54,7 @@ extension DiscoveryViewModel {
             return
         } catch {
             continueWatchingItems = []
+            progressByID = [:]
         }
     }
 }

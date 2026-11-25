@@ -6,10 +6,16 @@ import SampleTVProfile
 import SampleTVSearch
 import SwiftUI
 
+private struct CategoryDestination: Hashable {
+    let kind: MediaKind
+    let genre: Genre?
+}
+
 struct RootView: View {
     let container: AppContainer
     @State private var selection: MediaItem?
     @State private var authenticatedAccount: UserAccount?
+    @State private var categoryDestination: CategoryDestination?
 
     var body: some View {
         Group {
@@ -44,6 +50,26 @@ struct RootView: View {
                     .navigationTitle("Discover")
             }
             .tabItem { Label("Discover", systemImage: "square.grid.2x2") }
+
+            NavigationStack {
+                CategoriesView(
+                    getGenres: GetGenres(repository: container.repository),
+                    onSelectCategory: { kind, genre in
+                        categoryDestination = CategoryDestination(kind: kind, genre: genre)
+                    },
+                    onSelectKind: { kind in
+                        categoryDestination = CategoryDestination(kind: kind, genre: nil)
+                    }
+                )
+                .navigationDestination(item: $categoryDestination) { destination in
+                    CategoryResultsView(
+                        discover: DiscoverMedia(repository: container.repository),
+                        kind: destination.kind,
+                        genre: destination.genre
+                    ) { selection = $0 }
+                }
+            }
+            .tabItem { Label("Categories", systemImage: "list.bullet") }
 
             NavigationStack {
                 SearchView(viewModel: container.makeSearchViewModel()) { selection = $0 }
