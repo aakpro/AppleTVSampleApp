@@ -14,7 +14,14 @@ phase PR; it is the source of truth that [AGENTS.md](../AGENTS.md) points agents
 | 3b | [Stabilization](Phase03_API_Layer/Documentation/Phase_03b_Stabilization.md): fix 2/3, link packages to the app | ✅ Complete & Verified | `feature/add-workspace` |
 | 4 | [Movie discovery](Phase04_Movie_Discovery/Documentation/Phase_04_Movie_Discovery.md) (`SampleTVUI`, `SampleTVDiscovery`) | ✅ Complete & Verified | `feature/phase_04_movie_discovery` |
 | 5 | Search (`SampleTVSearch`) | ✅ Complete & Verified | `feature/phase_05_search_module` |
-| 6 | Player (`SampleTVPlayer`) | ⏳ Not started | - |
+| 6 | Player (`SampleTVPlayer`) | ✅ Complete & Verified | `feature/phase_06_player` |
+| 7 | [Continue Watching](Phase07_Continue_Watching/Documentation/Phase_07_Continue_Watching.md) (`SampleTVPlaybackProgress`) | ✅ Complete & Verified | `feature/phase_07_continue_watching` |
+| 7b | [Stabilization](Phase07_Continue_Watching/Documentation/Phase_07b_Stabilization.md): Domain progress contracts, player/view wiring | ✅ Complete & Verified | `bugfix/phase_07_continue_watching` |
+| 8 | [Authentication](Phase08_Authentication/Documentation/Phase_08_Authentication.md) (`SampleTVAuth`, mock auth) | ⏳ Not started | - |
+| 9 | [Profile](Phase09_Profile/Documentation/Phase_09_Profile.md) (`SampleTVProfile`, switcher & preferences) | ⏳ Not started | - |
+| 10 | [Categories](Phase10_Categories/Documentation/Phase_10_Categories.md) (genre shelves, Categories tab, search filters) | ⏳ Not started | - |
+| 11 | [Trailers & Playback](Phase11_Trailers_And_Playback/Documentation/Phase_11_Trailers_And_Playback.md) (videos, distinct streams, recommendations) | ⏳ Not started | - |
+| 12 | [Watchlist & Release](Phase12_Watchlist_And_Release/Documentation/Phase_12_Watchlist_And_Release.md) (My List, UI smoke tests, `v2.0.0`) | ⏳ Not started | - |
 
 Statuses: ⏳ not started · 🚧 in progress (branch name) · ✅ complete / merged (version tag).
 
@@ -35,7 +42,9 @@ the app target through `Scripts/link_package.rb` appear in Xcode as local packag
 │   ├── SampleTVAPI/             Phase 3 (verified, 5 tests passing)
 │   ├── SampleTVUI/              Phase 4 (verified, 2 tests passing)
 │   ├── SampleTVDiscovery/       Phase 4 (verified, 6 tests passing)
-│   └── SampleTVSearch/          Phase 5 (verified, 2 tests passing)
+│   ├── SampleTVSearch/          Phase 5 (verified, 2 tests passing)
+│   ├── SampleTVPlayer/          Phase 6 (AVKit player)
+│   └── SampleTVPlaybackProgress/ Phase 7 / 7b (UserDefaults progress store)
 ├── Scripts/                     link_package.rb (adds a local package to the app target)
 ├── Config/                      Shared.xcconfig, Secrets.xcconfig(.example), Info.plist
 ├── Docs/                        architecture, API spec, phase guides, templates
@@ -48,7 +57,7 @@ the app target through `Scripts/link_package.rb` appear in Xcode as local packag
 2. Add `<FileRef location="group:<Name>">` to the `Packages` group in `SampleTV.xcworkspace/contents.xcworkspacedata`.
 3. Run `ruby Scripts/link_package.rb <Name>` to link the package product to the app target. Never hand-edit `project.pbxproj`.
 
-## Target (after Phase 6)
+## Target (after Phase 12)
 
 ```
 .
@@ -74,8 +83,11 @@ the app target through `Scripts/link_package.rb` appear in Xcode as local packag
 │   ├── SampleTVAPI/                 TMDB client, DTOs, retry, cache                  (Phase 3)
 │   ├── SampleTVUI/                  MediaCard, PosterImage, ImageURLBuilder          (Phase 4)
 │   ├── SampleTVDiscovery/           browse grid, details                             (Phase 4)
-│   ├── SampleTVSearch/              debounced search, filters                        (Phase 5)
-│   └── SampleTVPlayer/              AVKit player                                     (Phase 6)
+│   ├── SampleTVSearch/              debounced search, filters                        (Phase 5, 10)
+│   ├── SampleTVPlayer/              AVKit player                                     (Phase 6, 11)
+│   ├── SampleTVPlaybackProgress/    UserDefaults progress store                      (Phase 7, 7b)
+│   ├── SampleTVAuth/                mock login & session UI                          (Phase 8)
+│   └── SampleTVProfile/             profile switcher, preferences, My List           (Phase 9, 12)
 └── Docs/
 ```
 
@@ -86,8 +98,11 @@ Each package follows the same layout: `Package.swift`, `Sources/<Name>/…`, `Te
 ```
 SampleTVDomain      (Foundation only)
 ├── SampleTVAPI
+├── SampleTVPlaybackProgress
 ├── SampleTVUI
+│   ├── SampleTVAuth
 │   ├── SampleTVDiscovery
+│   ├── SampleTVProfile
 │   └── SampleTVSearch
 SampleTVPlayer      (no dependencies)
 
@@ -113,6 +128,13 @@ Enforced by `Package.swift` plus the custom rules in `.swiftlint.yml`.
 | `Docs/Phase04_Movie_Discovery/Documentation/Phase_04_Movie_Discovery.md` | Phase 4 guide |
 | `Docs/Phase05_Search_Module/Documentation/Phase_05_Search_Module.md` | Phase 5 guide |
 | `Docs/Phase06_Player_Feature/Documentation/Phase_06_Player_Feature.md` | Phase 6 guide |
+| `Docs/Phase07_Continue_Watching/Documentation/Phase_07_Continue_Watching.md` | Phase 7 guide |
+| `Docs/Phase07_Continue_Watching/Documentation/Phase_07b_Stabilization.md` | Phase 7b stabilization guide |
+| `Docs/Phase08_Authentication/Documentation/Phase_08_Authentication.md` | Phase 8 guide |
+| `Docs/Phase09_Profile/Documentation/Phase_09_Profile.md` | Phase 9 guide |
+| `Docs/Phase10_Categories/Documentation/Phase_10_Categories.md` | Phase 10 guide |
+| `Docs/Phase11_Trailers_And_Playback/Documentation/Phase_11_Trailers_And_Playback.md` | Phase 11 guide |
+| `Docs/Phase12_Watchlist_And_Release/Documentation/Phase_12_Watchlist_And_Release.md` | Phase 12 guide |
 
 ### Templates (`Docs/templates/`)
 
