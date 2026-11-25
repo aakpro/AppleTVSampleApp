@@ -13,7 +13,8 @@ Packages/SampleTVDomain/Sources/SampleTVDomain/
 └── Profile.swift                      ViewerProfile, UserPreferences, ProfileRepository, use cases
 
 Packages/SampleTVAPI/Sources/SampleTVAPI/
-└── MockProfileRepository.swift        actor backed by UserDefaults
+├── SwiftDataModels.swift              @Model entities (StoredProfile, StoredPreferences, StoredProgress)
+└── SwiftDataProfileRepository.swift   ModelActor-backed ProfileRepository (in-memory ModelConfiguration for tests)
 
 Packages/SampleTVProfile/
 ├── Package.swift                      depends on SampleTVDomain, SampleTVUI
@@ -30,7 +31,8 @@ SampleTV/RootView.swift                Profile tab + sign-out transition
 
 ## Design
 
-- **Mocked multi-profile support:** `MockProfileRepository` provides household profiles (e.g., `"Main"`, `"Kids"`, `"Guest"`) and per-profile `UserPreferences` (`defaultKind`, `autoplayTrailers`).
+- **SwiftData persistence:** `SwiftDataProfileRepository` uses a `@ModelActor` and `SwiftData` (`StoredProfile`, `StoredPreferences`) behind `ProfileRepository`, with `ModelConfiguration(isStoredInMemoryOnly: true)` in unit tests. Optionally migrate `PlaybackProgressStore` to SwiftData in the same container.
+- **Mocked multi-profile support:** Seeds household profiles (e.g., `"Main"`, `"Kids"`, `"Guest"`) and per-profile `UserPreferences` (`defaultKind`, `autoplayTrailers`).
 - **Watch history integration:** `ProfileViewModel` reads `PlaybackProgressStore.recentlyWatched(maxCount:)` to show a watch-history count and offers a **"Clear Watch History"** action.
 - **Clean sign-out:** Pressing **Sign Out** triggers a confirmation dialog, calls `SignOut`, and notifies `RootView` to reset navigation/covers and return to `LoginView`.
 

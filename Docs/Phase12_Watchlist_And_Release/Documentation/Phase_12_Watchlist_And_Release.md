@@ -13,7 +13,7 @@ Packages/SampleTVDomain/Sources/SampleTVDomain/
 └── Watchlist.swift                    WatchlistStore protocol, ToggleWatchlist, GetWatchlist
 
 Packages/SampleTVAPI/Sources/SampleTVAPI/
-└── UserDefaultsWatchlistStore.swift   actor-backed persistence (per active profile)
+└── SwiftDataWatchlistStore.swift      @ModelActor-backed WatchlistStore (per active profile)
 
 Packages/SampleTVDiscovery/Sources/SampleTVDiscovery/
 └── DetailsView.swift                  "Add to My List" / "In My List" toggle button

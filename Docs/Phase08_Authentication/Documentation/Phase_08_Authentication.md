@@ -13,7 +13,8 @@ Packages/SampleTVDomain/Sources/SampleTVDomain/
 └── Auth.swift                         UserAccount, AuthError, AuthRepository, SignIn, SignInDemo, SignOut, LoadCurrentAccount
 
 Packages/SampleTVAPI/Sources/SampleTVAPI/
-└── MockAuthRepository.swift           actor backed by UserDefaults (swappable for real OAuth/JWT)
+├── KeychainSessionStore.swift         Security framework Keychain wrapper (Sendable, testable via in-memory stub)
+└── MockAuthRepository.swift           actor backed by KeychainSessionStore (swappable for real OAuth/JWT)
 
 Packages/SampleTVAuth/
 ├── Package.swift                      depends on SampleTVDomain, SampleTVUI
@@ -30,7 +31,7 @@ SampleTV/RootView.swift                session routing (LoginView vs. TabView)
 
 ## Design
 
-- **Ports and adapters:** `SampleTVDomain` defines `UserAccount`, `AuthError`, and `AuthRepository`. `MockAuthRepository` lives in `SampleTVAPI` as an `actor` using `UserDefaults(suiteName:)` so real Keychain/OAuth can replace it later without touching Domain or UI.
+- **Ports and adapters:** `SampleTVDomain` defines `UserAccount`, `AuthError`, and `AuthRepository`. `MockAuthRepository` lives in `SampleTVAPI` as an `actor` backed by `KeychainSessionStore` (`Security` framework) so real OAuth/JWT tokens use the same secure Keychain storage without touching Domain or UI. Unit tests inject an in-memory `SessionStore` stub so tests never touch the system Keychain.
 - **tvOS 10-foot ergonomics:** Typing long credentials with the Siri Remote is tedious, so `LoginView` offers both `TextField`/`SecureField` credential sign-in (with validation for `emptyFields` and `invalidCredentials`) and a **"Continue with Demo Account"** button.
 - **Session gating:** `RootView` loads `LoadCurrentAccount` on launch via `.task`. Unauthenticated users see `LoginView`; authenticated users enter the `TabView`.
 
