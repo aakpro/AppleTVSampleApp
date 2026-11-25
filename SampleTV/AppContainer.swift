@@ -5,6 +5,7 @@ import SampleTVAuth
 import SampleTVDiscovery
 import SampleTVDomain
 import SampleTVPlaybackProgress
+import SampleTVProfile
 import SampleTVSearch
 
 @MainActor
@@ -18,17 +19,20 @@ final class AppContainer {
     let repository: any MediaRepository
     let progressStore: any PlaybackProgressStore
     let authRepository: any AuthRepository
+    let profileRepository: any ProfileRepository
 
     init(
         configuration: AppConfiguration, 
         repository: any MediaRepository, 
         progressStore: any PlaybackProgressStore,
-        authRepository: any AuthRepository
+        authRepository: any AuthRepository,
+        profileRepository: any ProfileRepository
     ) {
         self.configuration = configuration
         self.repository = repository
         self.progressStore = progressStore
         self.authRepository = authRepository
+        self.profileRepository = profileRepository
     }
 
     static func live() -> AppContainer {
@@ -39,11 +43,14 @@ final class AppContainer {
         )
         let progressStore = UserDefaultsPlaybackProgressStore()
         let authRepository = MockAuthRepository()
+        let profileRepository = MockProfileRepository()
+        
         return AppContainer(
             configuration: configuration, 
             repository: TMDBMediaRepository(client: client),
             progressStore: progressStore,
-            authRepository: authRepository
+            authRepository: authRepository,
+            profileRepository: profileRepository
         )
     }
 
@@ -73,6 +80,16 @@ final class AppContainer {
             signIn: SignIn(repository: authRepository),
             signInDemo: SignInDemo(repository: authRepository),
             onAuthenticated: onAuthenticated
+        )
+    }
+    
+    func makeProfileViewModel() -> ProfileViewModel {
+        ProfileViewModel(
+            getCurrentProfile: GetCurrentUserProfile(repository: profileRepository),
+            getPreferences: GetUserPreferences(repository: profileRepository),
+            updatePreferences: UpdateUserPreferences(repository: profileRepository),
+            switchProfile: SwitchProfile(repository: profileRepository),
+            progressStore: progressStore
         )
     }
 }

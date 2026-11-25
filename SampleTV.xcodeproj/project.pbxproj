@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 77;
+	objectVersion = 110;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -43,29 +43,21 @@
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		0B6F1D255F83935B8738C4EC /* SampleTVUITests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-			);
 			path = SampleTVUITests;
 			sourceTree = "<group>";
 		};
 		179AD818B125AB719681F381 /* SampleTVTests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-			);
 			path = SampleTVTests;
 			sourceTree = "<group>";
 		};
 		246CFD95586E97823AD8C113 /* Config */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-			);
 			path = Config;
 			sourceTree = "<group>";
 		};
 		31345B7B42A80EF4CAF66FA2 /* SampleTV */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-			);
 			path = SampleTV;
 			sourceTree = "<group>";
 		};
@@ -131,8 +123,6 @@
 				80D2A1A6C70976793BA466D6 /* Resources */,
 			);
 			buildRules = (
-			);
-			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
 				31345B7B42A80EF4CAF66FA2 /* SampleTV */,
@@ -222,14 +212,14 @@
 			mainGroup = A632399E075B7BDE0A3032DC;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
-				E9312D3FB12E516AF4EE4F92 /* XCLocalSwiftPackageReference "SampleTVDomain" */,
-				6AC7F580E9C769B930835440 /* XCLocalSwiftPackageReference "SampleTVAPI" */,
-				438741596C1F2B9D1BF6AFD4 /* XCLocalSwiftPackageReference "SampleTVUI" */,
-				1BF99D9A95D462AFBFAD659B /* XCLocalSwiftPackageReference "SampleTVDiscovery" */,
-				3C012D74E9F24E6E72C57044 /* XCLocalSwiftPackageReference "SampleTVSearch" */,
-				BE61E111650D011E1F5AF7EA /* XCLocalSwiftPackageReference "SampleTVPlayer" */,
-				61AF6140CDEB846618FC25CB /* XCLocalSwiftPackageReference "SampleTVPlaybackProgress" */,
-				EBAA13B139DE4CCE1B5BBEF6 /* XCLocalSwiftPackageReference "SampleTVAuth" */,
+				E9312D3FB12E516AF4EE4F92 /* XCLocalSwiftPackageReference "Packages/SampleTVDomain" */,
+				6AC7F580E9C769B930835440 /* XCLocalSwiftPackageReference "Packages/SampleTVAPI" */,
+				438741596C1F2B9D1BF6AFD4 /* XCLocalSwiftPackageReference "Packages/SampleTVUI" */,
+				1BF99D9A95D462AFBFAD659B /* XCLocalSwiftPackageReference "Packages/SampleTVDiscovery" */,
+				3C012D74E9F24E6E72C57044 /* XCLocalSwiftPackageReference "Packages/SampleTVSearch" */,
+				BE61E111650D011E1F5AF7EA /* XCLocalSwiftPackageReference "Packages/SampleTVPlayer" */,
+				61AF6140CDEB846618FC25CB /* XCLocalSwiftPackageReference "Packages/SampleTVPlaybackProgress" */,
+				EBAA13B139DE4CCE1B5BBEF6 /* XCLocalSwiftPackageReference "Packages/SampleTVAuth" */,
 			);
 			preferredProjectObjectVersion = 110;
 			productRefGroup = ECD8776C73450FC18EEB95B3 /* Products */;
@@ -293,7 +283,7 @@
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
-		55C284EA398B9D30D7BFC6FF /* Debug */ = {
+		55C284EA398B9D30D7BFC6FF /* Debug configuration for PBXNativeTarget "SampleTVUITests" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
@@ -312,7 +302,7 @@
 			};
 			name = Debug;
 		};
-		69869B4D0A75985A485AFCA5 /* Release */ = {
+		69869B4D0A75985A485AFCA5 /* Release configuration for PBXNativeTarget "SampleTVTests" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
@@ -333,7 +323,7 @@
 			};
 			name = Release;
 		};
-		723F9D19D6ED2ED201224302 /* Debug */ = {
+		723F9D19D6ED2ED201224302 /* Debug configuration for PBXNativeTarget "SampleTV" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = "App Icon & Top Shelf Image";
@@ -363,7 +353,7 @@
 			};
 			name = Debug;
 		};
-		8D4FDDF32CC741BFE3CAE46E /* Debug */ = {
+		8D4FDDF32CC741BFE3CAE46E /* Debug configuration for PBXProject "SampleTV" */ = {
 			isa = XCBuildConfiguration;
 			baseConfigurationReferenceAnchor = 246CFD95586E97823AD8C113 /* Config */;
 			baseConfigurationReferenceRelativePath = Shared.xcconfig;
@@ -428,7 +418,7 @@
 			};
 			name = Debug;
 		};
-		962A1D8B8C63B1836AA87E14 /* Release */ = {
+		962A1D8B8C63B1836AA87E14 /* Release configuration for PBXNativeTarget "SampleTVUITests" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
@@ -447,7 +437,7 @@
 			};
 			name = Release;
 		};
-		C606F7F3E7F11C713A9E0490 /* Debug */ = {
+		C606F7F3E7F11C713A9E0490 /* Debug configuration for PBXNativeTarget "SampleTVTests" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
@@ -468,7 +458,7 @@
 			};
 			name = Debug;
 		};
-		CF0A203873DFE67563E6314E /* Release */ = {
+		CF0A203873DFE67563E6314E /* Release configuration for PBXProject "SampleTV" */ = {
 			isa = XCBuildConfiguration;
 			baseConfigurationReferenceAnchor = 246CFD95586E97823AD8C113 /* Config */;
 			baseConfigurationReferenceRelativePath = Shared.xcconfig;
@@ -526,7 +516,7 @@
 			};
 			name = Release;
 		};
-		D776181F4B4890E18F33C1B9 /* Release */ = {
+		D776181F4B4890E18F33C1B9 /* Release configuration for PBXNativeTarget "SampleTV" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = "App Icon & Top Shelf Image";
@@ -562,67 +552,67 @@
 		33B5E75EF9547E2896720FD1 /* Build configuration list for PBXNativeTarget "SampleTVUITests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				55C284EA398B9D30D7BFC6FF /* Debug */,
-				962A1D8B8C63B1836AA87E14 /* Release */,
+				55C284EA398B9D30D7BFC6FF /* Debug configuration for PBXNativeTarget "SampleTVUITests" */,
+				962A1D8B8C63B1836AA87E14 /* Release configuration for PBXNativeTarget "SampleTVUITests" */,
 			);
 			defaultConfigurationName = Release;
 		};
 		5F73C25091926A6B6E6BA478 /* Build configuration list for PBXNativeTarget "SampleTVTests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				C606F7F3E7F11C713A9E0490 /* Debug */,
-				69869B4D0A75985A485AFCA5 /* Release */,
+				C606F7F3E7F11C713A9E0490 /* Debug configuration for PBXNativeTarget "SampleTVTests" */,
+				69869B4D0A75985A485AFCA5 /* Release configuration for PBXNativeTarget "SampleTVTests" */,
 			);
 			defaultConfigurationName = Release;
 		};
 		75FD6BBD69E8542BFFDDADC2 /* Build configuration list for PBXNativeTarget "SampleTV" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				723F9D19D6ED2ED201224302 /* Debug */,
-				D776181F4B4890E18F33C1B9 /* Release */,
+				723F9D19D6ED2ED201224302 /* Debug configuration for PBXNativeTarget "SampleTV" */,
+				D776181F4B4890E18F33C1B9 /* Release configuration for PBXNativeTarget "SampleTV" */,
 			);
 			defaultConfigurationName = Release;
 		};
 		A4FAD08308ACCD4B9E88C190 /* Build configuration list for PBXProject "SampleTV" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				8D4FDDF32CC741BFE3CAE46E /* Debug */,
-				CF0A203873DFE67563E6314E /* Release */,
+				8D4FDDF32CC741BFE3CAE46E /* Debug configuration for PBXProject "SampleTV" */,
+				CF0A203873DFE67563E6314E /* Release configuration for PBXProject "SampleTV" */,
 			);
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 
 /* Begin XCLocalSwiftPackageReference section */
-		1BF99D9A95D462AFBFAD659B /* XCLocalSwiftPackageReference "SampleTVDiscovery" */ = {
+		1BF99D9A95D462AFBFAD659B /* XCLocalSwiftPackageReference "Packages/SampleTVDiscovery" */ = {
 			isa = XCLocalSwiftPackageReference;
 			relativePath = Packages/SampleTVDiscovery;
 		};
-		3C012D74E9F24E6E72C57044 /* XCLocalSwiftPackageReference "SampleTVSearch" */ = {
+		3C012D74E9F24E6E72C57044 /* XCLocalSwiftPackageReference "Packages/SampleTVSearch" */ = {
 			isa = XCLocalSwiftPackageReference;
 			relativePath = Packages/SampleTVSearch;
 		};
-		438741596C1F2B9D1BF6AFD4 /* XCLocalSwiftPackageReference "SampleTVUI" */ = {
+		438741596C1F2B9D1BF6AFD4 /* XCLocalSwiftPackageReference "Packages/SampleTVUI" */ = {
 			isa = XCLocalSwiftPackageReference;
 			relativePath = Packages/SampleTVUI;
 		};
-		61AF6140CDEB846618FC25CB /* XCLocalSwiftPackageReference "SampleTVPlaybackProgress" */ = {
+		61AF6140CDEB846618FC25CB /* XCLocalSwiftPackageReference "Packages/SampleTVPlaybackProgress" */ = {
 			isa = XCLocalSwiftPackageReference;
 			relativePath = Packages/SampleTVPlaybackProgress;
 		};
-		6AC7F580E9C769B930835440 /* XCLocalSwiftPackageReference "SampleTVAPI" */ = {
+		6AC7F580E9C769B930835440 /* XCLocalSwiftPackageReference "Packages/SampleTVAPI" */ = {
 			isa = XCLocalSwiftPackageReference;
 			relativePath = Packages/SampleTVAPI;
 		};
-		BE61E111650D011E1F5AF7EA /* XCLocalSwiftPackageReference "SampleTVPlayer" */ = {
+		BE61E111650D011E1F5AF7EA /* XCLocalSwiftPackageReference "Packages/SampleTVPlayer" */ = {
 			isa = XCLocalSwiftPackageReference;
 			relativePath = Packages/SampleTVPlayer;
 		};
-		E9312D3FB12E516AF4EE4F92 /* XCLocalSwiftPackageReference "SampleTVDomain" */ = {
+		E9312D3FB12E516AF4EE4F92 /* XCLocalSwiftPackageReference "Packages/SampleTVDomain" */ = {
 			isa = XCLocalSwiftPackageReference;
 			relativePath = Packages/SampleTVDomain;
 		};
-		EBAA13B139DE4CCE1B5BBEF6 /* XCLocalSwiftPackageReference "SampleTVAuth" */ = {
+		EBAA13B139DE4CCE1B5BBEF6 /* XCLocalSwiftPackageReference "Packages/SampleTVAuth" */ = {
 			isa = XCLocalSwiftPackageReference;
 			relativePath = Packages/SampleTVAuth;
 		};

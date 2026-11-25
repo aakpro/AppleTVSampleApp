@@ -2,6 +2,7 @@ import SampleTVAuth
 import SampleTVDiscovery
 import SampleTVDomain
 import SampleTVPlayer
+import SampleTVProfile
 import SampleTVSearch
 import SwiftUI
 
@@ -46,6 +47,12 @@ struct RootView: View {
                 SearchView(viewModel: container.makeSearchViewModel()) { selection = $0 }
             }
             .tabItem { Label("Search", systemImage: "magnifyingglass") }
+            
+            NavigationStack {
+                ProfileView(viewModel: container.makeProfileViewModel())
+                    .navigationTitle("Profile")
+            }
+            .tabItem { Label("Profile", systemImage: "person.circle") }
         }
         .fullScreenCover(item: $selection) { item in
             DetailsScreen(container: container, item: item)
