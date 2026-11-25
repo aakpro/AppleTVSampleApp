@@ -11,7 +11,7 @@ phase PR; it is the source of truth that [AGENTS.md](../AGENTS.md) points agents
 | 1 | Foundation: Swift 6, CI, DI skeleton | ✅ Merged | `main` (v0.1.0) |
 | 2 | Domain layer (`SampleTVDomain`) | ✅ Complete & Verified | `main` / `feature/add-workspace` |
 | 3 | API layer (`SampleTVAPI`) | ✅ Complete & Verified | `main` / `feature/add-workspace` |
-| 3b | [Stabilization](Phase03_API_Layer/Documentation/Phase_03b_Stabilization.md): fix 2/3, link packages to the app | ✅ Complete & Verified | `feature/add-workspace` |
+| 3b | [Stabilization](Phase03_API_Layer/Documentation/Phase_03b_Stabilization.md): fix 2/3, link packages to the app | ✅ Complete & Verified | `bugfix/phase_03b_stabilization` |
 | 4 | [Movie discovery](Phase04_Movie_Discovery/Documentation/Phase_04_Movie_Discovery.md) (`SampleTVUI`, `SampleTVDiscovery`) | ✅ Complete & Verified | `feature/phase_04_movie_discovery` |
 | 5 | Search (`SampleTVSearch`) | ✅ Complete & Verified | `feature/phase_05_search_module` |
 | 6 | Player (`SampleTVPlayer`) | ✅ Complete & Verified | `feature/phase_06_player` |
@@ -20,7 +20,7 @@ phase PR; it is the source of truth that [AGENTS.md](../AGENTS.md) points agents
 | 8 | [Authentication](Phase08_Authentication/Documentation/Phase_08_Authentication.md) (`SampleTVAuth`, mock auth) | ✅ Complete & Verified | `feature/phase_08_authentication` |
 | 9 | [Profile](Phase09_Profile/Documentation/Phase_09_Profile.md) (`SampleTVProfile`, switcher & preferences) | ✅ Complete & Verified | `feature/phase_09_profile` |
 | 10 | [Categories](Phase10_Categories/Documentation/Phase_10_Categories.md) (genre shelves, Categories tab, search filters) | ✅ Complete & Verified | `feature/phase_10_categories` |
-| 11 | [Trailers & Playback](Phase11_Trailers_And_Playback/Documentation/Phase_11_Trailers_And_Playback.md) (videos, distinct streams, recommendations) | ⏳ Not started | - |
+| 11 | [Trailers & Playback](Phase11_Trailers_And_Playback/Documentation/Phase_11_Trailers_And_Playback.md) (videos, distinct streams, recommendations) | ✅ Complete & Verified | `feature/phase_11_trailers_and_playback` |
 | 12 | [Watchlist & Release](Phase12_Watchlist_And_Release/Documentation/Phase_12_Watchlist_And_Release.md) (My List, UI smoke tests, `v2.0.0`) | ⏳ Not started | - |
 
 Statuses: ⏳ not started · 🚧 in progress (branch name) · ✅ complete / merged (version tag).

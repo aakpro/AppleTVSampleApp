@@ -11,6 +11,12 @@ private struct CategoryDestination: Hashable {
     let genre: Genre?
 }
 
+private struct PlaybackSelection: Identifiable {
+    let id = UUID()
+    let mediaID: MediaID
+    let resource: PlayableResource
+}
+
 struct RootView: View {
     let container: AppContainer
     @State private var selection: MediaItem?
@@ -36,7 +42,6 @@ struct RootView: View {
             }
         }
         .task {
-            // Load current account on launch
             if let account = await container.authRepository.currentAccount() {
                 authenticatedAccount = account
             }
@@ -85,7 +90,9 @@ struct RootView: View {
             .tabItem { Label("Profile", systemImage: "person.circle") }
         }
         .fullScreenCover(item: $selection) { item in
-            DetailsScreen(container: container, item: item)
+            DetailsScreen(container: container, item: item) { recommended in
+                selection = recommended
+            }
         }
     }
 }
@@ -94,19 +101,40 @@ struct RootView: View {
 private struct DetailsScreen: View {
     let container: AppContainer
     let item: MediaItem
-    @State private var playing: MediaItem?
+    let onSelectRecommendation: (MediaItem) -> Void
+    @State private var playbackSelection: PlaybackSelection?
 
     var body: some View {
-        DetailsView(viewModel: container.makeDetailsViewModel(for: item)) { playing = $0 }
-            .fullScreenCover(item: $playing) { item in
-                PlayerScreen(container: container, item: item)
-            }
+        DetailsView(
+            viewModel: container.makeDetailsViewModel(for: item),
+            onPlay: { item in
+                Task { await startPlayback(for: item, kind: .feature) }
+            },
+            onPlayTrailer: { item in
+                Task { await startPlayback(for: item, kind: .trailer) }
+            },
+            onSelectRecommendation: onSelectRecommendation
+        )
+        .fullScreenCover(item: $playbackSelection) { selection in
+            PlayerScreen(container: container, selection: selection)
+        }
+    }
+
+    private func startPlayback(for item: MediaItem, kind: PlaybackResourceKind) async {
+        let resources = (try? await container.resourceResolver.resolve(item.id, genreIDs: item.genreIDs)) ?? []
+        let resolved = resources.first { $0.kind == kind } ?? PlayableResource(
+            url: container.playbackURL(for: item),
+            kind: kind,
+            title: item.title,
+            trackProgress: kind == .feature
+        )
+        playbackSelection = PlaybackSelection(mediaID: item.id, resource: resolved)
     }
 }
 
 private struct PlayerScreen: View {
     let container: AppContainer
-    let item: MediaItem
+    let selection: PlaybackSelection
     @State private var initialPosition: TimeInterval?
     @State private var isReady = false
 
@@ -114,11 +142,14 @@ private struct PlayerScreen: View {
         Group {
             if isReady {
                 PlayerView(
-                    url: container.playbackURL(for: item),
+                    url: selection.resource.url,
+                    title: selection.resource.title,
+                    subtitle: selection.resource.subtitle,
                     initialPosition: initialPosition
                 ) { position, duration in
+                    guard selection.resource.trackProgress else { return }
                     let progress = PlaybackProgress(
-                        mediaID: item.id,
+                        mediaID: selection.mediaID,
                         position: position,
                         duration: duration
                     )
@@ -131,9 +162,11 @@ private struct PlayerScreen: View {
             }
         }
         .task {
-            let saved = try? await container.progressStore.loadProgress(for: item.id)
-            if let saved, !saved.isWatched {
-                initialPosition = saved.position
+            if selection.resource.trackProgress {
+                let saved = try? await container.progressStore.loadProgress(for: selection.mediaID)
+                if let saved, !saved.isWatched {
+                    initialPosition = saved.position
+                }
             }
             isReady = true
         }

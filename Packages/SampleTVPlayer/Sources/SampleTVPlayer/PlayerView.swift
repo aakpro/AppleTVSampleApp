@@ -6,6 +6,8 @@ import SwiftUI
 /// audio/subtitle pickers and Siri Remote handling; don't rebuild them.
 public struct PlayerView: View {
     private let url: URL
+    private let title: String?
+    private let subtitle: String?
     private let initialPosition: TimeInterval?
     private let onProgress: (@MainActor @Sendable (TimeInterval, TimeInterval) -> Void)?
     @State private var player: AVPlayer
@@ -13,13 +15,19 @@ public struct PlayerView: View {
 
     public init(
         url: URL,
+        title: String? = nil,
+        subtitle: String? = nil,
         initialPosition: TimeInterval? = nil,
         onProgress: (@MainActor @Sendable (TimeInterval, TimeInterval) -> Void)? = nil
     ) {
         self.url = url
+        self.title = title
+        self.subtitle = subtitle
         self.initialPosition = initialPosition
         self.onProgress = onProgress
-        _player = State(initialValue: AVPlayer(url: url))
+        let item = AVPlayerItem(url: url)
+        item.externalMetadata = Self.buildMetadata(title: title, subtitle: subtitle)
+        _player = State(initialValue: AVPlayer(playerItem: item))
     }
 
     public var body: some View {
@@ -46,6 +54,25 @@ public struct PlayerView: View {
                 player.pause()
                 reportCurrentProgress()
             }
+    }
+
+    private static func buildMetadata(title: String?, subtitle: String?) -> [AVMetadataItem] {
+        var items: [AVMetadataItem] = []
+        if let title {
+            let item = AVMutableMetadataItem()
+            item.identifier = .commonIdentifierTitle
+            item.value = title as NSString
+            item.extendedLanguageTag = "und"
+            items.append(item)
+        }
+        if let subtitle {
+            let item = AVMutableMetadataItem()
+            item.identifier = .commonIdentifierDescription
+            item.value = subtitle as NSString
+            item.extendedLanguageTag = "und"
+            items.append(item)
+        }
+        return items
     }
 
     /// Observes `AVPlayerItem.status` for readiness (initial seek) and failures.
