@@ -1,90 +1,102 @@
 import Foundation
 import Observation
 import SampleTVDomain
-import SampleTVPlaybackProgress
 
 @MainActor
-public final class ProfileViewModel: ObservableObject {
+@Observable
+public final class ProfileViewModel {
     private let getCurrentProfile: GetCurrentUserProfile
+    private let getProfiles: GetProfiles
     private let getPreferences: GetUserPreferences
-    private let updatePreferences: UpdateUserPreferences
-    private let switchProfile: SwitchProfile
+    private let updatePreferencesUseCase: UpdateUserPreferences
+    private let switchProfileUseCase: SwitchProfile
+    private let signOutUseCase: SignOut
     private let progressStore: any PlaybackProgressStore
-    
-    @Published public var currentProfile: ViewerProfile?
-    @Published public var profiles: [ViewerProfile] = []
-    @Published public var preferences: UserPreferences = UserPreferences()
-    @Published public var watchHistoryCount: Int = 0
-    
+    private let onSignOut: @MainActor @Sendable () -> Void
+
+    public private(set) var currentProfile: ViewerProfile?
+    public private(set) var profiles: [ViewerProfile] = []
+    public private(set) var preferences = UserPreferences()
+    public private(set) var watchHistoryCount = 0
+    public private(set) var errorMessage: String?
+
     public init(
         getCurrentProfile: GetCurrentUserProfile,
+        getProfiles: GetProfiles,
         getPreferences: GetUserPreferences,
         updatePreferences: UpdateUserPreferences,
         switchProfile: SwitchProfile,
-        progressStore: any PlaybackProgressStore
+        signOut: SignOut,
+        progressStore: any PlaybackProgressStore,
+        onSignOut: @MainActor @Sendable @escaping () -> Void
     ) {
         self.getCurrentProfile = getCurrentProfile
+        self.getProfiles = getProfiles
         self.getPreferences = getPreferences
-        self.updatePreferences = updatePreferences
-        self.switchProfile = switchProfile
+        self.updatePreferencesUseCase = updatePreferences
+        self.switchProfileUseCase = switchProfile
+        self.signOutUseCase = signOut
         self.progressStore = progressStore
-        
-        Task {
-            await loadProfile()
-            await loadPreferences()
-            await loadWatchHistoryCount()
-        }
+        self.onSignOut = onSignOut
     }
-    
-    private func loadProfile() async {
+
+    public func load() async {
+        errorMessage = nil
         do {
-            currentProfile = try await getCurrentProfile()
-        } catch {
-            print("Failed to load profile: \(error)")
-        }
-    }
-    
-    private func loadPreferences() async {
-        do {
-            preferences = try await getPreferences()
-        } catch {
-            print("Failed to load preferences: \(error)")
-        }
-    }
-    
-    private func loadWatchHistoryCount() async {
-        do {
+            let profile = try await getCurrentProfile()
+            currentProfile = profile
+            profiles = try await getProfiles()
+            preferences = try await getPreferences(profileID: profile.id)
             let progressItems = try await progressStore.recentlyWatched(maxCount: 100)
             watchHistoryCount = progressItems.count
+        } catch is CancellationError {
+            return
         } catch {
-            print("Failed to load watch history count: \(error)")
+            errorMessage = error.localizedDescription
         }
     }
-    
+
     public func updatePreferences(_ newPreferences: UserPreferences) async {
+        let profileID = currentProfile?.id ?? "main"
         do {
-            try await updatePreferences(newPreferences)
+            try await updatePreferencesUseCase(newPreferences, for: profileID)
             preferences = newPreferences
+        } catch is CancellationError {
+            return
         } catch {
-            print("Failed to update preferences: \(error)")
+            errorMessage = error.localizedDescription
         }
     }
-    
+
     public func switchToProfile(_ profileID: String) async {
         do {
-            try await switchProfile(to: profileID)
-            await loadProfile()
+            try await switchProfileUseCase(to: profileID)
+            let profile = try await getCurrentProfile()
+            currentProfile = profile
+            preferences = try await getPreferences(profileID: profile.id)
+        } catch is CancellationError {
+            return
         } catch {
-            print("Failed to switch profile: \(error)")
+            errorMessage = error.localizedDescription
         }
     }
-    
+
     public func clearWatchHistory() async {
         do {
-            try await progressStore.clearProgress()
-            await loadWatchHistoryCount()
+            let progressItems = try await progressStore.recentlyWatched(maxCount: 100)
+            for item in progressItems {
+                try await progressStore.clearProgress(for: item.mediaID)
+            }
+            watchHistoryCount = 0
+        } catch is CancellationError {
+            return
         } catch {
-            print("Failed to clear watch history: \(error)")
+            errorMessage = error.localizedDescription
         }
+    }
+
+    public func signOut() async {
+        await signOutUseCase()
+        onSignOut()
     }
 }

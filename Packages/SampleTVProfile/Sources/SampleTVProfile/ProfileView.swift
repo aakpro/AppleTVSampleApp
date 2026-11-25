@@ -1,191 +1,188 @@
-import SwiftUI
 import SampleTVDomain
 import SampleTVUI
+import SwiftUI
 
 public struct ProfileView: View {
     @State private var isSignOutConfirmationPresented = false
-    @ObservedObject private var viewModel: ProfileViewModel
-    
+    let viewModel: ProfileViewModel
+
     public init(viewModel: ProfileViewModel) {
         self.viewModel = viewModel
     }
-    
+
     public var body: some View {
         ScrollView {
-            VStack(spacing: 20) {
-                // Account Header
+            VStack(alignment: .leading, spacing: 28) {
                 accountHeader
-                
-                // Profile Switcher
                 profileSwitcher
-                
-                // Preferences Section
                 preferencesSection
-                
-                // Watch History Section
                 watchHistorySection
-                
-                // Sign Out Button
                 signOutButton
             }
-            .padding(.horizontal)
+            .padding(48)
         }
         .navigationTitle("Profile")
-        .navigationBarTitleDisplayMode(.large)
+        .task {
+            await viewModel.load()
+        }
         .confirmationDialog("Sign Out", isPresented: $isSignOutConfirmationPresented) {
-            Button("Sign Out") { }
-            Button("Cancel", role: .cancel) { }
+            Button("Sign Out", role: .destructive) {
+                Task {
+                    await viewModel.signOut()
+                }
+            }
+            Button("Cancel", role: .cancel) {}
         } message: {
             Text("Are you sure you want to sign out?")
         }
     }
-    
+
     private var accountHeader: some View {
-        HStack {
+        HStack(spacing: 20) {
             Image(systemName: "person.circle.fill")
-                .font(.system(size: 60))
-                .foregroundColor(.blue)
-            
+                .font(.system(size: 64))
+                .foregroundStyle(.tint)
+
             VStack(alignment: .leading, spacing: 4) {
                 Text(viewModel.currentProfile?.name ?? "User")
                     .font(.title2)
                     .fontWeight(.semibold)
-                
+
                 Text("Account")
                     .font(.subheadline)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
             }
-            
+
             Spacer()
         }
-        .padding(.vertical, 10)
     }
-    
+
     private var profileSwitcher: some View {
-        Section {
-            VStack(alignment: .leading, spacing: 12) {
-                Text("Profile")
-                    .font(.headline)
-                
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Profiles")
+                .font(.headline)
+
+            HStack(spacing: 20) {
                 ForEach(viewModel.profiles) { profile in
-                    HStack {
-                        Text(profile.name)
-                            .foregroundColor(profile.isMain ? .primary : .secondary)
-                        
-                        Spacer()
-                        
-                        if profile.isMain {
-                            Image(systemName: "checkmark.circle.fill")
-                                .foregroundColor(.blue)
-                        }
-                    }
-                    .buttonStyle(.card)
-                    .onSelect {
+                    let isSelected = profile.id == viewModel.currentProfile?.id
+                    Button {
                         Task {
                             await viewModel.switchToProfile(profile.id)
                         }
-                    }
-                }
-            }
-        }
-    }
-    
-    private var preferencesSection: some View {
-        Section {
-            VStack(alignment: .leading, spacing: 12) {
-                Text("Preferences")
-                    .font(.headline)
-                
-                HStack {
-                    Text("Default media type")
-                    
-                    Spacer()
-                    
-                    Menu {
-                        ForEach(MediaKind.allCases, id: \.self) { kind in
-                            Button(kind.rawValue) {
-                                var newPrefs = viewModel.preferences
-                                newPrefs.defaultKind = kind
-                                Task {
-                                    await viewModel.updatePreferences(newPrefs)
-                                }
+                    } label: {
+                        HStack(spacing: 12) {
+                            Text(profile.name)
+                                .foregroundStyle(isSelected ? .primary : .secondary)
+
+                            if isSelected {
+                                Image(systemName: "checkmark.circle.fill")
+                                    .foregroundStyle(.tint)
                             }
                         }
-                    } label: {
-                        Text(viewModel.preferences.defaultKind.rawValue)
-                            .foregroundColor(.secondary)
+                        .padding(.horizontal, 24)
+                        .padding(.vertical, 14)
                     }
+                    .buttonStyle(.card)
                 }
-                
-                Toggle("Autoplay trailers", isOn: Binding<Bool>(
-                    get: { viewModel.preferences.autoplayTrailers },
-                    set: { newValue in
-                        var newPrefs = viewModel.preferences
-                        newPrefs.autoplayTrailers = newValue
-                        Task {
-                            await viewModel.updatePreferences(newPrefs)
-                        }
-                    }
-                ))
             }
-            .padding(.vertical, 8)
         }
     }
-    
+
+    private var preferencesSection: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("Preferences")
+                .font(.headline)
+
+            HStack {
+                Text("Default media type")
+
+                Spacer()
+
+                Menu {
+                    ForEach(MediaKind.allCases, id: \.self) { kind in
+                        Button(kind.rawValue.capitalized) {
+                            var newPrefs = viewModel.preferences
+                            newPrefs.defaultKind = kind
+                            Task {
+                                await viewModel.updatePreferences(newPrefs)
+                            }
+                        }
+                    }
+                } label: {
+                    Text(viewModel.preferences.defaultKind.rawValue.capitalized)
+                        .foregroundStyle(.secondary)
+                }
+            }
+
+            Toggle("Autoplay trailers", isOn: Binding<Bool>(
+                get: { viewModel.preferences.autoplayTrailers },
+                set: { newValue in
+                    var newPrefs = viewModel.preferences
+                    newPrefs.autoplayTrailers = newValue
+                    Task {
+                        await viewModel.updatePreferences(newPrefs)
+                    }
+                }
+            ))
+        }
+    }
+
     private var watchHistorySection: some View {
-        Section {
-            VStack(alignment: .leading, spacing: 12) {
-                Text("Watch History")
-                    .font(.headline)
-                
-                HStack {
-                    Text("\(viewModel.watchHistoryCount) items")
-                        .foregroundColor(.secondary)
-                    
-                    Spacer()
-                    
-                    Button("Clear Watch History") {
-                        Task {
-                            await viewModel.clearWatchHistory()
-                        }
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Watch History")
+                .font(.headline)
+
+            HStack {
+                Text("\(viewModel.watchHistoryCount) items")
+                    .foregroundStyle(.secondary)
+
+                Spacer()
+
+                Button("Clear Watch History") {
+                    Task {
+                        await viewModel.clearWatchHistory()
                     }
-                    .foregroundColor(.red)
-                    .buttonStyle(.plain)
                 }
+                .buttonStyle(.plain)
+                .foregroundStyle(.red)
             }
         }
     }
-    
+
     private var signOutButton: some View {
         HStack {
             Spacer()
-            
-            Button("Sign Out") {
+
+            Button("Sign Out", role: .destructive) {
                 isSignOutConfirmationPresented = true
             }
             .buttonStyle(.card)
-            .foregroundColor(.red)
         }
-        .padding(.vertical, 10)
+        .padding(.top, 12)
     }
 }
 
 #Preview {
+    let profileRepo = PreviewProfileRepository()
+    let authRepo = PreviewAuthRepository()
+    let progressStore = PreviewProgressStore()
     ProfileView(viewModel: ProfileViewModel(
-        getCurrentProfile: GetCurrentUserProfile(repository: MockProfileRepository()),
-        getPreferences: GetUserPreferences(repository: MockProfileRepository()),
-        updatePreferences: UpdateUserPreferences(repository: MockProfileRepository()),
-        switchProfile: SwitchProfile(repository: MockProfileRepository()),
-        progressStore: UserDefaultsPlaybackProgressStore()
+        getCurrentProfile: GetCurrentUserProfile(repository: profileRepo),
+        getProfiles: GetProfiles(repository: profileRepo),
+        getPreferences: GetUserPreferences(repository: profileRepo),
+        updatePreferences: UpdateUserPreferences(repository: profileRepo),
+        switchProfile: SwitchProfile(repository: profileRepo),
+        signOut: SignOut(repository: authRepo),
+        progressStore: progressStore,
+        onSignOut: {}
     ))
 }
 
-// Temporary mock repository for preview - this will be replaced with actual implementation
-private class MockProfileRepository: ProfileRepository {
+private struct PreviewProfileRepository: ProfileRepository {
     func currentProfile() async throws -> ViewerProfile {
         ViewerProfile(id: "main", name: "Main", isMain: true)
     }
-    
+
     func profiles() async throws -> [ViewerProfile] {
         [
             ViewerProfile(id: "main", name: "Main", isMain: true),
@@ -193,16 +190,47 @@ private class MockProfileRepository: ProfileRepository {
             ViewerProfile(id: "guest", name: "Guest", isMain: false)
         ]
     }
-    
+
     func preferences(for profileID: String) async throws -> UserPreferences {
         UserPreferences()
     }
-    
-    func updatePreferences(_ preferences: UserPreferences, for profileID: String) async throws {
-        // Mock implementation
+
+    func updatePreferences(_ preferences: UserPreferences, for profileID: String) async throws {}
+
+    func switchProfile(to profileID: String) async throws {}
+}
+
+private struct PreviewAuthRepository: AuthRepository {
+    func signIn(email: String, password: String) async throws -> UserAccount {
+        UserAccount(
+            id: "preview",
+            email: email,
+            displayName: "Preview",
+            avatarSystemName: "person.circle.fill",
+            isDemo: false,
+            createdAt: .now
+        )
     }
-    
-    func switchProfile(to profileID: String) async throws {
-        // Mock implementation
+
+    func signInDemo() async throws -> UserAccount {
+        UserAccount(
+            id: "demo",
+            email: "demo@sampletv.app",
+            displayName: "Demo",
+            avatarSystemName: "person.circle.fill",
+            isDemo: true,
+            createdAt: .now
+        )
     }
+
+    func signOut() async {}
+
+    func currentAccount() async -> UserAccount? { nil }
+}
+
+private struct PreviewProgressStore: PlaybackProgressStore {
+    func loadProgress(for mediaID: MediaID) async throws -> PlaybackProgress? { nil }
+    func saveProgress(_ progress: PlaybackProgress) async throws {}
+    func clearProgress(for mediaID: MediaID) async throws {}
+    func recentlyWatched(maxCount: Int) async throws -> [PlaybackProgress] { [] }
 }

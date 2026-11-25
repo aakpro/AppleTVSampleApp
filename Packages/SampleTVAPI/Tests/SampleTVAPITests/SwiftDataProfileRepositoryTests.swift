@@ -1,52 +1,57 @@
 import Foundation
-import Testing
+import SampleTVDomain
 import SwiftData
+import Testing
 @testable import SampleTVAPI
-@testable import SampleTVDomain
 
 @Suite struct SwiftDataProfileRepositoryTests {
-    private var repository: SwiftDataProfileRepository!
-    
-    init() {
-        // Initialize with in-memory database for testing
-        do {
-            self.repository = try SwiftDataProfileRepository(inMemory: true)
-        } catch {
-            #expect(false, "Failed to initialize repository: \(error)")
-        }
+    private func makeRepository() throws -> SwiftDataProfileRepository {
+        try SwiftDataProfileRepository(inMemory: true)
     }
-    
-    @Test func testCurrentProfile() async throws {
+
+    @Test func currentProfileDefaultsToMain() async throws {
+        let repository = try makeRepository()
         let profile = try await repository.currentProfile()
         #expect(profile.id == "main")
         #expect(profile.name == "Main")
         #expect(profile.isMain == true)
     }
-    
-    @Test func testProfiles() async throws {
+
+    @Test func profilesSeedsHouseholdProfiles() async throws {
+        let repository = try makeRepository()
         let profiles = try await repository.profiles()
-        #expect(!profiles.isEmpty)
+        #expect(profiles.count == 3)
         #expect(profiles.first?.id == "main")
+        #expect(profiles.contains { $0.id == "kids" })
+        #expect(profiles.contains { $0.id == "guest" })
     }
-    
-    @Test func testPreferences() async throws {
+
+    @Test func preferencesDefaultsToMovieAndAutoplay() async throws {
+        let repository = try makeRepository()
         let preferences = try await repository.preferences(for: "main")
         #expect(preferences.defaultKind == .movie)
         #expect(preferences.autoplayTrailers == true)
     }
-    
-    @Test func testUpdatePreferences() async throws {
-        var newPrefs = UserPreferences(defaultKind: .tv, autoplayTrailers: false)
+
+    @Test func updatePreferencesPersistsPerProfile() async throws {
+        let repository = try makeRepository()
+        let newPrefs = UserPreferences(defaultKind: .tv, autoplayTrailers: false)
         try await repository.updatePreferences(newPrefs, for: "main")
-        
+
         let updatedPrefs = try await repository.preferences(for: "main")
         #expect(updatedPrefs.defaultKind == .tv)
         #expect(updatedPrefs.autoplayTrailers == false)
+
+        let kidsPrefs = try await repository.preferences(for: "kids")
+        #expect(kidsPrefs.defaultKind == .movie)
+        #expect(kidsPrefs.autoplayTrailers == true)
     }
-    
-    @Test func testSwitchProfile() async throws {
+
+    @Test func switchProfileUpdatesCurrentProfile() async throws {
+        let repository = try makeRepository()
         try await repository.switchProfile(to: "kids")
-        let profiles = try await repository.profiles()
-        #expect(profiles.contains { $0.id == "kids" })
+        let current = try await repository.currentProfile()
+        #expect(current.id == "kids")
+        #expect(current.name == "Kids")
     }
 }
