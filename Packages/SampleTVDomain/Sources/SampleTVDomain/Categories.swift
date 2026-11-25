@@ -42,9 +42,24 @@ public struct GetDiscoveryShelves: Sendable {
         let genres = try await repository.genres(for: kind)
 
         var requests: [ShelfRequest] = [
-            ShelfRequest(index: 0, id: "popular", title: "Popular", filter: MediaFilter(kind: kind, sort: .popularity)),
-            ShelfRequest(index: 1, id: "top-rated", title: "Top Rated", filter: MediaFilter(kind: kind, sort: .rating)),
-            ShelfRequest(index: 2, id: "new-releases", title: "New Releases", filter: MediaFilter(kind: kind, sort: .newest))
+            ShelfRequest(
+                index: 0,
+                id: "popular",
+                title: "Popular",
+                filter: MediaFilter(kind: kind, sort: .popularity)
+            ),
+            ShelfRequest(
+                index: 1,
+                id: "top-rated",
+                title: "Top Rated",
+                filter: MediaFilter(kind: kind, sort: .rating)
+            ),
+            ShelfRequest(
+                index: 2,
+                id: "new-releases",
+                title: "New Releases",
+                filter: MediaFilter(kind: kind, sort: .newest)
+            )
         ]
 
         for (offset, genre) in genres.prefix(maxGenres).enumerated() {
