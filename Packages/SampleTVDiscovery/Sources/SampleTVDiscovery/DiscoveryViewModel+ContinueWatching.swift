@@ -1,24 +1,51 @@
-import Observation
 import SampleTVDomain
-import SampleTVPlaybackProgress
 
 @MainActor
 extension DiscoveryViewModel {
-    /// Returns recently watched items that are still available in the discovery
-    public var continueWatchingItems: [MediaItem] {
-        // This method will be called from the UI to get a list of items for Continue Watching 
-        // In a full implementation this would fetch and populate from progress store
-        return []
-    }
-    
-    /// Async function to load recent watched items (used by DiscoveryView)
-    public func loadContinueWatchingItems() async -> [MediaItem] {
+    /// Loads recently watched, unfinished items from `progressStore` and resolves their metadata.
+    public func loadContinueWatching() async {
+        guard let progressStore else {
+            continueWatchingItems = []
+            return
+        }
+
         do {
-            let recentProgress = try await progressStore.recentlyWatched(maxCount: 10)
-            // In a real implementation, we'd map the MediaIDs back to actual items
-            return []
+            let records = try await progressStore.recentlyWatched(maxCount: 10)
+                .filter { !$0.isWatched && $0.position > 0 }
+            guard !records.isEmpty else {
+                continueWatchingItems = []
+                return
+            }
+
+            let loadedByID = Dictionary(uniqueKeysWithValues: items.map { ($0.id, $0) })
+            var resolvedByID: [MediaID: MediaItem] = [:]
+
+            for record in records where loadedByID[record.mediaID] != nil {
+                resolvedByID[record.mediaID] = loadedByID[record.mediaID]
+            }
+
+            let missingIDs = records.map(\.mediaID).filter { resolvedByID[$0] == nil }
+            if !missingIDs.isEmpty, let getDetails {
+                await withTaskGroup(of: (MediaID, MediaItem?).self) { group in
+                    for id in missingIDs {
+                        group.addTask {
+                            let details = try? await getDetails(id)
+                            return (id, details?.item)
+                        }
+                    }
+                    for await (id, item) in group {
+                        if let item {
+                            resolvedByID[id] = item
+                        }
+                    }
+                }
+            }
+
+            continueWatchingItems = records.compactMap { resolvedByID[$0.mediaID] }
+        } catch is CancellationError {
+            return
         } catch {
-            return []
+            continueWatchingItems = []
         }
     }
 }

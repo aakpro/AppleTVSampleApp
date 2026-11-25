@@ -1,6 +1,5 @@
 import Observation
 import SampleTVDomain
-import SampleTVPlaybackProgress
 
 @MainActor
 @Observable
@@ -14,15 +13,23 @@ public final class DiscoveryViewModel {
 
     public private(set) var state: State = .idle
     public private(set) var canLoadMore = false
+    public internal(set) var continueWatchingItems: [MediaItem] = []
     public var filter: MediaFilter
-    
+
     private let discover: DiscoverMedia
-    private let progressStore: any PlaybackProgressStore
-    private var items: [MediaItem] = []
+    let getDetails: GetMediaDetails?
+    let progressStore: (any PlaybackProgressStore)?
+    var items: [MediaItem] = []
     private var nextPage = 1
 
-    public init(discover: DiscoverMedia, progressStore: any PlaybackProgressStore, filter: MediaFilter = MediaFilter()) {
+    public init(
+        discover: DiscoverMedia,
+        getDetails: GetMediaDetails? = nil,
+        progressStore: (any PlaybackProgressStore)? = nil,
+        filter: MediaFilter = MediaFilter()
+    ) {
         self.discover = discover
+        self.getDetails = getDetails
         self.progressStore = progressStore
         self.filter = filter
     }
@@ -48,20 +55,5 @@ public final class DiscoveryViewModel {
         } catch {
             state = .failed(error as? MediaError ?? .unknown)
         }
-    }
-    
-    /// Returns items to display in the Continue Watching section 
-    public var continueWatchingItems: [MediaItem] {
-        // This will be implemented separately - we need to load recently watched items 
-        // from progress store and match with available media items
-        return []
-    } 
-    
-    /// Get all items that should appear (Continue Watching + regular discovery)
-    public func allItems() async -> [MediaItem] {
-        if case .loaded(let loadedItems) = state {
-            return loadedItems
-        }
-        return []
     }
 }

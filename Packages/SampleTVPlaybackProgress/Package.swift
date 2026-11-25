@@ -8,13 +8,20 @@ let package = Package(
         .library(name: "SampleTVPlaybackProgress", targets: ["SampleTVPlaybackProgress"])
     ],
     dependencies: [
-        .package(name: "SampleTVDomain", path: "../SampleTVDomain"),
+        .package(name: "SampleTVDomain", path: "../SampleTVDomain")
     ],
     targets: [
         .target(
             name: "SampleTVPlaybackProgress",
             dependencies: [
-                .product(name: "SampleTVDomain", package: "SampleTVDomain"),
+                .product(name: "SampleTVDomain", package: "SampleTVDomain")
+            ]
+        ),
+        .testTarget(
+            name: "SampleTVPlaybackProgressTests",
+            dependencies: [
+                "SampleTVPlaybackProgress",
+                .product(name: "SampleTVDomain", package: "SampleTVDomain")
             ]
         )
     ]
