@@ -11,14 +11,28 @@ public final class DetailsViewModel {
     }
 
     public private(set) var state: State = .loading
+    public private(set) var savedProgress: PlaybackProgress?
+    public private(set) var playableResources: [PlayableResource] = []
     public let item: MediaItem
-    
-    /// The resume label based on progress tracking.
+
     public var resumeLabel: String {
-        // For now, simply return "Play" - we'll handle actual resume logic properly in the future
-        return "Play"
+        guard let savedProgress, !savedProgress.isWatched, savedProgress.position > 0 else {
+            return "Play"
+        }
+        let totalSeconds = Int(savedProgress.position)
+        let minutes = totalSeconds / 60
+        let seconds = totalSeconds % 60
+        return String(format: "Resume %02d:%02d", minutes, seconds)
     }
-    
+
+    public var featureResource: PlayableResource? {
+        playableResources.first { $0.kind == .feature }
+    }
+
+    public var trailerResource: PlayableResource? {
+        playableResources.first { $0.kind == .trailer }
+    }
+
     private let getDetails: GetMediaDetails
     private let progressStore: (any PlaybackProgressStore)?
     private let resourceResolver: (any PlaybackResourceResolver)?
@@ -38,37 +52,39 @@ public final class DetailsViewModel {
     public func load() async {
         state = .loading
         do {
-            state = .loaded(try await getDetails(item.id))
+            let details = try await getDetails(item.id)
+            state = .loaded(details)
+            savedProgress = try? await progressStore?.loadProgress(for: item.id)
+            if let resourceResolver {
+                playableResources = (try? await resourceResolver.resolve(
+                    item.id,
+                    genreIDs: details.item.genreIDs
+                )) ?? []
+            }
         } catch is CancellationError {
             return
         } catch {
             state = .failed(error as? MediaError ?? .unknown)
         }
     }
-    
-    /// Resolves the playable resource for the media item. Returns feature or trailer resources.
+
     public func resolvePlayableResource(kind: PlaybackResourceKind) async throws -> PlayableResource? {
-        guard case .loaded(let details) = state else { return nil }
-        
-        // If we have a resolver, use it to resolve resources
-        if let resourceResolver {
-            let resources = try await resourceResolver.resolve(item.id, genreIDs: details.item.genreIDs)
-            return resources.first { $0.kind == kind }
+        if let cached = playableResources.first(where: { $0.kind == kind }) {
+            return cached
         }
-        
-        // Fallback case (this would normally not be reached in the real implementation)
-        return nil
+        guard case .loaded(let details) = state, let resourceResolver else { return nil }
+        let resources = try await resourceResolver.resolve(item.id, genreIDs: details.item.genreIDs)
+        playableResources = resources
+        return resources.first { $0.kind == kind }
     }
-    
-    /// Gets all available playable resources for this media item.
+
     public func getPlayableResources() async throws -> [PlayableResource] {
-        guard case .loaded(let details) = state else { return [] }
-        
-        if let resourceResolver {
-            return try await resourceResolver.resolve(item.id, genreIDs: details.item.genreIDs)
+        if !playableResources.isEmpty {
+            return playableResources
         }
-        
-        // Fallback (this should not be reached in the real implementation)
-        return []
+        guard case .loaded(let details) = state, let resourceResolver else { return [] }
+        let resources = try await resourceResolver.resolve(item.id, genreIDs: details.item.genreIDs)
+        playableResources = resources
+        return resources
     }
 }
