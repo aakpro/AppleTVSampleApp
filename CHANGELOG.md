@@ -5,13 +5,19 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [2.0.0] - 2026-11-25
+
+### Added
+- **Phase 12 (`v2.0.0` release):** Watchlist (`WatchlistStore`, `GetWatchlist`, `ToggleWatchlist`, `IsInWatchlist` in `SampleTVDomain`; profile-scoped `SwiftDataWatchlistStore` in `SampleTVAPI`), **Add to My List** / **In My List** toggle in `DetailsView` (`SampleTVDiscovery`), **My List** shelf in `ProfileView` (`SampleTVProfile`), and `AppContainer` / `RootView` wiring.
+- **UI Smoke Tests (`SampleTVUITests`) & DI Tests (`SampleTVTests`):** Added tvOS Siri Remote XCUITest smoke suite (`testDemoLoginAndTabNavigation`, `testLaunchPerformance`) with `-reset-auth` deterministic test launch and `AppContainerTests` unit tests.
 - Phase 2: Domain layer (`SampleTVDomain` package) - entities, query types, `MediaRepository`, use cases, comprehensive tests.
 - Phase 3: API layer (`SampleTVAPI` package) - TMDB client, media repository implementation, retry logic, error mapping.
 - Phase 4: Movie discovery (`SampleTVUI`, `SampleTVDiscovery`) - browse grid with focusable cards, details modal, TMDB attribution, and wired into `AppContainer` and `RootView` using `@Observable`.
 - Phase 5: Search (`SampleTVSearch`) - debounced search, filters, pagination.
+- Phase 6 / 7 / 7b: Player (`SampleTVPlayer`) & Continue Watching (`SampleTVPlaybackProgress`) - `AVKit` player, `UserDefaults` progress store, progress persistence.
 - Phase 8: Authentication (`SampleTVAuth`) - mock login UI, session management, and authentication state persistence.
-- Phase 9: Profile (`SampleTVProfile`) - profile switcher, user preferences, and My List.
-- Phase 10: Categories (`SampleTVDiscovery`) - genre shelves on Discover, a dedicated Categories tab, progress overlay on `MediaCard`, and category/kind filter controls in `SampleTVSearch` 
+- Phase 9: Profile (`SampleTVProfile`) - profile switcher, user preferences, and My List foundation.
+- Phase 10: Categories (`SampleTVDiscovery`, `SampleTVSearch`) - genre shelves on Discover, a dedicated Categories tab, progress overlay on `MediaCard`, and category/kind filter controls in `SampleTVSearch`.
 - Phase 11: Trailers & Playback (`SampleTVAPI`, `SampleTVDiscovery`, `SampleTVPlayer`) - TMDB `/videos` decoding, `PlaybackResourceResolver` mapping titles/genres to distinct public HLS/MP4 streams, **Play** / **Resume** / **Watch Trailer** CTAs, Recommendations on `DetailsView`, and player metadata.
 
 ## [0.1.0] - 2026-11-23

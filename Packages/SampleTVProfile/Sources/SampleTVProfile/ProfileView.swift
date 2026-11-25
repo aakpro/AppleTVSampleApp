@@ -4,10 +4,12 @@ import SwiftUI
 
 public struct ProfileView: View {
     @State private var isSignOutConfirmationPresented = false
-    let viewModel: ProfileViewModel
+    @State private var viewModel: ProfileViewModel
+    private let onSelectItem: ((MediaItem) -> Void)?
 
-    public init(viewModel: ProfileViewModel) {
-        self.viewModel = viewModel
+    public init(viewModel: ProfileViewModel, onSelectItem: ((MediaItem) -> Void)? = nil) {
+        _viewModel = State(initialValue: viewModel)
+        self.onSelectItem = onSelectItem
     }
 
     public var body: some View {
@@ -17,6 +19,7 @@ public struct ProfileView: View {
                 profileSwitcher
                 preferencesSection
                 watchHistorySection
+                watchlistSection
                 signOutButton
             }
             .padding(48)
@@ -149,6 +152,31 @@ public struct ProfileView: View {
         }
     }
 
+    private var watchlistSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("My List")
+                .font(.headline)
+
+            if viewModel.watchlistItems.isEmpty {
+                Text("No saved titles yet.")
+                    .foregroundStyle(.secondary)
+            } else {
+                ScrollView(.horizontal) {
+                    LazyHStack(spacing: 40) {
+                        ForEach(viewModel.watchlistItems) { item in
+                            Button {
+                                onSelectItem?(item)
+                            } label: {
+                                MediaCard(item: item)
+                            }
+                            .buttonStyle(.card)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     private var signOutButton: some View {
         HStack {
             Spacer()
@@ -166,6 +194,7 @@ public struct ProfileView: View {
     let profileRepo = PreviewProfileRepository()
     let authRepo = PreviewAuthRepository()
     let progressStore = PreviewProgressStore()
+    let watchlistStore = PreviewWatchlistStore()
     ProfileView(viewModel: ProfileViewModel(
         getCurrentProfile: GetCurrentUserProfile(repository: profileRepo),
         getProfiles: GetProfiles(repository: profileRepo),
@@ -174,6 +203,7 @@ public struct ProfileView: View {
         switchProfile: SwitchProfile(repository: profileRepo),
         signOut: SignOut(repository: authRepo),
         progressStore: progressStore,
+        watchlistStore: watchlistStore,
         onSignOut: {}
     ))
 }
@@ -233,4 +263,21 @@ private struct PreviewProgressStore: PlaybackProgressStore {
     func saveProgress(_ progress: PlaybackProgress) async throws {}
     func clearProgress(for mediaID: MediaID) async throws {}
     func recentlyWatched(maxCount: Int) async throws -> [PlaybackProgress] { [] }
+}
+
+private struct PreviewWatchlistStore: WatchlistStore {
+    func items(for profileID: String) async throws -> [MediaItem] {
+        [
+            MediaItem(
+                id: MediaID(kind: .movie, value: 603),
+                title: "The Matrix",
+                releaseYear: 1999
+            )
+        ]
+    }
+
+    func contains(_ mediaID: MediaID, in profileID: String) async throws -> Bool { false }
+    func add(_ item: MediaItem, to profileID: String) async throws {}
+    func remove(_ mediaID: MediaID, from profileID: String) async throws {}
+    func toggle(_ item: MediaItem, for profileID: String) async throws -> Bool { false }
 }

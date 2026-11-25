@@ -22,6 +22,7 @@ struct RootView: View {
     @State private var selection: MediaItem?
     @State private var authenticatedAccount: UserAccount?
     @State private var categoryDestination: CategoryDestination?
+    @State private var activeProfileID = "main"
 
     var body: some View {
         Group {
@@ -51,7 +52,7 @@ struct RootView: View {
     private var tabs: some View {
         TabView {
             NavigationStack {
-                DiscoveryView(viewModel: container.makeDiscoveryViewModel()) { selection = $0 }
+                DiscoveryView(viewModel: container.makeDiscoveryViewModel()) { selectMedia($0) }
                     .navigationTitle("Discover")
             }
             .tabItem { Label("Discover", systemImage: "square.grid.2x2") }
@@ -71,28 +72,49 @@ struct RootView: View {
                         discover: DiscoverMedia(repository: container.repository),
                         kind: destination.kind,
                         genre: destination.genre
-                    ) { selection = $0 }
+                    ) { selectMedia($0) }
                 }
             }
             .tabItem { Label("Categories", systemImage: "list.bullet") }
 
             NavigationStack {
-                SearchView(viewModel: container.makeSearchViewModel()) { selection = $0 }
+                SearchView(viewModel: container.makeSearchViewModel()) { selectMedia($0) }
             }
             .tabItem { Label("Search", systemImage: "magnifyingglass") }
 
             NavigationStack {
                 ProfileView(viewModel: container.makeProfileViewModel(onSignOut: {
                     selection = nil
+                    categoryDestination = nil
                     authenticatedAccount = nil
-                }))
+                }), onSelectItem: { selectMedia($0) })
             }
             .tabItem { Label("Profile", systemImage: "person.circle") }
         }
         .fullScreenCover(item: $selection) { item in
-            DetailsScreen(container: container, item: item) { recommended in
+            DetailsScreen(container: container, item: item, profileID: activeProfileID) { recommended in
                 selection = recommended
             }
+            .id(item.id)
+        }
+        .task {
+            await refreshActiveProfileID()
+        }
+    }
+
+    private func refreshActiveProfileID() async {
+        do {
+            let profile = try await container.profileRepository.currentProfile()
+            activeProfileID = profile.id
+        } catch {
+            activeProfileID = "main"
+        }
+    }
+
+    private func selectMedia(_ item: MediaItem) {
+        Task {
+            await refreshActiveProfileID()
+            selection = item
         }
     }
 }
@@ -101,12 +123,13 @@ struct RootView: View {
 private struct DetailsScreen: View {
     let container: AppContainer
     let item: MediaItem
+    let profileID: String
     let onSelectRecommendation: (MediaItem) -> Void
     @State private var playbackSelection: PlaybackSelection?
 
     var body: some View {
         DetailsView(
-            viewModel: container.makeDetailsViewModel(for: item),
+            viewModel: container.makeDetailsViewModel(for: item, profileID: profileID),
             onPlay: { item in
                 Task { await startPlayback(for: item, kind: .feature) }
             },

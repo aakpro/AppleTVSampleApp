@@ -12,12 +12,14 @@ public final class ProfileViewModel {
     private let switchProfileUseCase: SwitchProfile
     private let signOutUseCase: SignOut
     private let progressStore: any PlaybackProgressStore
+    private let watchlistStore: (any WatchlistStore)?
     private let onSignOut: @MainActor @Sendable () -> Void
 
     public private(set) var currentProfile: ViewerProfile?
     public private(set) var profiles: [ViewerProfile] = []
     public private(set) var preferences = UserPreferences()
     public private(set) var watchHistoryCount = 0
+    public private(set) var watchlistItems: [MediaItem] = []
     public private(set) var errorMessage: String?
 
     public init(
@@ -28,6 +30,7 @@ public final class ProfileViewModel {
         switchProfile: SwitchProfile,
         signOut: SignOut,
         progressStore: any PlaybackProgressStore,
+        watchlistStore: (any WatchlistStore)? = nil,
         onSignOut: @MainActor @Sendable @escaping () -> Void
     ) {
         self.getCurrentProfile = getCurrentProfile
@@ -37,6 +40,7 @@ public final class ProfileViewModel {
         self.switchProfileUseCase = switchProfile
         self.signOutUseCase = signOut
         self.progressStore = progressStore
+        self.watchlistStore = watchlistStore
         self.onSignOut = onSignOut
     }
 
@@ -49,6 +53,7 @@ public final class ProfileViewModel {
             preferences = try await getPreferences(profileID: profile.id)
             let progressItems = try await progressStore.recentlyWatched(maxCount: 100)
             watchHistoryCount = progressItems.count
+            try await loadWatchlist(for: profile.id)
         } catch is CancellationError {
             return
         } catch {
@@ -69,15 +74,32 @@ public final class ProfileViewModel {
     }
 
     public func switchToProfile(_ profileID: String) async {
+        errorMessage = nil
         do {
             try await switchProfileUseCase(to: profileID)
             let profile = try await getCurrentProfile()
             currentProfile = profile
             preferences = try await getPreferences(profileID: profile.id)
+            try await loadWatchlist(for: profile.id)
         } catch is CancellationError {
             return
         } catch {
             errorMessage = error.localizedDescription
+        }
+    }
+
+    private func loadWatchlist(for profileID: String) async throws {
+        guard let watchlistStore else {
+            watchlistItems = []
+            return
+        }
+        do {
+            watchlistItems = try await watchlistStore.items(for: profileID)
+        } catch is CancellationError {
+            throw CancellationError()
+        } catch {
+            watchlistItems = []
+            throw error
         }
     }
 

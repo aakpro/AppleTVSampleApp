@@ -21,7 +21,7 @@ phase PR; it is the source of truth that [AGENTS.md](../AGENTS.md) points agents
 | 9 | [Profile](Phase09_Profile/Documentation/Phase_09_Profile.md) (`SampleTVProfile`, switcher & preferences) | ✅ Complete & Verified | `feature/phase_09_profile` |
 | 10 | [Categories](Phase10_Categories/Documentation/Phase_10_Categories.md) (genre shelves, Categories tab, search filters) | ✅ Complete & Verified | `feature/phase_10_categories` |
 | 11 | [Trailers & Playback](Phase11_Trailers_And_Playback/Documentation/Phase_11_Trailers_And_Playback.md) (videos, distinct streams, recommendations) | ✅ Complete & Verified | `feature/phase_11_trailers_and_playback` |
-| 12 | [Watchlist & Release](Phase12_Watchlist_And_Release/Documentation/Phase_12_Watchlist_And_Release.md) (My List, UI smoke tests, `v2.0.0`) | ⏳ Not started | - |
+| 12 | [Watchlist & Release](Phase12_Watchlist_And_Release/Documentation/Phase_12_Watchlist_And_Release.md) (My List, UI smoke tests, `v2.0.0`) | ✅ Complete & Verified | `feature/phase_12_watchlist_and_release` |
 
 Statuses: ⏳ not started · 🚧 in progress (branch name) · ✅ complete / merged (version tag).
 
@@ -35,16 +35,18 @@ the app target through `Scripts/link_package.rb` appear in Xcode as local packag
 ├── SampleTV.xcworkspace/        single entry point (open this)
 ├── SampleTV.xcodeproj/          tvOS app project, scheme "SampleTV"
 ├── SampleTV/                    app target = composition root (SampleTVApp, AppConfiguration, AppContainer, RootView)
-├── SampleTVTests/               unit tests (Swift Testing)
-├── SampleTVUITests/             UI tests (XCTest)
+├── SampleTVTests/               unit tests (Swift Testing: AppConfiguration, AppContainer)
+├── SampleTVUITests/             UI smoke tests (XCTest: demo login & tab navigation)
 ├── Packages/
-│   ├── SampleTVDomain/          Phase 2 (verified, 22 tests passing)
-│   ├── SampleTVAPI/             Phase 3 (verified, 5 tests passing)
-│   ├── SampleTVUI/              Phase 4 (verified, 2 tests passing)
-│   ├── SampleTVDiscovery/       Phase 4 (verified, 6 tests passing)
-│   ├── SampleTVSearch/          Phase 5 (verified, 2 tests passing)
-│   ├── SampleTVPlayer/          Phase 6 (AVKit player)
-│   └── SampleTVPlaybackProgress/ Phase 7 / 7b (UserDefaults progress store)
+│   ├── SampleTVDomain/          Phases 2, 7b, 8-12 (entities, ports, Watchlist, use cases)
+│   ├── SampleTVAPI/             Phases 3, 8, 9, 11, 12 (TMDB client, SwiftData profile & Watchlist stores)
+│   ├── SampleTVUI/              Phases 4, 10 (MediaCard, PosterImage, CategoryTile, ImageURLBuilder)
+│   ├── SampleTVDiscovery/       Phases 4, 7b, 10-12 (browse shelves, categories, details + Watchlist toggle)
+│   ├── SampleTVSearch/          Phases 5, 10 (debounced search, kind & genre filters)
+│   ├── SampleTVPlayer/          Phases 6, 11 (AVKit player)
+│   ├── SampleTVPlaybackProgress/ Phase 7 / 7b (UserDefaults progress store)
+│   ├── SampleTVAuth/            Phase 8 (mock login & session UI)
+│   └── SampleTVProfile/         Phases 9, 12 (profile switcher, preferences, Watchlist / My List shelf)
 ├── Scripts/                     link_package.rb (adds a local package to the app target)
 ├── Config/                      Shared.xcconfig, Secrets.xcconfig(.example), Info.plist
 ├── Docs/                        architecture, API spec, phase guides, templates
@@ -79,10 +81,10 @@ the app target through `Scripts/link_package.rb` appear in Xcode as local packag
 │   └── Assets.xcassets/
 ├── SampleTVTests/  SampleTVUITests/
 ├── Packages/                        local Swift packages, one folder each
-│   ├── SampleTVDomain/              entities, MediaRepository port, use cases        (Phase 2)
-│   ├── SampleTVAPI/                 TMDB client, DTOs, retry, cache                  (Phase 3)
+│   ├── SampleTVDomain/              entities, MediaRepository, WatchlistStore, use cases (Phase 2, 12)
+│   ├── SampleTVAPI/                 TMDB client, DTOs, retry, cache, SwiftData Watchlist (Phase 3, 12)
 │   ├── SampleTVUI/                  MediaCard, PosterImage, ImageURLBuilder          (Phase 4)
-│   ├── SampleTVDiscovery/           browse grid, details                             (Phase 4)
+│   ├── SampleTVDiscovery/           browse grid, details, Watchlist toggle           (Phase 4, 12)
 │   ├── SampleTVSearch/              debounced search, filters                        (Phase 5, 10)
 │   ├── SampleTVPlayer/              AVKit player                                     (Phase 6, 11)
 │   ├── SampleTVPlaybackProgress/    UserDefaults progress store                      (Phase 7, 7b)

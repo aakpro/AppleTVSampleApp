@@ -40,13 +40,23 @@ public struct DetailsView: View {
                                     onPlay(viewModel.item)
                                 }
                                 .buttonStyle(.card)
+                                .accessibilityIdentifier("details.playButton")
 
                                 if viewModel.trailerResource != nil || !details.videos.isEmpty {
                                     Button("Watch Trailer") {
                                         onPlayTrailer?(viewModel.item)
                                     }
                                     .buttonStyle(.card)
+                                    .accessibilityIdentifier("details.trailerButton")
                                 }
+
+                                Button(viewModel.isInWatchlist ? "In My List" : "Add to My List") {
+                                    Task {
+                                        await viewModel.toggleWatchlist()
+                                    }
+                                }
+                                .buttonStyle(.card)
+                                .accessibilityIdentifier("details.watchlistButton")
                             }
                         }
 
