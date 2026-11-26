@@ -29,7 +29,13 @@ struct DetailsScreen: View {
             viewModel: detailsViewModel,
             isPreviewPaused: viewModel.playbackSelection != nil,
             onPlay: { selected in
-                Task { await viewModel.startPlayback(for: selected, kind: .feature) }
+                Task {
+                    await viewModel.startPlayback(
+                        for: selected,
+                        episode: selected.id.kind == .tv ? detailsViewModel.selectedEpisode : nil,
+                        kind: .feature
+                    )
+                }
             },
             onPlayTrailer: { selected in
                 Task {
@@ -40,7 +46,12 @@ struct DetailsScreen: View {
                     )
                 }
             },
-            onSelectRecommendation: onSelectRecommendation
+            onSelectRecommendation: onSelectRecommendation,
+            onPlayEpisode: { selected, episode in
+                Task {
+                    await viewModel.startPlayback(for: selected, episode: episode, kind: .feature)
+                }
+            }
         )
         .fullScreenCover(item: $viewModel.playbackSelection) { selection in
             PlayerScreen(viewModel: container.makePlayerScreenViewModel(selection: selection))

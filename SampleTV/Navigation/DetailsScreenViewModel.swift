@@ -7,6 +7,7 @@ struct PlaybackSelection: Identifiable, Sendable {
     let mediaID: MediaID
     let profileID: String
     let resource: PlayableResource
+    let episode: TVEpisode?
 }
 
 @MainActor
@@ -28,10 +29,16 @@ final class DetailsScreenViewModel {
         self.profileID = profileID
     }
 
-    func startPlayback(for item: MediaItem, kind: PlaybackResourceKind, trailerTitle: String? = nil) async {
+    func startPlayback(
+        for item: MediaItem,
+        episode: TVEpisode? = nil,
+        kind: PlaybackResourceKind,
+        trailerTitle: String? = nil
+    ) async {
         let resolved = (try? await resolveResources.resolveFirst(
             item.id,
             genreIDs: item.genreIDs,
+            episode: kind == .feature ? episode : nil,
             kind: kind
         )) ?? PlayableResource(
             url: fallbackURL(item),
@@ -46,7 +53,11 @@ final class DetailsScreenViewModel {
 
         if kind == .feature {
             updatedTitle = item.title
-            updatedSubtitle = "Full Feature"
+            if let episode {
+                updatedSubtitle = "\(episode.episodeCode) · \(episode.name)"
+            } else {
+                updatedSubtitle = "Full Feature"
+            }
         } else if kind == .trailer {
             updatedTitle = trailerTitle ?? "\(item.title) — Trailer"
             updatedSubtitle = item.title
@@ -64,7 +75,8 @@ final class DetailsScreenViewModel {
         playbackSelection = PlaybackSelection(
             mediaID: item.id,
             profileID: profileID,
-            resource: updatedResource
+            resource: updatedResource,
+            episode: episode
         )
     }
 }

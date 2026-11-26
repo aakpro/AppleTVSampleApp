@@ -8,19 +8,22 @@ public struct DetailsView: View {
     private let onPlay: (MediaItem) -> Void
     private let onPlayTrailer: ((MediaItem) -> Void)?
     private let onSelectRecommendation: ((MediaItem) -> Void)?
+    private let onPlayEpisode: ((MediaItem, TVEpisode) -> Void)?
 
     public init(
         viewModel: DetailsViewModel,
         isPreviewPaused: Bool = false,
         onPlay: @escaping (MediaItem) -> Void,
         onPlayTrailer: ((MediaItem) -> Void)? = nil,
-        onSelectRecommendation: ((MediaItem) -> Void)? = nil
+        onSelectRecommendation: ((MediaItem) -> Void)? = nil,
+        onPlayEpisode: ((MediaItem, TVEpisode) -> Void)? = nil
     ) {
         _viewModel = State(initialValue: viewModel)
         self.isPreviewPaused = isPreviewPaused
         self.onPlay = onPlay
         self.onPlayTrailer = onPlayTrailer
         self.onSelectRecommendation = onSelectRecommendation
+        self.onPlayEpisode = onPlayEpisode
     }
 
     public var body: some View {
@@ -31,6 +34,15 @@ public struct DetailsView: View {
                 VStack(alignment: .leading, spacing: 44) {
                     heroDetailsSection
                         .padding(.horizontal, SampleTVTheme.horizontalSafeMargin)
+
+                    SeasonsEpisodesSection(viewModel: viewModel) { episode in
+                        viewModel.selectEpisode(episode)
+                        if let onPlayEpisode {
+                            onPlayEpisode(viewModel.item, episode)
+                        } else {
+                            onPlay(viewModel.item)
+                        }
+                    }
 
                     if case .loaded(let details) = viewModel.state, !details.recommendations.isEmpty {
                         MediaShelfRow(
@@ -111,6 +123,13 @@ public struct DetailsView: View {
 
                 metadataSummaryRow
 
+                if let selectedEpisode = viewModel.selectedEpisode {
+                    Text("\(selectedEpisode.episodeCode) · \(selectedEpisode.name)")
+                        .font(.headline.weight(.semibold))
+                        .foregroundStyle(.white.opacity(0.92))
+                        .accessibilityIdentifier("details.selectedEpisodeLabel")
+                }
+
                 if !viewModel.item.overview.isEmpty {
                     Text(viewModel.item.overview)
                         .font(.body)
@@ -177,7 +196,11 @@ public struct DetailsView: View {
     private func actionButtons(details: MediaDetails) -> some View {
         HStack(spacing: 24) {
             Button {
-                onPlay(viewModel.item)
+                if let episode = viewModel.selectedEpisode, let onPlayEpisode {
+                    onPlayEpisode(viewModel.item, episode)
+                } else {
+                    onPlay(viewModel.item)
+                }
             } label: {
                 Label(viewModel.resumeLabel, systemImage: "play.fill")
                     .padding(.horizontal, 12)

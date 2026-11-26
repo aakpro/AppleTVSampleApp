@@ -33,7 +33,12 @@ final class PlayerScreenViewModel {
                 profileID: selection.profileID
             )
             if let saved, !saved.isWatched {
-                initialPosition = saved.position
+                let episodeMatches = selection.episode == nil ||
+                    (saved.seasonNumber == selection.episode?.seasonNumber &&
+                     saved.episodeNumber == selection.episode?.episodeNumber)
+                if episodeMatches {
+                    initialPosition = saved.position
+                }
             }
         }
         isReady = true
@@ -45,7 +50,9 @@ final class PlayerScreenViewModel {
             mediaID: selection.mediaID,
             position: position,
             duration: duration,
-            profileID: selection.profileID
+            profileID: selection.profileID,
+            seasonNumber: selection.episode?.seasonNumber,
+            episodeNumber: selection.episode?.episodeNumber
         )
         try? await saveProgressUseCase(progress)
     }
