@@ -11,8 +11,10 @@ public final class ProfileViewModel {
     private let updatePreferencesUseCase: UpdateUserPreferences
     private let switchProfileUseCase: SwitchProfile
     private let signOutUseCase: SignOut
-    private let progressStore: any PlaybackProgressStore
-    private let watchlistStore: (any WatchlistStore)?
+    private let loadAccountUseCase: LoadCurrentAccount?
+    private let getWatchHistoryUseCase: GetWatchHistory
+    private let clearWatchHistoryUseCase: ClearWatchHistory
+    private let getWatchlistUseCase: GetWatchlist?
     private let onSignOut: @MainActor @Sendable () -> Void
 
     public private(set) var currentProfile: ViewerProfile?
@@ -20,6 +22,7 @@ public final class ProfileViewModel {
     public private(set) var preferences = UserPreferences()
     public private(set) var watchHistoryCount = 0
     public private(set) var watchlistItems: [MediaItem] = []
+    public private(set) var account: UserAccount?
     public private(set) var errorMessage: String?
 
     public init(
@@ -29,8 +32,10 @@ public final class ProfileViewModel {
         updatePreferences: UpdateUserPreferences,
         switchProfile: SwitchProfile,
         signOut: SignOut,
-        progressStore: any PlaybackProgressStore,
-        watchlistStore: (any WatchlistStore)? = nil,
+        loadAccount: LoadCurrentAccount? = nil,
+        getWatchHistory: GetWatchHistory,
+        clearWatchHistory: ClearWatchHistory,
+        getWatchlist: GetWatchlist? = nil,
         onSignOut: @MainActor @Sendable @escaping () -> Void
     ) {
         self.getCurrentProfile = getCurrentProfile
@@ -39,8 +44,10 @@ public final class ProfileViewModel {
         self.updatePreferencesUseCase = updatePreferences
         self.switchProfileUseCase = switchProfile
         self.signOutUseCase = signOut
-        self.progressStore = progressStore
-        self.watchlistStore = watchlistStore
+        self.loadAccountUseCase = loadAccount
+        self.getWatchHistoryUseCase = getWatchHistory
+        self.clearWatchHistoryUseCase = clearWatchHistory
+        self.getWatchlistUseCase = getWatchlist
         self.onSignOut = onSignOut
     }
 
@@ -49,9 +56,12 @@ public final class ProfileViewModel {
         do {
             let profile = try await getCurrentProfile()
             currentProfile = profile
+            if let loadAccountUseCase {
+                account = await loadAccountUseCase()
+            }
             profiles = try await getProfiles()
             preferences = try await getPreferences(profileID: profile.id)
-            let progressItems = try await progressStore.recentlyWatched(maxCount: 100)
+            let progressItems = try await getWatchHistoryUseCase(for: profile.id, maxCount: 100)
             watchHistoryCount = progressItems.count
             try await loadWatchlist(for: profile.id)
         } catch is CancellationError {
@@ -80,6 +90,8 @@ public final class ProfileViewModel {
             let profile = try await getCurrentProfile()
             currentProfile = profile
             preferences = try await getPreferences(profileID: profile.id)
+            let progressItems = try await getWatchHistoryUseCase(for: profile.id, maxCount: 100)
+            watchHistoryCount = progressItems.count
             try await loadWatchlist(for: profile.id)
         } catch is CancellationError {
             return
@@ -89,12 +101,12 @@ public final class ProfileViewModel {
     }
 
     private func loadWatchlist(for profileID: String) async throws {
-        guard let watchlistStore else {
+        guard let getWatchlistUseCase else {
             watchlistItems = []
             return
         }
         do {
-            watchlistItems = try await watchlistStore.items(for: profileID)
+            watchlistItems = try await getWatchlistUseCase(for: profileID)
         } catch is CancellationError {
             throw CancellationError()
         } catch {
@@ -105,10 +117,8 @@ public final class ProfileViewModel {
 
     public func clearWatchHistory() async {
         do {
-            let progressItems = try await progressStore.recentlyWatched(maxCount: 100)
-            for item in progressItems {
-                try await progressStore.clearProgress(for: item.mediaID)
-            }
+            let profileID = currentProfile?.id ?? ViewerProfile.defaultID
+            try await clearWatchHistoryUseCase(for: profileID)
             watchHistoryCount = 0
         } catch is CancellationError {
             return
