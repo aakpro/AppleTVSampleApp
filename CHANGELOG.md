@@ -5,8 +5,10 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [2.2.0] - 2026-11-26
+
 ### Added
-- **Phase 20 (TV Show Season & Episode Selection):** Added `TVSeason`, `TVEpisode`, `TVSeasonDetails`, `GetTVSeasonDetails`, and episode-aware `PlaybackResourceResolver` / `PlaybackProgress` persistence across Domain, API (`/tv/{id}/season/{season_number}` + `DetailsDTO.seasons`), and SwiftData (`StoredProgress`); built tvOS focusable season selector pills (`SeasonsEpisodesSection`) and unclipped 16:9 `EpisodeCard` shelf in `SampleTVDiscovery`; wired episode playback subtitles (`S2 E5 · ...`) and per-episode resume tracking through `DetailsScreenViewModel` and `PlayerScreenViewModel`; added unit, persistence, navigation, and UI smoke tests (`testTVShowSeasonAndEpisodeSelectionIfLoaded`).
+- **Phase 20 (TV Show Season & Episode Selection):** Added `TVSeason`, `TVEpisode`, `TVSeasonDetails`, `GetTVSeasonDetails`, and episode-aware `PlaybackResourceResolver` / `PlaybackProgress` persistence across Domain, API (`/tv/{id}/season/{season_number}` + `DetailsDTO.seasons`), and SwiftData (`StoredProgress`); built tvOS focusable season selector pills (`SeasonsEpisodesSection`) and unclipped 16:9 `EpisodeCard` shelf in `SampleTVDiscovery`; wired episode playback subtitles (`S2 E5 · ...`), default `PlaybackSelection` initializer ergonomics, and per-episode resume tracking through `DetailsScreenViewModel` and `PlayerScreenViewModel`; added unit, decoding, persistence, navigation, and XCUITest coverage (`testTVShowSeasonAndEpisodeSelectionIfLoaded`). (#25, #26)
 
 ## [2.1.0] - 2026-11-26
 
