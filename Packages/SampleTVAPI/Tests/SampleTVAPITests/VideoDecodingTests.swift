@@ -83,4 +83,17 @@ import Testing
 
         #expect(first.first?.url != second.first?.url)
     }
+
+    @Test func resolveNeverReturnsSpecificDomains() async throws {
+        let resolver = CatalogPlaybackResourceResolver()
+
+        for index in 0..<10 {
+            let resources = try await resolver.resolve(MediaID(kind: .movie, value: index), genreIDs: [])
+            for resource in resources {
+                let url = resource.url.absoluteString
+                #expect(!url.contains("bitdash-a.akamaihd.net"))
+                #expect(!url.contains("commondatastorage.googleapis.com"))
+            }
+        }
+    }
 }

@@ -119,6 +119,37 @@ struct PlaybackProgressUseCasesTests {
         )
         #expect(trailer?.url == trailerURL)
     }
+
+    @Test func savePlaybackProgressSkipsPositionsBelowFiveSeconds() async throws {
+        let progressStore = StubProgressStore()
+        let saveProgress = SavePlaybackProgress(store: progressStore)
+
+        let lowPositionProgress = PlaybackProgress(
+            mediaID: .init(kind: .movie, value: 123),
+            position: 4.5,
+            duration: 600
+        )
+        try await saveProgress(lowPositionProgress)
+
+        let loaded = try await progressStore.loadProgress(
+            for: lowPositionProgress.mediaID,
+            profileID: ViewerProfile.defaultID
+        )
+        #expect(loaded == nil)
+
+        let validPositionProgress = PlaybackProgress(
+            mediaID: .init(kind: .movie, value: 123),
+            position: 5.0,
+            duration: 600
+        )
+        try await saveProgress(validPositionProgress)
+
+        let loaded2 = try await progressStore.loadProgress(
+            for: validPositionProgress.mediaID,
+            profileID: ViewerProfile.defaultID
+        )
+        #expect(loaded2?.position == 5.0)
+    }
 }
 
 private actor StubProgressStore: PlaybackProgressStore {

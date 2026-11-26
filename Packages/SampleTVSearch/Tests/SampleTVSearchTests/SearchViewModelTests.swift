@@ -60,4 +60,47 @@ struct SearchViewModelTests {
         await model.loadGenres()
         #expect(model.availableGenres == [Genre(id: 28, name: "Action")])
     }
+
+    @Test func retryRecoversFromFailedToLoaded() async {
+        let expected = item(1, genres: [28])
+        let repo = ToggleableSearchRepository(
+            page: ResultPage(items: [expected], page: 1, totalPages: 1)
+        )
+        let model = SearchViewModel(
+            search: SearchMedia(repository: repo),
+            debounce: .milliseconds(1)
+        )
+        model.text = "heat"
+        model.filter = MediaFilter(kind: .tv, genreIDs: [28])
+
+        await model.performSearch()
+        #expect(model.state == .failed(.offline))
+
+        await repo.setShouldFail(false)
+        await model.retry()
+        #expect(model.state == .loaded([expected]))
+    }
+}
+
+private actor ToggleableSearchRepository: MediaRepository {
+    private var shouldFail = true
+    private let page: ResultPage<MediaItem>
+
+    init(page: ResultPage<MediaItem>) {
+        self.page = page
+    }
+
+    func setShouldFail(_ value: Bool) {
+        shouldFail = value
+    }
+
+    func discover(_ filter: MediaFilter, page: Int) async throws -> ResultPage<MediaItem> { .empty }
+    func search(_ query: SearchQuery, page: Int) async throws -> ResultPage<MediaItem> {
+        if shouldFail {
+            throw MediaError.offline
+        }
+        return self.page
+    }
+    func details(of id: MediaID) async throws -> MediaDetails { throw MediaError.unknown }
+    func genres(for kind: MediaKind) async throws -> [Genre] { [] }
 }
