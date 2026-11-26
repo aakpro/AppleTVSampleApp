@@ -18,6 +18,7 @@ public struct ProfileView: View {
                 VStack(alignment: .leading, spacing: 28) {
                     Text("Profile")
                         .font(SampleTVTheme.Typography.screenTitle)
+                        .accessibilityAddTraits(.isHeader)
 
                     if let errorMessage = viewModel.errorMessage {
                         errorBanner(errorMessage)

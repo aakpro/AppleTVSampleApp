@@ -44,6 +44,8 @@ struct ProfileSwitcherSection: View {
                         .padding(.vertical, 16)
                     }
                     .buttonStyle(.card)
+                    .accessibilityLabel("\(profile.name), \(isSelected ? "selected profile" : "profile")")
+                    .accessibilityIdentifier("profile.switcher.\(profile.id)")
                 }
             }
         }

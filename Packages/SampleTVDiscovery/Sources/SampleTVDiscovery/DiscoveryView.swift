@@ -36,6 +36,7 @@ public struct DiscoveryView: View {
         HStack(spacing: 24) {
             Text("Discover")
                 .font(SampleTVTheme.Typography.screenTitle)
+                .accessibilityAddTraits(.isHeader)
 
             Spacer()
 

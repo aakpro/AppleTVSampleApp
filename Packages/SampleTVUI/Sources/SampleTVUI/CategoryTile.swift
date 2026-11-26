@@ -41,6 +41,10 @@ public struct CategoryTile: View {
         }
         .buttonStyle(.card)
         .accessibilityLabel(title)
+        .accessibilityHint("Browse \(title)")
+        .accessibilityIdentifier(
+            "category.tile.\(title.lowercased().replacingOccurrences(of: " ", with: "-"))"
+        )
     }
 
     private static let symbolByTitle: [String: String] = [
