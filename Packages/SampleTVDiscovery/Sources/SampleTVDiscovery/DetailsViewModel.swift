@@ -16,6 +16,7 @@ public final class DetailsViewModel {
     public let item: MediaItem
 
     public private(set) var isInWatchlist = false
+    public private(set) var shouldAutoplayTrailer = false
 
     public var resumeLabel: String {
         guard let savedProgress, !savedProgress.isWatched, savedProgress.position > 0 else {
@@ -52,6 +53,7 @@ public final class DetailsViewModel {
     private let resolveResources: ResolvePlaybackResources?
     private let isInWatchlistUseCase: IsInWatchlist?
     private let toggleWatchlistUseCase: ToggleWatchlist?
+    private let getPreferences: GetUserPreferences?
     private let profileID: String
 
     public init(
@@ -61,6 +63,7 @@ public final class DetailsViewModel {
         resolveResources: ResolvePlaybackResources? = nil,
         isInWatchlist: IsInWatchlist? = nil,
         toggleWatchlist: ToggleWatchlist? = nil,
+        getPreferences: GetUserPreferences? = nil,
         profileID: String = ViewerProfile.defaultID
     ) {
         self.item = item
@@ -69,11 +72,13 @@ public final class DetailsViewModel {
         self.resolveResources = resolveResources
         self.isInWatchlistUseCase = isInWatchlist
         self.toggleWatchlistUseCase = toggleWatchlist
+        self.getPreferences = getPreferences
         self.profileID = profileID
     }
 
     public func load() async {
         state = .loading
+        shouldAutoplayTrailer = false
         do {
             let details = try await getDetails(item.id)
             state = .loaded(details)
@@ -83,6 +88,12 @@ public final class DetailsViewModel {
                     item.id,
                     genreIDs: details.item.genreIDs
                 )) ?? []
+            }
+
+            if let getPreferences,
+               let prefs = try? await getPreferences(profileID: profileID) {
+                let hasTrailer = trailerResource != nil || !details.videos.isEmpty
+                shouldAutoplayTrailer = prefs.autoplayTrailers && hasTrailer
             }
 
             if let isInWatchlistUseCase {

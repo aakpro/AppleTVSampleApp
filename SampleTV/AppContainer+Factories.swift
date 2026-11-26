@@ -59,6 +59,7 @@ extension AppContainer {
             resolveResources: ResolvePlaybackResources(resolver: resourceResolver),
             isInWatchlist: IsInWatchlist(store: watchlistStore),
             toggleWatchlist: ToggleWatchlist(store: watchlistStore),
+            getPreferences: GetUserPreferences(repository: profileRepository),
             profileID: profileID
         )
     }
