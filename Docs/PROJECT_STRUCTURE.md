@@ -22,7 +22,7 @@ phase PR; it is the source of truth that [AGENTS.md](../AGENTS.md) points agents
 | 10 | [Categories](Phase10_Categories/Documentation/Phase_10_Categories.md) (genre shelves, Categories tab, search filters) | ✅ Complete & Verified | `feature/phase_10_categories` |
 | 11 | [Trailers & Playback](Phase11_Trailers_And_Playback/Documentation/Phase_11_Trailers_And_Playback.md) (videos, distinct streams, recommendations) | ✅ Complete & Verified | `feature/phase_11_trailers_and_playback` |
 | 12 | [Watchlist & Release](Phase12_Watchlist_And_Release/Documentation/Phase_12_Watchlist_And_Release.md) (My List, UI smoke tests, `v2.0.0`) | ✅ Complete & Verified | `feature/phase_12_watchlist_and_release` |
-| 13 | [Clean Architecture & Domain/Data Modularization](Phase13_Arch_Domain_Data_Cleanup/Documentation/Phase_13_Arch_Domain_Data_Cleanup.md) (split Domain/DTOs, extract `SampleTVPersistence`, lint hardening) | ⏳ Not started | - |
+| 13 | [Clean Architecture & Domain/Data Modularization](Phase13_Arch_Domain_Data_Cleanup/Documentation/Phase_13_Arch_Domain_Data_Cleanup.md) (split Domain/DTOs, extract `SampleTVPersistence`, lint hardening) | ✅ Complete & Verified | `feature/phase_13_arch_domain_data_cleanup` |
 | 14 | [Presentation Refactoring](Phase14_Presentation_Refactoring/Documentation/Phase_14_Presentation_Refactoring.md) (thin Views, ViewModels for Categories/Player/Root, remove `Combine`) | ⏳ Not started | - |
 | 15 | [Playback & Data Polish](Phase15_Playback_And_Data_Polish/Documentation/Phase_15_Playback_And_Data_Polish.md) (working streams, player errors, TMDB query hygiene, kind-filtered Continue Watching) | ⏳ Not started | - |
 | 16 | [Design System & Cards](Phase16_Design_System_And_Cards/Documentation/Phase_16_Design_System_And_Cards.md) (`AccentColor`, cached posters, unclipped `MediaCard` & `CategoryTile`) | ⏳ Not started | - |
@@ -45,8 +45,9 @@ the app target through `Scripts/link_package.rb` appear in Xcode as local packag
 ├── SampleTVTests/               unit tests (Swift Testing: AppConfiguration, AppContainer)
 ├── SampleTVUITests/             UI smoke tests (XCTest: demo login & tab navigation)
 ├── Packages/
-│   ├── SampleTVDomain/          Phases 2, 7b, 8-12 (entities, ports, Watchlist, use cases)
-│   ├── SampleTVAPI/             Phases 3, 8, 9, 11, 12 (TMDB client, SwiftData profile & Watchlist stores)
+│   ├── SampleTVDomain/          Phases 2, 7b, 8-13 (modular entities, ports, Watchlist, Playback use cases)
+│   ├── SampleTVAPI/             Phases 3, 11, 13 (TMDB client, split DTOs, playback catalog)
+│   ├── SampleTVPersistence/     Phase 13 (unified SwiftData container, profile/watchlist/progress stores, Keychain auth)
 │   ├── SampleTVUI/              Phases 4, 10 (MediaCard, PosterImage, CategoryTile, ImageURLBuilder)
 │   ├── SampleTVDiscovery/       Phases 4, 7b, 10-12 (browse shelves, categories, details + Watchlist toggle)
 │   ├── SampleTVSearch/          Phases 5, 10 (debounced search, kind & genre filters)

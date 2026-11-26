@@ -1,13 +1,15 @@
 import Foundation
-import SampleTVAPI
 import SampleTVDomain
+import SampleTVPersistence
 import Testing
 
 @Suite("MockAuthRepository Tests")
 struct MockAuthRepositoryTests {
-    private func makeRepository(suite: String = "com.sampletv.auth.tests.\(UUID().uuidString)") -> MockAuthRepository {
+    private func makeRepository(
+        suite: String = "com.sampletv.auth.tests.\(UUID().uuidString)"
+    ) -> MockAuthRepository {
         UserDefaults.standard.removePersistentDomain(forName: suite)
-        return MockAuthRepository(suiteName: suite)
+        return MockAuthRepository(sessionStore: UserDefaultsSessionStore(suiteName: suite))
     }
 
     @Test("SignIn with empty fields throws AuthError.emptyFields")
@@ -67,8 +69,8 @@ struct MockAuthRepositoryTests {
     @Test("Account persists across repository instances")
     func persistence() async throws {
         let suite = "com.sampletv.auth.tests.\(UUID().uuidString)"
-        let repository1 = MockAuthRepository(suiteName: suite)
-        let repository2 = MockAuthRepository(suiteName: suite)
+        let repository1 = MockAuthRepository(sessionStore: UserDefaultsSessionStore(suiteName: suite))
+        let repository2 = MockAuthRepository(sessionStore: UserDefaultsSessionStore(suiteName: suite))
 
         let account = try await repository1.signIn(email: "user@example.com", password: "password123")
         let retrievedAccount = await repository2.currentAccount()

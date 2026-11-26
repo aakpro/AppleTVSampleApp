@@ -10,13 +10,14 @@ private struct StubPlaybackProgressStore: PlaybackProgressStore {
         self.progress = progress
     }
 
-    func loadProgress(for mediaID: MediaID) async throws -> PlaybackProgress? {
+    func loadProgress(for mediaID: MediaID, profileID: String) async throws -> PlaybackProgress? {
         progress.first { $0.mediaID == mediaID }
     }
 
     func saveProgress(_ progress: PlaybackProgress) async throws {}
-    func clearProgress(for mediaID: MediaID) async throws {}
-    func recentlyWatched(maxCount: Int) async throws -> [PlaybackProgress] { progress }
+    func clearProgress(for mediaID: MediaID, profileID: String) async throws {}
+    func clearAllProgress(for profileID: String) async throws {}
+    func recentlyWatched(for profileID: String, maxCount: Int) async throws -> [PlaybackProgress] { progress }
 }
 
 private struct StubResourceResolver: PlaybackResourceResolver {

@@ -2,7 +2,7 @@ import Foundation
 import SampleTVDomain
 import SwiftData
 import Testing
-@testable import SampleTVAPI
+@testable import SampleTVPersistence
 
 @Suite struct SwiftDataProfileRepositoryTests {
     private func makeRepository() throws -> SwiftDataProfileRepository {

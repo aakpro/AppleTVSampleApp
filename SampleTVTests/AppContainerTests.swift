@@ -3,6 +3,7 @@ import SampleTVAPI
 import SampleTVAuth
 import SampleTVDiscovery
 import SampleTVDomain
+import SampleTVPersistence
 import SampleTVProfile
 import SampleTVSearch
 import Testing
@@ -18,17 +19,19 @@ struct AppContainerTests {
 
     @Test func factoriesWireWatchlistStoreAndProfileID() async throws {
         let item = MediaItem(id: MediaID(kind: .movie, value: 603), title: "The Matrix")
-        let watchlistStore = try SwiftDataWatchlistStore(inMemory: true)
+        let modelContainer = try PersistenceContainer.makeModelContainer(inMemory: true)
+        let watchlistStore = SwiftDataWatchlistStore(modelContainer: modelContainer)
         try await watchlistStore.add(item, to: "kids")
 
-        let profileRepository = try SwiftDataProfileRepository(inMemory: true)
+        let profileRepository = SwiftDataProfileRepository(modelContainer: modelContainer)
         try await profileRepository.switchProfile(to: "kids")
 
+        let sessionSuite = "AppContainerTests.\(UUID().uuidString)"
         let container = AppContainer(
             configuration: AppConfiguration(tmdbToken: "test-token"),
             repository: StubMediaRepository(item: item),
             progressStore: StubProgressStore(),
-            authRepository: MockAuthRepository(suiteName: "AppContainerTests.\(UUID().uuidString)"),
+            authRepository: MockAuthRepository(sessionStore: TestUserDefaultsSessionStore(suiteName: sessionSuite)),
             profileRepository: profileRepository,
             resourceResolver: CatalogPlaybackResourceResolver(),
             watchlistStore: watchlistStore
@@ -82,8 +85,30 @@ private struct StubMediaRepository: MediaRepository {
 }
 
 private struct StubProgressStore: PlaybackProgressStore {
-    func loadProgress(for mediaID: MediaID) async throws -> PlaybackProgress? { nil }
+    func loadProgress(for mediaID: MediaID, profileID: String) async throws -> PlaybackProgress? { nil }
     func saveProgress(_ progress: PlaybackProgress) async throws {}
-    func clearProgress(for mediaID: MediaID) async throws {}
-    func recentlyWatched(maxCount: Int) async throws -> [PlaybackProgress] { [] }
+    func clearProgress(for mediaID: MediaID, profileID: String) async throws {}
+    func clearAllProgress(for profileID: String) async throws {}
+    func recentlyWatched(for profileID: String, maxCount: Int) async throws -> [PlaybackProgress] { [] }
+}
+
+private struct TestUserDefaultsSessionStore: SessionStore {
+    private let suiteName: String
+    private let key = "currentAccount"
+
+    init(suiteName: String) {
+        self.suiteName = suiteName
+    }
+
+    func load() -> Data? {
+        (UserDefaults(suiteName: suiteName) ?? .standard).data(forKey: key)
+    }
+
+    func save(_ data: Data) {
+        (UserDefaults(suiteName: suiteName) ?? .standard).set(data, forKey: key)
+    }
+
+    func clear() {
+        (UserDefaults(suiteName: suiteName) ?? .standard).removeObject(forKey: key)
+    }
 }

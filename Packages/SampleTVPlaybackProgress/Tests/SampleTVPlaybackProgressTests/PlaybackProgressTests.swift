@@ -62,4 +62,40 @@ struct PlaybackProgressTests {
         #expect(recent[1].mediaID.value == 2)
         #expect(recent[2].mediaID.value == 1)
     }
+
+    @Test("UserDefaultsPlaybackProgressStore profileID isolation")
+    func testProfileIDIsolation() async throws {
+        let store = makeStore()
+        let movieID = MediaID(kind: .movie, value: 123)
+
+        // Save progress for one profile
+        let progressMain = PlaybackProgress(mediaID: movieID, position: 100, duration: 600, profileID: "main")
+        try await store.saveProgress(progressMain)
+
+        // Try to get it from different profile - should not exist
+        let loaded = try await store.loadProgress(for: movieID, profileID: "kids")
+        #expect(loaded == nil)
+    }
+
+    @Test("UserDefaultsPlaybackProgressStore clearAllProgress")
+    func testClearAllProgress() async throws {
+        let store = makeStore()
+        let movieID1 = MediaID(kind: .movie, value: 123)
+        let movieID2 = MediaID(kind: .movie, value: 456)
+
+        // Save progress for one profile
+        let progress1 = PlaybackProgress(mediaID: movieID1, position: 100, duration: 600, profileID: "main")
+        let progress2 = PlaybackProgress(mediaID: movieID2, position: 200, duration: 600, profileID: "main")
+        try await store.saveProgress(progress1)
+        try await store.saveProgress(progress2)
+
+        // Clear all for that profile
+        try await store.clearAllProgress(for: "main")
+
+        // Check both are cleared
+        let loaded1 = try await store.loadProgress(for: movieID1, profileID: "main")
+        let loaded2 = try await store.loadProgress(for: movieID2, profileID: "main")
+        #expect(loaded1 == nil)
+        #expect(loaded2 == nil)
+    }
 }
