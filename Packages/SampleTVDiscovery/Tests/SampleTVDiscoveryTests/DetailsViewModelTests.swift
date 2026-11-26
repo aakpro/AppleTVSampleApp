@@ -266,6 +266,25 @@ struct DetailsPlaybackTests {
         await disabledVM.load()
         #expect(disabledVM.shouldAutoplayTrailer == false)
     }
+
+    @Test func resolvePlayableResourceAndGetPlayableResourcesReturnResolvedStreams() async throws {
+        let featureURL = try #require(URL(string: "https://example.com/feature.m3u8"))
+        let trailerURL = try #require(URL(string: "https://example.com/trailer.m3u8"))
+        let feature = PlayableResource(url: featureURL, kind: .feature, title: "Feature", trackProgress: true)
+        let trailer = PlayableResource(url: trailerURL, kind: .trailer, title: "Trailer", trackProgress: false)
+
+        let model = DetailsViewModel(
+            item: item,
+            getDetails: GetMediaDetails(repository: PlaybackDetailsRepository(details: MediaDetails(item: item))),
+            resolveResources: ResolvePlaybackResources(resolver: StubResourceResolver(resources: [feature, trailer]))
+        )
+        await model.load()
+
+        let resolvedFeature = try await model.resolvePlayableResource(kind: .feature)
+        #expect(resolvedFeature == feature)
+        let all = try await model.getPlayableResources()
+        #expect(all == [feature, trailer])
+    }
 }
 
 private struct StubPreferencesProfileRepository: ProfileRepository {

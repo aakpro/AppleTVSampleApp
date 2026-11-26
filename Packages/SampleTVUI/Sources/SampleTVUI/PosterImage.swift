@@ -9,13 +9,13 @@ public struct PosterImage: View {
 
     private let url: URL?
     private let title: String?
-    private let aspectRatio: CGFloat
+    private let aspectRatio: CGFloat?
     @State private var loadState: LoadState
 
     public init(
         url: URL?,
         title: String? = nil,
-        aspectRatio: CGFloat = SampleTVTheme.posterAspectRatio
+        aspectRatio: CGFloat? = SampleTVTheme.posterAspectRatio
     ) {
         self.url = url
         self.title = title
@@ -24,8 +24,7 @@ public struct PosterImage: View {
     }
 
     public var body: some View {
-        Color.clear
-            .aspectRatio(aspectRatio, contentMode: .fit)
+        container
             .overlay {
                 content
             }
@@ -33,6 +32,15 @@ public struct PosterImage: View {
             .task(id: url) {
                 await fetch()
             }
+    }
+
+    @ViewBuilder
+    private var container: some View {
+        if let aspectRatio {
+            Color.clear.aspectRatio(aspectRatio, contentMode: .fit)
+        } else {
+            Color.clear
+        }
     }
 
     @ViewBuilder

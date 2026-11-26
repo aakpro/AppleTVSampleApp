@@ -31,5 +31,6 @@ struct AccountHeaderSection: View {
 
             Spacer()
         }
+        .accessibilityElement(children: .combine)
     }
 }

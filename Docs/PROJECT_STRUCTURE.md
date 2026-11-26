@@ -28,7 +28,7 @@ phase PR; it is the source of truth that [AGENTS.md](../AGENTS.md) points agents
 | 16 | [Design System & Cards](Phase16_Design_System_And_Cards/Documentation/Phase_16_Design_System_And_Cards.md) (`AccentColor`, cached posters, unclipped `MediaCard` & `CategoryTile`) | ✅ Complete & Verified | `feature/phase_16_design_system_and_cards` |
 | 17 | [Discover, Categories & Search Chrome](Phase17_Discover_Search_Chrome/Documentation/Phase_17_Discover_Search_Chrome.md) (hero banner, un-truncated pickers, headers, Search loading state) | ✅ Complete & Verified | `feature/phase_17_discover_search_chrome` |
 | 18 | [Details, Auth & Profile Polish](Phase18_Details_Auth_Profile/Documentation/Phase_18_Details_Auth_Profile.md) (opaque backdrop `DetailsView`, flash-free auth, `ProfileView` layout) | ✅ Complete & Verified | `feature/phase_18_details_auth_profile` |
-| 19 | [Visual QA & Release](Phase19_Visual_QA_And_Release/Documentation/Phase_19_Visual_QA_And_Release.md) (expanded XCUITests, accessibility pass, `v2.1.0`) | ⏳ Not started | - |
+| 19 | [Visual QA & Release](Phase19_Visual_QA_And_Release/Documentation/Phase_19_Visual_QA_And_Release.md) (expanded XCUITests, accessibility pass, `v2.1.0`) | ✅ Complete & Verified | `feature/phase_19_visual_qa_and_release` |
 
 Statuses: ⏳ not started · 🚧 in progress (branch name) · ✅ complete / merged (version tag).
 

@@ -67,6 +67,7 @@ public struct PlayerView: View {
                             .padding(.vertical, 8)
                     }
                     .buttonStyle(.borderedProminent)
+                    .accessibilityIdentifier("player.tryAgainButton")
 
                     Button {
                         dismiss()
@@ -76,6 +77,7 @@ public struct PlayerView: View {
                             .padding(.vertical, 8)
                     }
                     .buttonStyle(.bordered)
+                    .accessibilityIdentifier("player.closeButton")
                 }
             }
             .padding(60)

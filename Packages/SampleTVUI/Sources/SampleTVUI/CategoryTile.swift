@@ -22,6 +22,8 @@ public struct CategoryTile: View {
                 Text(title)
                     .font(SampleTVTheme.Typography.tileTitle)
                     .lineLimit(2)
+                    .minimumScaleFactor(0.85)
+                    .fixedSize(horizontal: false, vertical: true)
                     .multilineTextAlignment(.center)
                     .foregroundStyle(.primary)
             }
@@ -41,6 +43,10 @@ public struct CategoryTile: View {
         }
         .buttonStyle(.card)
         .accessibilityLabel(title)
+        .accessibilityHint("Browse \(title)")
+        .accessibilityIdentifier(
+            "category.tile.\(title.lowercased().replacingOccurrences(of: " ", with: "-"))"
+        )
     }
 
     private static let symbolByTitle: [String: String] = [

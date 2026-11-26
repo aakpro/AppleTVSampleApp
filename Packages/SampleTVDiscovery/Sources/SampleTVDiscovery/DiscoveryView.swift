@@ -33,11 +33,10 @@ public struct DiscoveryView: View {
     }
 
     private var header: some View {
-        HStack(spacing: 24) {
+        HStack(spacing: 36) {
             Text("Discover")
                 .font(SampleTVTheme.Typography.screenTitle)
-
-            Spacer()
+                .accessibilityAddTraits(.isHeader)
 
             Picker("Media Type", selection: $viewModel.kind) {
                 Text("Movies").tag(MediaKind.movie)
@@ -46,6 +45,8 @@ public struct DiscoveryView: View {
             .pickerStyle(.segmented)
             .fixedSize()
             .accessibilityIdentifier("discover.kindPicker")
+
+            Spacer()
         }
         .padding(.horizontal, SampleTVTheme.horizontalSafeMargin)
         .padding(.top, 24)
@@ -62,7 +63,7 @@ public struct DiscoveryView: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
         case .loaded:
             ScrollView {
-                LazyVStack(alignment: .leading, spacing: 28) {
+                VStack(alignment: .leading, spacing: 28) {
                     if let featured = viewModel.featuredItem {
                         DiscoveryHeroBanner(
                             item: featured,

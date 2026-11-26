@@ -30,6 +30,7 @@ public struct CategoryResultsView: View {
         HStack(spacing: 24) {
             Text(headerTitle)
                 .font(SampleTVTheme.Typography.screenTitle)
+                .accessibilityAddTraits(.isHeader)
 
             Spacer()
 

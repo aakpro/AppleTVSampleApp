@@ -28,6 +28,7 @@ public struct MediaCard: View {
                 }
                 .buttonStyle(.card)
                 .accessibilityLabel(accessibilitySummary)
+                .accessibilityIdentifier("media.card.\(item.id.kind.rawValue).\(item.id.value)")
             } else {
                 posterContent
                     .accessibilityElement(children: .combine)
@@ -108,6 +109,9 @@ public struct MediaCard: View {
         }
         if let rating = item.rating, rating > 0 {
             parts.append("rated \(rating.formatted(.number.precision(.fractionLength(1))))")
+        }
+        if let playbackProgress, playbackProgress > 0 {
+            parts.append("\(Int(min(max(playbackProgress, 0), 1) * 100))% watched")
         }
         return parts.joined(separator: ", ")
     }

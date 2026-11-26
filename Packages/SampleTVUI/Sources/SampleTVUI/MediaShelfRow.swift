@@ -32,6 +32,7 @@ public struct MediaShelfRow: View {
                 .font(SampleTVTheme.Typography.sectionTitle)
                 .foregroundStyle(.primary)
                 .padding(.horizontal, horizontalMargin)
+                .accessibilityAddTraits(.isHeader)
 
             ScrollView(.horizontal, showsIndicators: false) {
                 LazyHStack(alignment: .top, spacing: SampleTVTheme.shelfItemSpacing) {

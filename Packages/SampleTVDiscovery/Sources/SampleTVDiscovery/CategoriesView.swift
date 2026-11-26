@@ -23,6 +23,7 @@ public struct CategoriesView: View {
                 .font(SampleTVTheme.Typography.screenTitle)
                 .padding(.horizontal, SampleTVTheme.horizontalSafeMargin)
                 .padding(.top, 24)
+                .accessibilityAddTraits(.isHeader)
 
             content
         }

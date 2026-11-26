@@ -18,6 +18,7 @@ public struct ProfileView: View {
                 VStack(alignment: .leading, spacing: 28) {
                     Text("Profile")
                         .font(SampleTVTheme.Typography.screenTitle)
+                        .accessibilityAddTraits(.isHeader)
 
                     if let errorMessage = viewModel.errorMessage {
                         errorBanner(errorMessage)
@@ -30,6 +31,7 @@ public struct ProfileView: View {
                     signOutButton
                 }
                 .frame(maxWidth: 960, alignment: .leading)
+                .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.horizontal, SampleTVTheme.horizontalSafeMargin)
 
                 WatchlistSection(viewModel: viewModel, onSelectItem: onSelectItem)

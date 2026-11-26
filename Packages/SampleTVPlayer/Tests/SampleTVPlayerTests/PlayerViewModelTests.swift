@@ -60,4 +60,24 @@ struct PlayerViewModelTests {
         let newItem = viewModel.player.currentItem
         #expect(newItem != nil)
     }
+
+    @Test func playPauseUnknownStatusAndCancellationSafeObservation() async throws {
+        let url = try #require(URL(string: "https://example.com/video.mp4"))
+        let viewModel = PlayerViewModel(url: url, initialPosition: 30)
+
+        viewModel.play()
+        viewModel.pause()
+        await viewModel.handleStatus(.unknown)
+        #expect(viewModel.failure == nil)
+
+        await viewModel.handleStatus(.failed, errorDescription: nil)
+        #expect(viewModel.failure != nil)
+
+        let observerTask = Task {
+            await viewModel.startObserving()
+        }
+        await Task.yield()
+        observerTask.cancel()
+        await observerTask.value
+    }
 }
