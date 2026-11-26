@@ -22,6 +22,13 @@ phase PR; it is the source of truth that [AGENTS.md](../AGENTS.md) points agents
 | 10 | [Categories](Phase10_Categories/Documentation/Phase_10_Categories.md) (genre shelves, Categories tab, search filters) | ✅ Complete & Verified | `feature/phase_10_categories` |
 | 11 | [Trailers & Playback](Phase11_Trailers_And_Playback/Documentation/Phase_11_Trailers_And_Playback.md) (videos, distinct streams, recommendations) | ✅ Complete & Verified | `feature/phase_11_trailers_and_playback` |
 | 12 | [Watchlist & Release](Phase12_Watchlist_And_Release/Documentation/Phase_12_Watchlist_And_Release.md) (My List, UI smoke tests, `v2.0.0`) | ✅ Complete & Verified | `feature/phase_12_watchlist_and_release` |
+| 13 | [Clean Architecture & Domain/Data Modularization](Phase13_Arch_Domain_Data_Cleanup/Documentation/Phase_13_Arch_Domain_Data_Cleanup.md) (split Domain/DTOs, extract `SampleTVPersistence`, lint hardening) | ⏳ Not started | - |
+| 14 | [Presentation Refactoring](Phase14_Presentation_Refactoring/Documentation/Phase_14_Presentation_Refactoring.md) (thin Views, ViewModels for Categories/Player/Root, remove `Combine`) | ⏳ Not started | - |
+| 15 | [Playback & Data Polish](Phase15_Playback_And_Data_Polish/Documentation/Phase_15_Playback_And_Data_Polish.md) (working streams, player errors, TMDB query hygiene, kind-filtered Continue Watching) | ⏳ Not started | - |
+| 16 | [Design System & Cards](Phase16_Design_System_And_Cards/Documentation/Phase_16_Design_System_And_Cards.md) (`AccentColor`, cached posters, unclipped `MediaCard` & `CategoryTile`) | ⏳ Not started | - |
+| 17 | [Discover, Categories & Search Chrome](Phase17_Discover_Search_Chrome/Documentation/Phase_17_Discover_Search_Chrome.md) (hero banner, un-truncated pickers, headers, Search loading state) | ⏳ Not started | - |
+| 18 | [Details, Auth & Profile Polish](Phase18_Details_Auth_Profile/Documentation/Phase_18_Details_Auth_Profile.md) (opaque backdrop `DetailsView`, flash-free auth, `ProfileView` layout) | ⏳ Not started | - |
+| 19 | [Visual QA & Release](Phase19_Visual_QA_And_Release/Documentation/Phase_19_Visual_QA_And_Release.md) (expanded XCUITests, accessibility pass, `v2.1.0`) | ⏳ Not started | - |
 
 Statuses: ⏳ not started · 🚧 in progress (branch name) · ✅ complete / merged (version tag).
 
@@ -50,6 +57,7 @@ the app target through `Scripts/link_package.rb` appear in Xcode as local packag
 ├── Scripts/                     link_package.rb (adds a local package to the app target)
 ├── Config/                      Shared.xcconfig, Secrets.xcconfig(.example), Info.plist
 ├── Docs/                        architecture, API spec, phase guides, templates
+├── .agents/skills/              project skills (sampletv-clean-architecture, sampletv-tvos-ui-polish)
 ├── .github/  .swiftlint.yml  .gitignore
 └── README.md  AGENTS.md  CHANGELOG.md  PHASE_SUMMARY.md
 ```
@@ -137,6 +145,15 @@ Enforced by `Package.swift` plus the custom rules in `.swiftlint.yml`.
 | `Docs/Phase10_Categories/Documentation/Phase_10_Categories.md` | Phase 10 guide |
 | `Docs/Phase11_Trailers_And_Playback/Documentation/Phase_11_Trailers_And_Playback.md` | Phase 11 guide |
 | `Docs/Phase12_Watchlist_And_Release/Documentation/Phase_12_Watchlist_And_Release.md` | Phase 12 guide |
+| `Docs/Phase13_Arch_Domain_Data_Cleanup/Documentation/Phase_13_Arch_Domain_Data_Cleanup.md` | Phase 13 guide |
+| `Docs/Phase14_Presentation_Refactoring/Documentation/Phase_14_Presentation_Refactoring.md` | Phase 14 guide |
+| `Docs/Phase15_Playback_And_Data_Polish/Documentation/Phase_15_Playback_And_Data_Polish.md` | Phase 15 guide |
+| `Docs/Phase16_Design_System_And_Cards/Documentation/Phase_16_Design_System_And_Cards.md` | Phase 16 guide |
+| `Docs/Phase17_Discover_Search_Chrome/Documentation/Phase_17_Discover_Search_Chrome.md` | Phase 17 guide |
+| `Docs/Phase18_Details_Auth_Profile/Documentation/Phase_18_Details_Auth_Profile.md` | Phase 18 guide |
+| `Docs/Phase19_Visual_QA_And_Release/Documentation/Phase_19_Visual_QA_And_Release.md` | Phase 19 guide |
+| `.agents/skills/sampletv-clean-architecture/SKILL.md` | Clean Architecture, modularity & thin-view enforcement skill |
+| `.agents/skills/sampletv-tvos-ui-polish/SKILL.md` | tvOS 17 UI, focus, image caching & simulator visual QA skill |
 
 ### Templates (`Docs/templates/`)
 
