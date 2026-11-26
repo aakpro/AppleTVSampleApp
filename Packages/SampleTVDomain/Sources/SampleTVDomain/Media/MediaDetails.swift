@@ -32,6 +32,7 @@ public struct MediaDetails: Codable, Hashable, Sendable {
     public let seasonCount: Int?
     public let recommendations: [MediaItem]
     public let videos: [MediaVideo]
+    public let seasons: [TVSeason]
 
     public init(
         item: MediaItem,
@@ -39,7 +40,8 @@ public struct MediaDetails: Codable, Hashable, Sendable {
         runtimeMinutes: Int? = nil,
         seasonCount: Int? = nil,
         recommendations: [MediaItem] = [],
-        videos: [MediaVideo] = []
+        videos: [MediaVideo] = [],
+        seasons: [TVSeason] = []
     ) {
         self.item = item
         self.genres = genres
@@ -47,5 +49,6 @@ public struct MediaDetails: Codable, Hashable, Sendable {
         self.seasonCount = seasonCount
         self.recommendations = recommendations
         self.videos = videos
+        self.seasons = seasons
     }
 }

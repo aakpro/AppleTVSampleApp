@@ -12,9 +12,10 @@ struct DetailsDTO: Decodable, Sendable {
     let numberOfSeasons: Int?
     let recommendations: RecommendationsDTO?
     let videos: VideosResponseDTO?
+    let seasons: [TVSeasonDTO]?
 
     enum CodingKeys: String, CodingKey {
-        case genres, runtime, recommendations, videos
+        case genres, runtime, recommendations, videos, seasons
         case numberOfSeasons = "number_of_seasons"
     }
 
@@ -27,6 +28,7 @@ struct DetailsDTO: Decodable, Sendable {
         numberOfSeasons = try container.decodeIfPresent(Int.self, forKey: .numberOfSeasons)
         recommendations = try container.decodeIfPresent(RecommendationsDTO.self, forKey: .recommendations)
         videos = try container.decodeIfPresent(VideosResponseDTO.self, forKey: .videos)
+        seasons = try container.decodeIfPresent([TVSeasonDTO].self, forKey: .seasons)
     }
 
     func toDomain(kind: MediaKind) throws -> MediaDetails {
@@ -52,7 +54,8 @@ struct DetailsDTO: Decodable, Sendable {
                     key: $0.key,
                     language: $0.iso6391 ?? "en"
                 )
-            }
+            },
+            seasons: TVSeasonDTO.normalizedSeasons(seasons)
         )
     }
 }

@@ -44,3 +44,18 @@ public struct GetMediaDetails: Sendable {
         try await repository.details(of: id)
     }
 }
+
+public struct GetTVSeasonDetails: Sendable {
+    private let repository: any MediaRepository
+
+    public init(repository: any MediaRepository) {
+        self.repository = repository
+    }
+
+    public func callAsFunction(of id: MediaID, seasonNumber: Int) async throws -> TVSeasonDetails {
+        guard id.kind == .tv && seasonNumber >= 0 else {
+            throw MediaError.notFound
+        }
+        return try await repository.seasonDetails(of: id, seasonNumber: seasonNumber)
+    }
+}

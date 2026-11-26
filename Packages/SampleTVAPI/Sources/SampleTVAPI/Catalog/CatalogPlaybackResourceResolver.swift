@@ -39,17 +39,23 @@ public struct CatalogPlaybackResourceResolver: PlaybackResourceResolver {
 
     public init() {}
 
-    public func resolve(_ mediaID: MediaID, genreIDs: [Int]) async throws -> [PlayableResource] {
-        let seed = abs(mediaID.value + (genreIDs.first ?? 0) + (mediaID.kind == .tv ? 1 : 0))
+    public func resolve(
+        _ mediaID: MediaID,
+        genreIDs: [Int],
+        episode: TVEpisode?
+    ) async throws -> [PlayableResource] {
+        let episodeOffset = episode.map { ($0.seasonNumber * 31) + ($0.episodeNumber * 7) } ?? 0
+        let seed = abs(mediaID.value + (genreIDs.first ?? 0) + (mediaID.kind == .tv ? 1 : 0) + episodeOffset)
         let entry = Self.catalog[seed % Self.catalog.count]
 
         var resources: [PlayableResource] = []
         if let featureURL = URL(string: entry.featureURLString) {
+            let subtitle = episode.map { "\($0.episodeCode) · \($0.name)" } ?? "Full Feature"
             resources.append(PlayableResource(
                 url: featureURL,
                 kind: .feature,
                 title: entry.title,
-                subtitle: "Full Feature",
+                subtitle: subtitle,
                 trackProgress: true
             ))
         }
@@ -63,5 +69,10 @@ public struct CatalogPlaybackResourceResolver: PlaybackResourceResolver {
             ))
         }
         return resources
+    }
+
+    /// Default implementation that delegates to the new resolve method.
+    public func resolve(_ mediaID: MediaID, genreIDs: [Int]) async throws -> [PlayableResource] {
+        try await self.resolve(mediaID, genreIDs: genreIDs, episode: nil)
     }
 }

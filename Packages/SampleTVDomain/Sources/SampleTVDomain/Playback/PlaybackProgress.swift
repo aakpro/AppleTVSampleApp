@@ -7,6 +7,8 @@ public struct PlaybackProgress: Codable, Hashable, Sendable {
     public let position: TimeInterval
     public let duration: TimeInterval
     public let updatedAt: Date
+    public let seasonNumber: Int?
+    public let episodeNumber: Int?
 
     /// Creates a new playback progress record.
     public init(
@@ -14,13 +16,17 @@ public struct PlaybackProgress: Codable, Hashable, Sendable {
         position: TimeInterval,
         duration: TimeInterval,
         updatedAt: Date = .now,
-        profileID: String = ViewerProfile.defaultID
+        profileID: String = ViewerProfile.defaultID,
+        seasonNumber: Int? = nil,
+        episodeNumber: Int? = nil
     ) {
         self.profileID = profileID
         self.mediaID = mediaID
         self.position = position
         self.duration = duration
         self.updatedAt = updatedAt
+        self.seasonNumber = seasonNumber
+        self.episodeNumber = episodeNumber
     }
 
     /// Returns true if the item should be considered watched (position >= 90% of duration).
@@ -36,10 +42,12 @@ public struct PlaybackProgress: Codable, Hashable, Sendable {
         self.updatedAt = try container.decode(Date.self, forKey: .updatedAt)
         self.profileID = try container.decodeIfPresent(String.self, forKey: .profileID)
             ?? ViewerProfile.defaultID
+        self.seasonNumber = try container.decodeIfPresent(Int.self, forKey: .seasonNumber)
+        self.episodeNumber = try container.decodeIfPresent(Int.self, forKey: .episodeNumber)
     }
 
     private enum CodingKeys: String, CodingKey {
-        case mediaID, position, duration, updatedAt, profileID
+        case mediaID, position, duration, updatedAt, profileID, seasonNumber, episodeNumber
     }
 }
 
