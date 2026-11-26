@@ -39,7 +39,8 @@ public struct SearchView: View {
                 Text("TV Shows").tag(MediaKind?.some(.tv))
             }
             .pickerStyle(.segmented)
-            .frame(maxWidth: 420)
+            .fixedSize()
+            .accessibilityIdentifier("search.kindPicker")
 
             if !viewModel.availableGenres.isEmpty {
                 Menu {

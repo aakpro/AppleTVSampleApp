@@ -18,24 +18,35 @@ public struct CategoriesView: View {
     }
 
     public var body: some View {
-        Group {
-            switch viewModel.state {
-            case .idle, .loading:
-                ProgressView()
-            case .failed(let error):
-                ErrorView(error: error) { Task { await viewModel.load() } }
-            case .loaded(let movies, let tvShows):
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 36) {
-                        genreSection(title: "Movies", kind: .movie, genres: movies)
-                        genreSection(title: "TV Shows", kind: .tv, genres: tvShows)
-                    }
-                    .padding(.vertical, 48)
+        VStack(alignment: .leading, spacing: 20) {
+            Text("Categories")
+                .font(SampleTVTheme.Typography.screenTitle)
+                .padding(.horizontal, SampleTVTheme.horizontalSafeMargin)
+                .padding(.top, 24)
+
+            content
+        }
+        .task { await viewModel.load() }
+    }
+
+    @ViewBuilder
+    private var content: some View {
+        switch viewModel.state {
+        case .idle, .loading:
+            ProgressView()
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+        case .failed(let error):
+            ErrorView(error: error) { Task { await viewModel.load() } }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+        case .loaded(let movies, let tvShows):
+            ScrollView {
+                VStack(alignment: .leading, spacing: 36) {
+                    genreSection(title: "Movies", kind: .movie, genres: movies)
+                    genreSection(title: "TV Shows", kind: .tv, genres: tvShows)
                 }
+                .padding(.vertical, 28)
             }
         }
-        .navigationTitle("Categories")
-        .task { await viewModel.load() }
     }
 
     private func genreSection(title: String, kind: MediaKind, genres: [Genre]) -> some View {
