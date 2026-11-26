@@ -10,16 +10,17 @@ struct WatchlistSection: View {
         if viewModel.watchlistItems.isEmpty {
             VStack(alignment: .leading, spacing: 12) {
                 Text("My List")
-                    .font(.headline)
+                    .font(SampleTVTheme.Typography.sectionTitle)
 
                 Text("No saved titles yet.")
                     .foregroundStyle(.secondary)
             }
+            .padding(.horizontal, SampleTVTheme.horizontalSafeMargin)
         } else {
             MediaShelfRow(
                 title: "My List",
                 items: viewModel.watchlistItems,
-                horizontalMargin: 0
+                horizontalMargin: SampleTVTheme.horizontalSafeMargin
             ) { item in
                 onSelectItem?(item)
             }

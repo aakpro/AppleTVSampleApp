@@ -3,6 +3,7 @@ import SampleTVDiscovery
 import SampleTVDomain
 import SampleTVProfile
 import SampleTVSearch
+import SampleTVUI
 import SwiftUI
 
 struct RootView: View {
@@ -16,20 +17,29 @@ struct RootView: View {
 
     var body: some View {
         Group {
-            if viewModel.authenticatedAccount != nil {
+            switch viewModel.sessionState {
+            case .checking:
+                ZStack {
+                    SampleTVTheme.Colors.canvas
+                        .ignoresSafeArea()
+                    ProgressView()
+                }
+            case .signedIn:
                 tabs
-            } else if viewModel.hasTMDBToken {
-                LoginView(viewModel: container.makeLoginViewModel { account in
-                    Task { await viewModel.didAuthenticate(account) }
-                })
-            } else {
-                ContentUnavailableView(
-                    "TMDB token missing",
-                    systemImage: "key.slash",
-                    description: Text(
-                        "Copy Config/Secrets.xcconfig.example to Config/Secrets.xcconfig and add your token."
+            case .signedOut:
+                if viewModel.hasTMDBToken {
+                    LoginView(viewModel: container.makeLoginViewModel { account in
+                        Task { await viewModel.didAuthenticate(account) }
+                    })
+                } else {
+                    ContentUnavailableView(
+                        "TMDB token missing",
+                        systemImage: "key.slash",
+                        description: Text(
+                            "Copy Config/Secrets.xcconfig.example to Config/Secrets.xcconfig and add your token."
+                        )
                     )
-                )
+                }
             }
         }
         .task {

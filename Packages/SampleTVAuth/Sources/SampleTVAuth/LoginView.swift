@@ -4,63 +4,106 @@ import SampleTVUI
 import SwiftUI
 
 public struct LoginView: View {
+    private enum FocusField: Hashable {
+        case email
+        case password
+        case signIn
+        case demo
+    }
+
     @State private var viewModel: LoginViewModel
+    @FocusState private var focusedField: FocusField?
 
     public init(viewModel: LoginViewModel) {
         _viewModel = State(initialValue: viewModel)
     }
 
     public var body: some View {
-        VStack(spacing: 40) {
-            VStack(spacing: 16) {
-                Image(systemName: "play.rectangle.on.rectangle")
-                    .font(.system(size: 64, weight: .thin))
-                    .foregroundStyle(.tint)
+        ZStack {
+            SampleTVTheme.Colors.canvas
+                .ignoresSafeArea()
 
-                Text("SampleTV")
-                    .font(.largeTitle)
-                    .fontWeight(.semibold)
-            }
+            VStack(spacing: 32) {
+                VStack(spacing: 12) {
+                    Image(systemName: "play.rectangle.on.rectangle")
+                        .font(.system(size: 64, weight: .thin))
+                        .foregroundStyle(.tint)
 
-            VStack(spacing: 24) {
-                TextField("Email", text: $viewModel.email)
-                    .textInputAutocapitalization(.never)
-                    .autocorrectionDisabled()
-                    .keyboardType(.emailAddress)
+                    Text("SampleTV")
+                        .font(SampleTVTheme.Typography.screenTitle)
 
-                SecureField("Password", text: $viewModel.password)
-                    .textInputAutocapitalization(.never)
-                    .autocorrectionDisabled()
-            }
-            .frame(maxWidth: 500)
-
-            VStack(spacing: 16) {
-                Button("Sign In") {
-                    Task { await viewModel.submit() }
+                    Text("Sign in to sync your Watchlist, playback progress, and profile preferences.")
+                        .font(.callout)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
                 }
-                .buttonStyle(.borderedProminent)
-                .disabled(viewModel.state == .authenticating)
 
-                Button("Continue with Demo Account") {
-                    Task { await viewModel.continueAsDemo() }
+                VStack(spacing: 20) {
+                    TextField("Email", text: $viewModel.email)
+                        .textInputAutocapitalization(.never)
+                        .autocorrectionDisabled()
+                        .keyboardType(.emailAddress)
+                        .focused($focusedField, equals: .email)
+
+                    SecureField("Password", text: $viewModel.password)
+                        .textInputAutocapitalization(.never)
+                        .autocorrectionDisabled()
+                        .focused($focusedField, equals: .password)
                 }
-                .buttonStyle(.bordered)
-                .disabled(viewModel.state == .authenticating)
-            }
 
-            if case .failed(let error) = viewModel.state {
-                Text(error.userMessage)
-                    .font(.callout)
-                    .foregroundStyle(.red)
-                    .multilineTextAlignment(.center)
-            }
+                VStack(spacing: 16) {
+                    Button {
+                        Task { await viewModel.submit() }
+                    } label: {
+                        Text("Sign In")
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 6)
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .disabled(viewModel.state == .authenticating)
+                    .focused($focusedField, equals: .signIn)
+                    .accessibilityIdentifier("login.signInButton")
 
-            if viewModel.state == .authenticating {
-                ProgressView()
+                    Button {
+                        Task { await viewModel.continueAsDemo() }
+                    } label: {
+                        Text("Continue with Demo Account")
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 6)
+                    }
+                    .buttonStyle(.bordered)
+                    .disabled(viewModel.state == .authenticating)
+                    .focused($focusedField, equals: .demo)
+                    .accessibilityIdentifier("login.demoButton")
+                }
+
+                if case .failed(let error) = viewModel.state {
+                    Text(error.userMessage)
+                        .font(.callout)
+                        .foregroundStyle(.red)
+                        .multilineTextAlignment(.center)
+                }
+
+                if viewModel.state == .authenticating {
+                    ProgressView()
+                }
+            }
+            .padding(48)
+            .frame(maxWidth: 620)
+            .background(
+                SampleTVTheme.Colors.surface.opacity(0.92),
+                in: RoundedRectangle(cornerRadius: 24, style: .continuous)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 24, style: .continuous)
+                    .stroke(SampleTVTheme.Colors.glassBorder, lineWidth: 1)
+            )
+        }
+        .onAppear {
+            if focusedField == nil {
+                focusedField = .demo
             }
         }
-        .padding(60)
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }
 

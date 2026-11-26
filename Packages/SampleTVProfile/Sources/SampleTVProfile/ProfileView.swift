@@ -1,4 +1,5 @@
 import SampleTVDomain
+import SampleTVUI
 import SwiftUI
 
 public struct ProfileView: View {
@@ -13,17 +14,28 @@ public struct ProfileView: View {
 
     public var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 28) {
-                AccountHeaderSection(viewModel: viewModel)
-                ProfileSwitcherSection(viewModel: viewModel)
-                PreferencesSection(viewModel: viewModel)
-                WatchHistorySection(viewModel: viewModel)
+            VStack(alignment: .leading, spacing: 36) {
+                VStack(alignment: .leading, spacing: 28) {
+                    Text("Profile")
+                        .font(SampleTVTheme.Typography.screenTitle)
+
+                    if let errorMessage = viewModel.errorMessage {
+                        errorBanner(errorMessage)
+                    }
+
+                    AccountHeaderSection(viewModel: viewModel)
+                    ProfileSwitcherSection(viewModel: viewModel)
+                    PreferencesSection(viewModel: viewModel)
+                    WatchHistorySection(viewModel: viewModel)
+                    signOutButton
+                }
+                .frame(maxWidth: 960, alignment: .leading)
+                .padding(.horizontal, SampleTVTheme.horizontalSafeMargin)
+
                 WatchlistSection(viewModel: viewModel, onSelectItem: onSelectItem)
-                signOutButton
             }
-            .padding(48)
+            .padding(.vertical, 36)
         }
-        .navigationTitle("Profile")
         .task {
             await viewModel.load()
         }
@@ -39,16 +51,37 @@ public struct ProfileView: View {
         }
     }
 
+    private func errorBanner(_ message: String) -> some View {
+        HStack(spacing: 16) {
+            Image(systemName: "exclamationmark.triangle.fill")
+                .foregroundStyle(.yellow)
+            Text(message)
+                .font(.callout)
+            Spacer()
+            Button("Dismiss") {
+                viewModel.clearError()
+            }
+            .buttonStyle(.bordered)
+        }
+        .padding(16)
+        .background(Color.red.opacity(0.18), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+    }
+
     private var signOutButton: some View {
         HStack {
             Spacer()
 
-            Button("Sign Out", role: .destructive) {
+            Button(role: .destructive) {
                 isSignOutConfirmationPresented = true
+            } label: {
+                Text("Sign Out")
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
             }
-            .buttonStyle(.card)
+            .buttonStyle(.bordered)
+            .accessibilityIdentifier("profile.signOutButton")
         }
-        .padding(.top, 12)
+        .padding(.top, 8)
     }
 }
 
