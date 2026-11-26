@@ -10,11 +10,21 @@ struct CategoryDestination: Hashable {
 @MainActor
 @Observable
 final class RootViewModel {
+    enum SessionState: Equatable {
+        case checking
+        case signedOut
+        case signedIn(UserAccount)
+    }
+
     private let loadCurrentAccount: LoadCurrentAccount
     private let getCurrentProfile: GetCurrentUserProfile
     let hasTMDBToken: Bool
 
-    var authenticatedAccount: UserAccount?
+    private(set) var sessionState: SessionState = .checking
+    var authenticatedAccount: UserAccount? {
+        guard case .signedIn(let account) = sessionState else { return nil }
+        return account
+    }
     var activeProfileID = ViewerProfile.defaultID
     var selection: MediaItem?
     var categoryDestination: CategoryDestination?
@@ -30,21 +40,24 @@ final class RootViewModel {
     }
 
     func loadSession() async {
+        sessionState = .checking
         if let account = await loadCurrentAccount() {
-            authenticatedAccount = account
             await refreshActiveProfileID()
+            sessionState = .signedIn(account)
+        } else {
+            sessionState = .signedOut
         }
     }
 
     func didAuthenticate(_ account: UserAccount) async {
-        authenticatedAccount = account
         await refreshActiveProfileID()
+        sessionState = .signedIn(account)
     }
 
     func signOut() {
         selection = nil
         categoryDestination = nil
-        authenticatedAccount = nil
+        sessionState = .signedOut
     }
 
     func refreshActiveProfileID() async {

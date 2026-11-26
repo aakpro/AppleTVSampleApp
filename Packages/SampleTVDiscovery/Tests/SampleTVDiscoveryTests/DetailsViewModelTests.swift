@@ -233,6 +233,51 @@ struct DetailsPlaybackTests {
         await model.toggleWatchlist()
         #expect(model.isInWatchlist == false)
     }
+
+    @Test func loadSetsShouldAutoplayTrailerFromUserPreferences() async throws {
+        let trailerURL = try #require(URL(string: "https://example.com/trailer.m3u8"))
+        let trailer = PlayableResource(
+            url: trailerURL,
+            kind: .trailer,
+            title: "Trailer",
+            trackProgress: false
+        )
+        let details = MediaDetails(
+            item: item,
+            videos: [MediaVideo(id: "v1", kind: .trailer, name: "Official", site: "YouTube", key: "k", language: "en")]
+        )
+        let repo = PlaybackDetailsRepository(details: details)
+
+        let enabledVM = DetailsViewModel(
+            item: item,
+            getDetails: GetMediaDetails(repository: repo),
+            resolveResources: ResolvePlaybackResources(resolver: StubResourceResolver(resources: [trailer])),
+            getPreferences: GetUserPreferences(repository: StubPreferencesProfileRepository(autoplayTrailers: true))
+        )
+        await enabledVM.load()
+        #expect(enabledVM.shouldAutoplayTrailer == true)
+
+        let disabledVM = DetailsViewModel(
+            item: item,
+            getDetails: GetMediaDetails(repository: repo),
+            resolveResources: ResolvePlaybackResources(resolver: StubResourceResolver(resources: [trailer])),
+            getPreferences: GetUserPreferences(repository: StubPreferencesProfileRepository(autoplayTrailers: false))
+        )
+        await disabledVM.load()
+        #expect(disabledVM.shouldAutoplayTrailer == false)
+    }
+}
+
+private struct StubPreferencesProfileRepository: ProfileRepository {
+    let autoplayTrailers: Bool
+
+    func currentProfile() async throws -> ViewerProfile { ViewerProfile(id: "main", name: "Main", isMain: true) }
+    func profiles() async throws -> [ViewerProfile] { [try await currentProfile()] }
+    func preferences(for profileID: String) async throws -> UserPreferences {
+        UserPreferences(defaultKind: .movie, autoplayTrailers: autoplayTrailers)
+    }
+    func updatePreferences(_ preferences: UserPreferences, for profileID: String) async throws {}
+    func switchProfile(to profileID: String) async throws {}
 }
 
 private struct PlaybackDetailsRepository: MediaRepository {

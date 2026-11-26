@@ -100,6 +100,17 @@ import Testing
         #expect(viewModel.watchlistItems == [savedItem])
     }
 
+    @Test func clearErrorResetsErrorMessageAfterFailure() async {
+        let failingRepo = FailingProfileRepository()
+        let viewModel = makeViewModel(profileRepo: failingRepo)
+
+        await viewModel.load()
+        #expect(viewModel.errorMessage != nil)
+
+        viewModel.clearError()
+        #expect(viewModel.errorMessage == nil)
+    }
+
     @Test func loadLeavesWatchlistEmptyWithoutStore() async {
         let viewModel = makeViewModel()
 
@@ -161,7 +172,7 @@ import Testing
     }
 
     private func makeViewModel(
-        profileRepo: StubProfileRepository = StubProfileRepository(),
+        profileRepo: any ProfileRepository = StubProfileRepository(),
         authRepo: StubAuthRepository = StubAuthRepository(),
         progressStore: StubProgressStore = StubProgressStore(),
         watchlistStore: StubWatchlistStore? = nil,
@@ -337,4 +348,12 @@ private actor StubWatchlistStore: WatchlistStore {
             return true
         }
     }
+}
+
+private struct FailingProfileRepository: ProfileRepository {
+    func currentProfile() async throws -> ViewerProfile { throw MediaError.offline }
+    func profiles() async throws -> [ViewerProfile] { throw MediaError.offline }
+    func preferences(for profileID: String) async throws -> UserPreferences { throw MediaError.offline }
+    func updatePreferences(_ preferences: UserPreferences, for profileID: String) async throws {}
+    func switchProfile(to profileID: String) async throws {}
 }

@@ -27,6 +27,7 @@ struct DetailsScreen: View {
     var body: some View {
         DetailsView(
             viewModel: detailsViewModel,
+            isPreviewPaused: viewModel.playbackSelection != nil,
             onPlay: { selected in
                 Task { await viewModel.startPlayback(for: selected, kind: .feature) }
             },

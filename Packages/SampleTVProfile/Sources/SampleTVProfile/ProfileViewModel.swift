@@ -131,4 +131,8 @@ public final class ProfileViewModel {
         await signOutUseCase()
         onSignOut()
     }
+
+    public func clearError() {
+        errorMessage = nil
+    }
 }
