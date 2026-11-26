@@ -57,26 +57,33 @@ struct SeasonsEpisodesSection: View {
             Button {
                 Task { await viewModel.selectSeason(season.seasonNumber) }
             } label: {
-                seasonLabel(season)
+                seasonLabel(season, isSelected: true)
             }
             .buttonStyle(.borderedProminent)
+            .tint(Color.accentColor)
             .accessibilityIdentifier("details.seasonButton.\(season.seasonNumber)")
         } else {
             Button {
                 Task { await viewModel.selectSeason(season.seasonNumber) }
             } label: {
-                seasonLabel(season)
+                seasonLabel(season, isSelected: false)
             }
             .buttonStyle(.bordered)
             .accessibilityIdentifier("details.seasonButton.\(season.seasonNumber)")
         }
     }
 
-    private func seasonLabel(_ season: TVSeason) -> some View {
-        Text(season.name)
-            .font(.subheadline.weight(.semibold))
-            .padding(.horizontal, 14)
-            .padding(.vertical, 6)
+    private func seasonLabel(_ season: TVSeason, isSelected: Bool) -> some View {
+        HStack(spacing: 8) {
+            Text(season.name)
+            if isSelected {
+                Image(systemName: "checkmark.circle.fill")
+                    .font(.caption.weight(.bold))
+            }
+        }
+        .font(.subheadline.weight(.semibold))
+        .padding(.horizontal, 14)
+        .padding(.vertical, 6)
     }
 
     @ViewBuilder
