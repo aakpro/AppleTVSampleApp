@@ -259,10 +259,11 @@ private struct PreviewAuthRepository: AuthRepository {
 }
 
 private struct PreviewProgressStore: PlaybackProgressStore {
-    func loadProgress(for mediaID: MediaID) async throws -> PlaybackProgress? { nil }
+    func loadProgress(for mediaID: MediaID, profileID: String) async throws -> PlaybackProgress? { nil }
     func saveProgress(_ progress: PlaybackProgress) async throws {}
-    func clearProgress(for mediaID: MediaID) async throws {}
-    func recentlyWatched(maxCount: Int) async throws -> [PlaybackProgress] { [] }
+    func clearProgress(for mediaID: MediaID, profileID: String) async throws {}
+    func clearAllProgress(for profileID: String) async throws {}
+    func recentlyWatched(for profileID: String, maxCount: Int) async throws -> [PlaybackProgress] { [] }
 }
 
 private struct PreviewWatchlistStore: WatchlistStore {

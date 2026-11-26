@@ -22,7 +22,7 @@ struct RootView: View {
     @State private var selection: MediaItem?
     @State private var authenticatedAccount: UserAccount?
     @State private var categoryDestination: CategoryDestination?
-    @State private var activeProfileID = "main"
+    @State private var activeProfileID = ViewerProfile.defaultID
 
     var body: some View {
         Group {
@@ -107,7 +107,7 @@ struct RootView: View {
             let profile = try await container.profileRepository.currentProfile()
             activeProfileID = profile.id
         } catch {
-            activeProfileID = "main"
+            activeProfileID = ViewerProfile.defaultID
         }
     }
 
