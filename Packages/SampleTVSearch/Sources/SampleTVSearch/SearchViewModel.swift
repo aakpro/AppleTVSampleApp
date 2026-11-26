@@ -77,6 +77,12 @@ public final class SearchViewModel {
         }
     }
 
+    public func retry() async {
+        items = []
+        nextPage = 1
+        await loadNextPage()
+    }
+
     private func matchesCurrentFilter(_ item: MediaItem) -> Bool {
         if selectedKind != nil {
             return filter.matches(item)

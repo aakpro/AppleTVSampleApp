@@ -29,16 +29,23 @@ public final class DiscoveryViewModel {
     private let discover: DiscoverMedia
     private let getDiscoveryShelves: GetDiscoveryShelves?
     let getContinueWatching: GetContinueWatching?
-    let profileID: String
+    public private(set) var profileID: String
     private var shelves: [MediaShelf] = []
     private var nextPage = 1
+
+    private var getCurrentProfile: GetCurrentUserProfile?
+    private var getPreferences: GetUserPreferences?
+
+    private var hasAppliedInitialPreferences = false
 
     public init(
         discover: DiscoverMedia,
         getDiscoveryShelves: GetDiscoveryShelves? = nil,
         getContinueWatching: GetContinueWatching? = nil,
         profileID: String = ViewerProfile.defaultID,
-        filter: MediaFilter = MediaFilter(kind: .movie)
+        filter: MediaFilter = MediaFilter(kind: .movie),
+        getCurrentProfile: GetCurrentUserProfile? = nil,
+        getPreferences: GetUserPreferences? = nil
     ) {
         self.discover = discover
         self.getDiscoveryShelves = getDiscoveryShelves
@@ -46,6 +53,8 @@ public final class DiscoveryViewModel {
         self.profileID = profileID
         self.filter = filter
         self.kind = filter.kind
+        self.getCurrentProfile = getCurrentProfile
+        self.getPreferences = getPreferences
     }
 
     /// Reloads shelves from page 1. Call from `.task` and whenever `kind` or `filter` changes.
@@ -95,6 +104,30 @@ public final class DiscoveryViewModel {
         } catch {
             let mediaError = error as? MediaError ?? .unknown
             state = .failed(mediaError)
+        }
+    }
+
+    public func applyInitialPreferencesIfNeeded() async {
+        guard !hasAppliedInitialPreferences else { return }
+
+        do {
+            // Load current profile if available
+            if let getCurrentProfile {
+                let currentProfile = try await getCurrentProfile()
+                profileID = currentProfile.id
+
+                // Load preferences for this profile
+                if let getPreferences {
+                    let prefs = try await getPreferences(profileID: currentProfile.id)
+                    if prefs.defaultKind != kind {
+                        kind = prefs.defaultKind
+                    }
+                }
+            }
+
+            hasAppliedInitialPreferences = true
+        } catch {
+            // If we fail to load preferences, continue with default settings
         }
     }
 }

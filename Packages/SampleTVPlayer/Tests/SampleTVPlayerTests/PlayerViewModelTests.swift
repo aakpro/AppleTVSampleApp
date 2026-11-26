@@ -44,4 +44,20 @@ struct PlayerViewModelTests {
         viewModel.reportCurrentProgress()
         #expect(reported == false)
     }
+
+    @Test func retryClearsFailureIncrementsAttemptIDAndReplacesCurrentItem() async throws {
+        let url = try #require(URL(string: "https://example.com/video.mp4"))
+        let viewModel = PlayerViewModel(url: url)
+
+        await viewModel.handleStatus(.failed, errorDescription: "Stream error")
+        #expect(viewModel.failure == "Stream error")
+        let initialAttemptID = viewModel.attemptID
+
+        viewModel.retry()
+        #expect(viewModel.failure == nil)
+        #expect(viewModel.attemptID == initialAttemptID + 1)
+
+        let newItem = viewModel.player.currentItem
+        #expect(newItem != nil)
+    }
 }

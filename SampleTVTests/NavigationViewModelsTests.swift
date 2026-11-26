@@ -79,8 +79,49 @@ struct DetailsScreenViewModelTests {
 
         await viewModel.startPlayback(for: item, kind: .feature)
 
-        #expect(viewModel.playbackSelection?.resource == resource)
+        #expect(viewModel.playbackSelection?.resource.url == resolvedURL)
+        #expect(viewModel.playbackSelection?.resource.title == "The Matrix")
+        #expect(viewModel.playbackSelection?.resource.subtitle == "Full Feature")
         #expect(viewModel.playbackSelection?.profileID == "kids")
+    }
+
+    @Test func startPlaybackPreservesMovieAndTrailerTitles() async throws {
+        let item = MediaItem(id: MediaID(kind: .movie, value: 603), title: "The Matrix", genreIDs: [28])
+        let resolvedURL = try #require(URL(string: "https://example.com/resolved.m3u8"))
+        let trailerURL = try #require(URL(string: "https://example.com/trailer.m3u8"))
+        let fallbackURL = try #require(URL(string: "https://example.com/fallback.m3u8"))
+        let featureResource = PlayableResource(
+            url: resolvedURL,
+            kind: .feature,
+            title: "Generic Catalog Stream",
+            subtitle: "Other Subtitle",
+            trackProgress: true
+        )
+        let trailerResource = PlayableResource(
+            url: trailerURL,
+            kind: .trailer,
+            title: "Generic Trailer Stream",
+            trackProgress: false
+        )
+
+        let viewModel = DetailsScreenViewModel(
+            resolveResources: ResolvePlaybackResources(
+                resolver: StubResolver(resources: [featureResource, trailerResource])
+            ),
+            fallbackURL: { _ in fallbackURL }
+        )
+
+        await viewModel.startPlayback(for: item, kind: .feature)
+        #expect(viewModel.playbackSelection?.resource.title == "The Matrix")
+        #expect(viewModel.playbackSelection?.resource.subtitle == "Full Feature")
+
+        await viewModel.startPlayback(for: item, kind: .trailer, trailerTitle: "Official Teaser")
+        #expect(viewModel.playbackSelection?.resource.title == "Official Teaser")
+        #expect(viewModel.playbackSelection?.resource.subtitle == "The Matrix")
+
+        await viewModel.startPlayback(for: item, kind: .trailer)
+        #expect(viewModel.playbackSelection?.resource.title == "The Matrix — Trailer")
+        #expect(viewModel.playbackSelection?.resource.subtitle == "The Matrix")
     }
 
     @Test func startPlaybackFallsBackToFallbackURLWhenEmpty() async throws {

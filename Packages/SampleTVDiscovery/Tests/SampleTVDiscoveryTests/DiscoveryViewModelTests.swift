@@ -111,8 +111,82 @@ struct DiscoveryViewModelTests {
         await model.reload()
         await model.loadContinueWatching()
 
-        #expect(model.continueWatchingItems == [fetchedItem, loadedItem])
+        #expect(model.continueWatchingItems == [fetchedItem])
         #expect(model.progressByID[fetchedItem.id] == 0.2)
+    }
+
+    @Test func loadContinueWatchingResolvesUnfinishedItemsAndProgressFiltersByKind() async {
+        let movieItem = MediaItem(id: MediaID(kind: .movie, value: 1), title: "Movie Show")
+        let movieProgress = PlaybackProgress(mediaID: movieItem.id, position: 45, duration: 600)
+
+        let tvItem = MediaItem(id: MediaID(kind: .tv, value: 2), title: "TV Show")
+        let tvProgress = PlaybackProgress(mediaID: tvItem.id, position: 120, duration: 600)
+
+        let repo = StubRepository(
+            result: .success(ResultPage(items: [], page: 1, totalPages: 1)),
+            detailsByID: [
+                movieItem.id: MediaDetails(item: movieItem),
+                tvItem.id: MediaDetails(item: tvItem)
+            ]
+        )
+        let store = StubProgressStore(recent: [movieProgress, tvProgress])
+
+        let modelMovieKind = DiscoveryViewModel(
+            discover: DiscoverMedia(repository: repo),
+            getContinueWatching: GetContinueWatching(progressStore: store, mediaRepository: repo)
+        )
+
+        modelMovieKind.kind = .movie
+        await modelMovieKind.reload()
+        await modelMovieKind.loadContinueWatching()
+
+        #expect(modelMovieKind.continueWatchingItems.contains(movieItem))
+        #expect(!modelMovieKind.continueWatchingItems.contains(tvItem))
+
+        let modelTVKind = DiscoveryViewModel(
+            discover: DiscoverMedia(repository: repo),
+            getContinueWatching: GetContinueWatching(progressStore: store, mediaRepository: repo)
+        )
+
+        modelTVKind.kind = .tv
+        await modelTVKind.reload()
+        await modelTVKind.loadContinueWatching()
+
+        #expect(modelTVKind.continueWatchingItems.contains(tvItem))
+        #expect(!modelTVKind.continueWatchingItems.contains(movieItem))
+    }
+
+    @Test func applyInitialPreferencesIfNeededSetsProfileIDAndKind() async {
+        let repo = StubRepository(result: .success(ResultPage(items: [], page: 1, totalPages: 1)))
+
+        struct ProfileSettingsRepositoryMock: ProfileRepository {
+            func currentProfile() async throws -> ViewerProfile {
+                ViewerProfile(id: "kids", name: "Kids", isMain: false)
+            }
+
+            func profiles() async throws -> [ViewerProfile] { [try await currentProfile()] }
+
+            func preferences(for profileID: String) async throws -> UserPreferences {
+                UserPreferences(defaultKind: .tv, autoplayTrailers: true)
+            }
+
+            func updatePreferences(_ preferences: UserPreferences, for profileID: String) async throws {}
+
+            func switchProfile(to profileID: String) async throws {}
+        }
+
+        let profileRepo = ProfileSettingsRepositoryMock()
+        let model = DiscoveryViewModel(
+            discover: DiscoverMedia(repository: repo),
+            getCurrentProfile: GetCurrentUserProfile(repository: profileRepo),
+            getPreferences: GetUserPreferences(repository: profileRepo)
+        )
+
+        await model.applyInitialPreferencesIfNeeded()
+
+        #expect(model.profileID == "kids")
+        #expect(model.kind == .tv)
+        #expect(model.filter.kind == .tv)
     }
 
     @Test func kindSwitchingSyncsFilterKind() {
@@ -132,6 +206,46 @@ struct DetailsViewModelTests {
         let model = DetailsViewModel(item: item, getDetails: GetMediaDetails(repository: repository))
         await model.load()
         #expect(model.state == .loaded(details))
+    }
+
+    @Test func preferredTrailerTitlePrefersTrailerNameAndFallsBack() async {
+        let item = MediaItem(id: MediaID(kind: .movie, value: 603), title: "The Matrix")
+        let detailsWithTrailer = MediaDetails(
+            item: item,
+            videos: [
+                MediaVideo(id: "1", kind: .feature, name: "Featurette", site: "YouTube", key: "k1", language: "en"),
+                MediaVideo(
+                    id: "2",
+                    kind: .trailer,
+                    name: "Official Trailer",
+                    site: "YouTube",
+                    key: "k2",
+                    language: "en"
+                )
+            ]
+        )
+
+        let detailsWithoutTrailer = MediaDetails(
+            item: item,
+            videos: [
+                MediaVideo(id: "3", kind: .feature, name: "First Video", site: "YouTube", key: "k3", language: "en"),
+                MediaVideo(id: "4", kind: .feature, name: "Second Video", site: "YouTube", key: "k4", language: "en")
+            ]
+        )
+
+        let modelWithTrailer = DetailsViewModel(
+            item: item,
+            getDetails: GetMediaDetails(repository: DetailsRepository(details: detailsWithTrailer))
+        )
+        await modelWithTrailer.load()
+        #expect(modelWithTrailer.preferredTrailerTitle == "Official Trailer")
+
+        let modelWithoutTrailer = DetailsViewModel(
+            item: item,
+            getDetails: GetMediaDetails(repository: DetailsRepository(details: detailsWithoutTrailer))
+        )
+        await modelWithoutTrailer.load()
+        #expect(modelWithoutTrailer.preferredTrailerTitle == "First Video")
     }
 }
 

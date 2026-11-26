@@ -37,13 +37,16 @@ private let tvPage = """
 """
 
 struct TMDBClientTests {
-    private func repository(_ stub: StubTransport) -> TMDBMediaRepository {
+    private func repository(
+        _ stub: StubTransport,
+        now: @Sendable @escaping () -> Date = Date.init
+    ) -> TMDBMediaRepository {
         let client = TMDBClient(
             configuration: TMDBConfiguration(readAccessToken: "token"),
             transport: stub,
             retryPolicy: RetryPolicy(maxAttempts: 3, baseDelay: .milliseconds(1))
         )
-        return TMDBMediaRepository(client: client)
+        return TMDBMediaRepository(client: client, now: now)
     }
 
     @Test func discoverMapsTVResultsAndSendsBearerToken() async throws {
@@ -86,6 +89,52 @@ struct TMDBClientTests {
         let stub = StubTransport([StubResponse(body: body)])
         let page = try await repository(stub).search(try #require(SearchQuery("heat")), page: 1)
         #expect(page.items.map(\.title) == ["Heat"])
+    }
+
+    @Test func discoverWithNewestSortIncludesLteDate() async throws {
+        let stub = StubTransport([StubResponse(body: tvPage)])
+        let fixedDate = Date(timeIntervalSince1970: 1_767_225_600)
+        let filter = MediaFilter(kind: .movie, sort: .newest)
+        let page = try await repository(stub, now: { fixedDate }).discover(filter, page: 1)
+        #expect(page.items.count == 1)
+
+        let request = try #require(await stub.requests.first)
+        #expect(request.url?.query?.contains("primary_release_date.lte=2026-01-01") == true)
+    }
+
+    @Test func discoverWithTVNewestSortIncludesLteDate() async throws {
+        let stub = StubTransport([StubResponse(body: tvPage)])
+        let fixedDate = Date(timeIntervalSince1970: 1_767_225_600)
+        let filter = MediaFilter(kind: .tv, sort: .newest)
+        let page = try await repository(stub, now: { fixedDate }).discover(filter, page: 1)
+        #expect(page.items.count == 1)
+
+        let request = try #require(await stub.requests.first)
+        #expect(request.url?.query?.contains("first_air_date.lte=2026-01-01") == true)
+    }
+
+    @Test func discoverWithRatingSortIncludesVoteCountGTE() async throws {
+        let stub = StubTransport([StubResponse(body: tvPage)])
+        let filter = MediaFilter(kind: .movie, sort: .rating)
+        let page = try await repository(stub).discover(filter, page: 1)
+        #expect(page.items.count == 1)
+
+        let request = try #require(await stub.requests.first)
+        #expect(request.url?.query?.contains("vote_count.gte=100") == true)
+    }
+
+    @Test func discoverWithRatingAndMinimumRatingIncludesVoteCountGTEOnce() async throws {
+        let stub = StubTransport([StubResponse(body: tvPage)])
+        let filter = MediaFilter(kind: .movie, minimumRating: 7.0, sort: .rating)
+        let page = try await repository(stub).discover(filter, page: 1)
+        #expect(page.items.count == 1)
+
+        let request = try #require(await stub.requests.first)
+        let url = try #require(request.url)
+        let components = try #require(URLComponents(url: url, resolvingAgainstBaseURL: false))
+        let voteCountItems = components.queryItems?.filter { $0.name == "vote_count.gte" }
+        #expect(voteCountItems?.count == 1)
+        #expect(voteCountItems?.first?.value == "100")
     }
 }
 

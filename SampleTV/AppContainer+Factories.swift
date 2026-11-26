@@ -23,7 +23,9 @@ extension AppContainer {
                 progressStore: progressStore,
                 mediaRepository: repository
             ),
-            profileID: profileID
+            profileID: profileID,
+            getCurrentProfile: GetCurrentUserProfile(repository: profileRepository),
+            getPreferences: GetUserPreferences(repository: profileRepository)
         )
     }
 

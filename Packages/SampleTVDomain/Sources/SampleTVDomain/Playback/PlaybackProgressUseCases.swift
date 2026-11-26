@@ -49,11 +49,17 @@ public struct LoadPlaybackProgress: Sendable {
 public struct SavePlaybackProgress: Sendable {
     private let store: any PlaybackProgressStore
 
+    public static let minimumSavedPosition: TimeInterval = 5
+
     public init(store: any PlaybackProgressStore) {
         self.store = store
     }
 
     public func callAsFunction(_ progress: PlaybackProgress) async throws {
+        guard progress.duration > 0,
+              progress.position >= Self.minimumSavedPosition || progress.isWatched else {
+            return
+        }
         try await store.saveProgress(progress)
     }
 }

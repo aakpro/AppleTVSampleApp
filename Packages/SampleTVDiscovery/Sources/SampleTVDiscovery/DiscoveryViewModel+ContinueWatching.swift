@@ -17,7 +17,7 @@ extension DiscoveryViewModel {
             )
             let records = try await getContinueWatching(
                 for: profileID,
-                kind: nil,
+                kind: kind,
                 maxCount: 10,
                 knownItems: knownByID
             )
