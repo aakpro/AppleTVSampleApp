@@ -29,7 +29,7 @@ phase PR; it is the source of truth that [AGENTS.md](../AGENTS.md) points agents
 | 17 | [Discover, Categories & Search Chrome](Phase17_Discover_Search_Chrome/Documentation/Phase_17_Discover_Search_Chrome.md) (hero banner, un-truncated pickers, headers, Search loading state) | ✅ Complete & Verified | `feature/phase_17_discover_search_chrome` |
 | 18 | [Details, Auth & Profile Polish](Phase18_Details_Auth_Profile/Documentation/Phase_18_Details_Auth_Profile.md) (opaque backdrop `DetailsView`, flash-free auth, `ProfileView` layout) | ✅ Complete & Verified | `feature/phase_18_details_auth_profile` |
 | 19 | [Visual QA & Release](Phase19_Visual_QA_And_Release/Documentation/Phase_19_Visual_QA_And_Release.md) (expanded XCUITests, accessibility pass, `v2.1.0`) | ✅ Complete & Verified | `feature/phase_19_visual_qa_and_release` |
-| 20 | [TV Show Season & Episode Selection](Phase20_TV_Seasons_Episodes/Documentation/Phase_20_TV_Seasons_Episodes.md) (season switcher, episode shelf, episode playback & progress) | ✅ Complete & Verified | `feature/phase_20_tv_seasons_episodes` |
+| 20 | [TV Show Season & Episode Selection](Phase20_TV_Seasons_Episodes/Documentation/Phase_20_TV_Seasons_Episodes.md) (season switcher, episode shelf, episode playback & progress, `v2.2.0`) | ✅ Complete & Verified | `feature/phase_20_tv_seasons_episodes` |
 
 Statuses: ⏳ not started · 🚧 in progress (branch name) · ✅ complete / merged (version tag).
 
@@ -46,11 +46,11 @@ the app target through `Scripts/link_package.rb` appear in Xcode as local packag
 ├── SampleTVTests/               unit tests (Swift Testing: AppConfiguration, AppContainer)
 ├── SampleTVUITests/             UI smoke tests (XCTest: demo login & tab navigation)
 ├── Packages/
-│   ├── SampleTVDomain/          Phases 2, 7b, 8-13 (modular entities, ports, Watchlist, Playback use cases)
-│   ├── SampleTVAPI/             Phases 3, 11, 13 (TMDB client, split DTOs, playback catalog)
-│   ├── SampleTVPersistence/     Phase 13 (unified SwiftData container, profile/watchlist/progress stores, Keychain auth)
-│   ├── SampleTVUI/              Phases 4, 10 (MediaCard, PosterImage, CategoryTile, ImageURLBuilder)
-│   ├── SampleTVDiscovery/       Phases 4, 7b, 10-12 (browse shelves, categories, details + Watchlist toggle)
+│   ├── SampleTVDomain/          Phases 2, 7b, 8-13, 20 (modular entities, seasons/episodes, Watchlist, Playback use cases)
+│   ├── SampleTVAPI/             Phases 3, 11, 13, 20 (TMDB client, split DTOs, season decoding, playback catalog)
+│   ├── SampleTVPersistence/     Phases 13, 20 (unified SwiftData container, profile/watchlist/progress stores, Keychain auth)
+│   ├── SampleTVUI/              Phases 4, 10, 16, 20 (MediaCard, PosterImage, CategoryTile, ImageURLBuilder)
+│   ├── SampleTVDiscovery/       Phases 4, 7b, 10-12, 16-20 (browse shelves, categories, details, seasons/episodes, Watchlist toggle)
 │   ├── SampleTVSearch/          Phases 5, 10 (debounced search, kind & genre filters)
 │   ├── SampleTVPlayer/          Phases 6, 11 (AVKit player)
 │   ├── SampleTVPlaybackProgress/ Phase 7 / 7b (UserDefaults progress store)
