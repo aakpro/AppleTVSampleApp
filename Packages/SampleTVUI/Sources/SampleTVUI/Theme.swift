@@ -21,6 +21,8 @@ public enum SampleTVTheme: Sendable {
     public static let tileWidth: CGFloat = 280
     public static let tileHeight: CGFloat = 150
     public static let heroHeight: CGFloat = 440
+    public static let episodeCardWidth: CGFloat = 340
+    public static let episodeAspectRatio: CGFloat = 16.0 / 9.0
 
     /// Cinema-dark surface palette tailored for tvOS 10-foot viewing.
     public enum Colors: Sendable {
