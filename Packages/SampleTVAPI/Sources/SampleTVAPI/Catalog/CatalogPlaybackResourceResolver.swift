@@ -11,29 +11,29 @@ public struct CatalogPlaybackResourceResolver: PlaybackResourceResolver {
 
     private static let catalog: [StreamEntry] = [
         StreamEntry(
-            title: "Sintel",
-            featureURLString: "https://bitdash-a.akamaihd.net/content/sintel/hls/playlist.m3u8",
-            trailerURLString: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4"
-        ),
-        StreamEntry(
             title: "Tears of Steel",
             featureURLString: "https://demo.unified-streaming.com/k8s/features/stable/video/tears-of-steel/tears-of-steel.ism/.m3u8",
-            trailerURLString: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4"
+            trailerURLString: "https://devstreaming-cdn.apple.com/videos/streaming/examples/bipbop_4x3/bipbop_4x3_variant.m3u8"
         ),
         StreamEntry(
             title: "Big Buck Bunny",
-            featureURLString: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
-            trailerURLString: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4"
-        ),
-        StreamEntry(
-            title: "Elephants Dream",
-            featureURLString: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
-            trailerURLString: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoy.mp4"
+            featureURLString: "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8",
+            trailerURLString: "https://devstreaming-cdn.apple.com/videos/streaming/examples/bipbop_16x9/bipbop_16x9_variant.m3u8"
         ),
         StreamEntry(
             title: "Apple Advanced Stream",
             featureURLString: "https://devstreaming-cdn.apple.com/videos/streaming/examples/img_bipbop_adv_example_fmp4/master.m3u8",
-            trailerURLString: "https://devstreaming-cdn.apple.com/videos/streaming/examples/bipbop_4x3/bipbop_4x3_variant.m3u8"
+            trailerURLString: "https://demo.unified-streaming.com/k8s/features/stable/video/tears-of-steel/tears-of-steel.ism/.m3u8"
+        ),
+        StreamEntry(
+            title: "Dolby Atmos Stream",
+            featureURLString: "https://devstreaming-cdn.apple.com/videos/streaming/examples/adv_dv_atmos/main.m3u8",
+            trailerURLString: "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8"
+        ),
+        StreamEntry(
+            title: "BipBop 16x9",
+            featureURLString: "https://devstreaming-cdn.apple.com/videos/streaming/examples/bipbop_16x9/bipbop_16x9_variant.m3u8",
+            trailerURLString: "https://devstreaming-cdn.apple.com/videos/streaming/examples/img_bipbop_adv_example_fmp4/master.m3u8"
         )
     ]
 
