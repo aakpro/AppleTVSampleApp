@@ -174,10 +174,28 @@ import Testing
             updatePreferences: UpdateUserPreferences(repository: profileRepo),
             switchProfile: SwitchProfile(repository: profileRepo),
             signOut: SignOut(repository: authRepo),
-            progressStore: progressStore,
-            watchlistStore: watchlistStore,
+            loadAccount: LoadCurrentAccount(repository: authRepo),
+            getWatchHistory: GetWatchHistory(store: progressStore),
+            clearWatchHistory: ClearWatchHistory(store: progressStore),
+            getWatchlist: watchlistStore.map { GetWatchlist(store: $0) },
             onSignOut: onSignOut
         )
+    }
+    @Test func loadPopulatesAccountFromLoadCurrentAccount() async {
+        let expected = UserAccount(
+            id: "demo",
+            email: "demo@sampletv.app",
+            displayName: "Alex Mercer",
+            avatarSystemName: "person.circle.fill",
+            isDemo: true,
+            createdAt: .now
+        )
+        let authRepo = StubAuthRepository(account: expected)
+        let viewModel = makeViewModel(authRepo: authRepo)
+
+        await viewModel.load()
+
+        #expect(viewModel.account == expected)
     }
 }
 
@@ -214,7 +232,12 @@ private actor StubProfileRepository: ProfileRepository {
 }
 
 private actor StubAuthRepository: AuthRepository {
+    private let account: UserAccount?
     private(set) var didCallSignOut = false
+
+    init(account: UserAccount? = nil) {
+        self.account = account
+    }
 
     func signIn(email: String, password: String) async throws -> UserAccount {
         UserAccount(
@@ -242,7 +265,7 @@ private actor StubAuthRepository: AuthRepository {
         didCallSignOut = true
     }
 
-    func currentAccount() async -> UserAccount? { nil }
+    func currentAccount() async -> UserAccount? { account }
 }
 
 private actor StubProgressStore: PlaybackProgressStore {

@@ -11,7 +11,7 @@ private struct StubPlaybackProgressStore: PlaybackProgressStore {
     }
 
     func loadProgress(for mediaID: MediaID, profileID: String) async throws -> PlaybackProgress? {
-        progress.first { $0.mediaID == mediaID }
+        progress.first { $0.mediaID == mediaID && $0.profileID == profileID }
     }
 
     func saveProgress(_ progress: PlaybackProgress) async throws {}
@@ -91,7 +91,7 @@ struct DetailsPlaybackTests {
         let model = DetailsViewModel(
             item: item,
             getDetails: GetMediaDetails(repository: repository),
-            progressStore: nil
+            loadProgress: nil
         )
         #expect(model.resumeLabel == "Play")
     }
@@ -104,7 +104,7 @@ struct DetailsPlaybackTests {
         let model = DetailsViewModel(
             item: item,
             getDetails: GetMediaDetails(repository: repository),
-            progressStore: store
+            loadProgress: LoadPlaybackProgress(store: store)
         )
 
         await model.load()
@@ -119,7 +119,7 @@ struct DetailsPlaybackTests {
         let model = DetailsViewModel(
             item: item,
             getDetails: GetMediaDetails(repository: repository),
-            progressStore: store
+            loadProgress: LoadPlaybackProgress(store: store)
         )
 
         await model.load()
@@ -137,7 +137,7 @@ struct DetailsPlaybackTests {
         let model = DetailsViewModel(
             item: item,
             getDetails: GetMediaDetails(repository: repository),
-            resourceResolver: resolver
+            resolveResources: ResolvePlaybackResources(resolver: resolver)
         )
 
         await model.load()
@@ -157,7 +157,7 @@ struct DetailsPlaybackTests {
         let model = DetailsViewModel(
             item: item,
             getDetails: GetMediaDetails(repository: repository),
-            watchlistStore: watchlistStore
+            isInWatchlist: IsInWatchlist(store: watchlistStore)
         )
 
         await model.load()
@@ -170,7 +170,7 @@ struct DetailsPlaybackTests {
         let model = DetailsViewModel(
             item: item,
             getDetails: GetMediaDetails(repository: repository),
-            watchlistStore: watchlistStore,
+            isInWatchlist: IsInWatchlist(store: watchlistStore),
             profileID: "kids"
         )
 
@@ -184,7 +184,8 @@ struct DetailsPlaybackTests {
         let model = DetailsViewModel(
             item: item,
             getDetails: GetMediaDetails(repository: repository),
-            watchlistStore: watchlistStore,
+            isInWatchlist: IsInWatchlist(store: watchlistStore),
+            toggleWatchlist: ToggleWatchlist(store: watchlistStore),
             profileID: "kids"
         )
 
@@ -208,7 +209,7 @@ struct DetailsPlaybackTests {
         let model = DetailsViewModel(
             item: item,
             getDetails: GetMediaDetails(repository: repository),
-            watchlistStore: watchlistStore
+            isInWatchlist: IsInWatchlist(store: watchlistStore)
         )
 
         await model.load()
@@ -222,7 +223,8 @@ struct DetailsPlaybackTests {
         let model = DetailsViewModel(
             item: item,
             getDetails: GetMediaDetails(repository: repository),
-            watchlistStore: watchlistStore
+            isInWatchlist: IsInWatchlist(store: watchlistStore),
+            toggleWatchlist: ToggleWatchlist(store: watchlistStore)
         )
 
         await model.load()

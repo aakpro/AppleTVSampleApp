@@ -6,6 +6,7 @@ All notable changes to this project are documented here. The format follows
 ## [Unreleased]
 
 ### Changed
+- **Phase 14 (Presentation Refactoring):** Extracted `PosterImage`, `ErrorView`, and `PaginationController` into `SampleTVUI`; added `PlayerViewModel` (removing `Combine` workspace-wide) and `SampleTVPlayerTests`; introduced `CategoriesViewModel` and `CategoryResultsViewModel`; wired `DiscoveryViewModel`, `DetailsViewModel`, and `ProfileViewModel` exclusively to Domain use cases; split `ProfileView` into modular `Sections/` with `#if DEBUG` preview fixtures; decomposed `RootView` and `AppContainer` into `Navigation/` (`RootView`, `RootViewModel`, `DetailsScreen`, `PlayerScreen`) and `AppContainer+Factories`.
 - **Phase 13 (Clean Architecture & Domain/Data Modularization):** Reorganized `SampleTVDomain` into feature subdirectories (`Media/`, `Auth/`, `Profile/`, `Watchlist/`, `Playback/`), added `ViewerProfile.defaultID`, profile-scoped `PlaybackProgress`, playback progress use cases (`LoadPlaybackProgress`, `SavePlaybackProgress`, `ClearWatchHistory`, `GetContinueWatching`), and `ResolvePlaybackResources`.
 - Split `SampleTVAPI/DTOs.swift` into single-DTO files and extracted SwiftData/Keychain/MockAuth persistence into a dedicated `SampleTVPersistence` package with a unified resilient `PersistenceContainer`.
 - Hardened `.swiftlint.yml` with `SampleTVUI`/`SampleTVPersistence`/`SampleTVPlaybackProgress` boundary rules and `no_combine`, resolving all existing lint warnings.

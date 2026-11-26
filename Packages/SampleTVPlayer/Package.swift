@@ -8,6 +8,10 @@ let package = Package(
         .library(name: "SampleTVPlayer", targets: ["SampleTVPlayer"])
     ],
     targets: [
-        .target(name: "SampleTVPlayer")
+        .target(name: "SampleTVPlayer"),
+        .testTarget(
+            name: "SampleTVPlayerTests",
+            dependencies: ["SampleTVPlayer"]
+        )
     ]
 )
