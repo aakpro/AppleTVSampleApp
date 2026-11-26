@@ -73,7 +73,6 @@ custom_rules:
   no_combine:
     name: "Combine is forbidden"
     included: "Packages/.*/Sources|SampleTV"
-    excluded: "Packages/SampleTVPlayer/Sources/SampleTVPlayer/PlayerView.swift"
     regex: '^\s*import\s+Combine\b'
     message: "Use Swift 6 structured concurrency (async/await, AsyncStream, Task) instead of Combine."
     severity: error

@@ -1,106 +1,95 @@
 # SampleTV
 
-A tvOS streaming-style sample app (inspired by Apple TV+) built to demonstrate Clean Architecture with
-SwiftUI and local Swift packages. It lists movies and TV shows from [TMDB](https://www.themoviedb.org),
-supports search and filtering, and plays a sample HLS stream with the system player.
+SampleTV is a tvOS app built using the clean architecture approach with Swift. This project implements features in phases, each building upon the previous ones to create a comprehensive media discovery and playback application.
 
-> **Status: Phase 1 not started.** The repository currently holds the Xcode tvOS template
-> (SwiftUI + SwiftData) and the planning documents. Everything below describes the *target* design;
-> [Docs/PROJECT_STRUCTURE.md](Docs/PROJECT_STRUCTURE.md) tracks what actually exists.
+## Getting Started
 
-## Requirements
+To get started with this project, you'll need:
+- Xcode 15+ (with tvOS support)
+- A TMDB API token for access to movie/series data
 
-| Tool | Version | Notes |
-|------|---------|-------|
-| Xcode | 27.2 | The project's tvOS deployment target is 27.2, so older Xcodes cannot build it |
-| Swift | 6.x toolchain | Language mode is still Swift 5 in the template; Phase 1 moves it to Swift 6 |
-| SwiftLint | 0.65+ | `brew install swiftlint` |
-| TMDB account | free | For an *API Read Access Token* (see below) |
+### Setting Up Your Environment
 
-## Quick start
+1. Get a [TMDB API token](https://www.themoviedb.org/settings/api) 
+2. Copy `Config/Secrets.xcconfig.example` to `Config/Secrets.xcconfig`
+3. Add your TMDB token to the new `Secrets.xcconfig` file
+
+### Building and Running
 
 ```bash
-git clone git@github.com:aakpro/AppleTVSampleApp.git && cd AppleTVSampleApp
-open SampleTV.xcworkspace          # single entry: app + packages + docs; scheme: SampleTV, run on any Apple TV simulator
-```
-
-TMDB token (available once Phase 1 has landed the `Config/` folder):
-
-1. Create a free account at themoviedb.org, then **Settings → API → API Read Access Token**.
-2. `cp Config/Secrets.xcconfig.example Config/Secrets.xcconfig` and paste the token. This file is git-ignored.
-3. Without a token the app still launches and shows a "token missing" screen.
-
-Build and test from the command line:
-
-```bash
+# Set up simulator device (Apple TV)
 UDID=$(xcrun simctl list devices available -j \
   | jq -r '[.devices[][] | select(.name | startswith("Apple TV"))][0].udid')
 
+# Build app
+xcodebuild build -workspace SampleTV.xcworkspace -scheme SampleTV -destination "id=$UDID"
+
+# Test app (skipping UI tests)
 xcodebuild test -workspace SampleTV.xcworkspace -scheme SampleTV -destination "id=$UDID" -skip-testing:SampleTVUITests
-swiftlint lint
 ```
 
-## Architecture in one page
+### Project Structure
 
-Dependencies point inward. The Domain knows nothing about TMDB, SwiftUI or AVKit.
+The project is organized into multiple Swift packages following clean architecture principles:
 
-```
-SampleTV (app target: composition root, navigation, reads the token)
-   │ wires together
-   ├── SampleTVDiscovery ─┐
-   ├── SampleTVSearch    ─┼─► SampleTVUI ─┐
-   ├── SampleTVPlayer     │               ├─► SampleTVDomain   (entities, MediaRepository protocol, use cases)
-   └── SampleTVAPI ───────┴───────────────┘        ▲
-        (TMDB client, DTOs, retry, caching)  ──────┘  implements MediaRepository
-```
+- **Packages/**
+  - `SampleTVDomain` - Core domain logic and types (Foundation only)
+  - `SampleTVAPI` - Data layer for interacting with TMDB API
+  - `SampleTVUI` - UI components, helpers, and error handling
+  - `SampleTVDiscovery` - Media discovery features (Search, Categories, etc.)
+  - `SampleTVAuth` - Authentication related functionality
+  - `SampleTVProfile` - User profiles and preferences
+  - `SampleTVPlayer` - Video playback functionality
 
-- **MVVM** in the presentation layer: `@MainActor @Observable` view models, SwiftUI views.
-- **Dependency injection** is plain constructor injection from one composition root (`AppContainer`).
-  No DI framework.
-- **Swift 6 concurrency**: async/await, `Sendable` value types, actors where state is shared. No Combine.
-- **Boundaries are enforced** by `Package.swift` (a package cannot import what it does not declare)
-  and by SwiftLint custom rules, both checked in CI.
+- **SampleTV/** - App target with the main application logic
 
-Details: [Docs/ARCHITECTURE.md](Docs/ARCHITECTURE.md).
+## Architecture Rules
 
-## Documentation
+1. **Dependency Direction**:
+   - `SampleTVDomain` imports Foundation only
+   - All other packages depend on `SampleTVDomain`
+   - Only app target sees every package
 
-| Document | Purpose |
-|----------|---------|
-| [AGENTS.md](AGENTS.md) | Instructions for AI coding agents working in this repo |
-| [Docs/ARCHITECTURE.md](Docs/ARCHITECTURE.md) | Layers, modules, DI, concurrency, testing |
-| [Docs/API_SPECS.md](Docs/API_SPECS.md) | TMDB endpoints, auth, errors, retry, caching |
-| [Docs/PROJECT_STRUCTURE.md](Docs/PROJECT_STRUCTURE.md) | Target file tree, per-phase deliverables, progress |
-| [Docs/RELEASE_PROCESS.md](Docs/RELEASE_PROCESS.md) | Branching, CI gates, versioning, releases |
-| [Docs/PR_TEMPLATE.md](Docs/PR_TEMPLATE.md) | Pull request template and review checklist |
-| `Docs/Phase0X_*/Documentation/` | One implementation guide per phase |
-| `Docs/templates/` | Verified config templates (SwiftLint, CI, xcconfig, .gitignore) |
+2. **Ports and Adapters**:
+   - Domain defines interfaces (`MediaRepository`, etc.)
+   - API implements them
+   - View models use protocols, never concrete implementations
 
-## Roadmap
+3. **DTOs**:
+   - Keep in `SampleTVAPI`
+   - Map to domain entities at the boundary
 
-Domain comes before the API layer because the API layer implements a protocol the Domain defines.
+4. **DI**:
+   - Constructor injection from `AppContainer` in app target
 
-| Phase | Scope | Branch |
-|-------|-------|--------|
-| 1 | Foundation: remove template code, Swift 6, config/secrets, `AppContainer`, lint, CI | `feature/phase_01_foundation` |
-| 2 | `SampleTVDomain`: entities, `MediaRepository` port, use cases | `feature/phase_02_domain_layer` |
-| 3 | `SampleTVAPI`: TMDB client, DTO mapping, retry, caching | `feature/phase_03_api_layer` |
-| 4 | `SampleTVUI` + `SampleTVDiscovery`: browse grid, details screen | `feature/phase_04_movie_discovery` |
-| 5 | `SampleTVSearch`: debounced search, filters, pagination | `feature/phase_05_search_module` |
-| 6 | `SampleTVPlayer`: AVKit playback of a sample HLS stream | `feature/phase_06_player_feature` |
+5. **Concurrency**:
+   - Swift 6 language mode
+   - View models are `@MainActor @Observable final class`  
+   - Models are `Sendable` value types
+   - Use `async/await`; avoid Combine or completion handlers
 
-## Decisions on earlier open questions
+## Phase Status
 
-| Question | Decision |
-|----------|----------|
-| Should use cases carry UX concerns such as rate limiting? | No. Use cases hold business rules only (e.g. minimum search length). Rate limiting and retry are transport concerns in `SampleTVAPI`. |
-| How much offline support? | None beyond HTTP caching (`URLCache`). Offline shows an error state with a retry action. |
-| TMDB API v4? | Not needed. v3 endpoints are authenticated with the v4 *Read Access Token* as a Bearer header. |
-| Per-module tests or shared framework? | Each package has its own test target (Swift Testing). No shared test framework until duplication hurts. |
-| Where does video come from? | TMDB has no streams. Playback uses a public sample HLS URL (Phase 6). |
+- ⚙️ Phase 01: Setup and Configuration (Complete)
+- ⚙️ Phase 02: Basic Domain, API, and Error Handling (Complete)  
+- ⚙️ Phase 03: Data Layer with Pagination (Complete)
+- 🔧 Phase 03b: Stabilization (Complete)
+- 📺 Phase 04: Movie Discovery UI (`SampleTVUI`, `SampleTVDiscovery`) (In Progress)
+- 📺 Phase 05: Search and Categories UI (`SampleTVSearch`, `SampleTVDiscovery`) (In Progress)
+- 📺 Phase 06: Profile Management UI (`SampleTVProfile`) (In Progress)
+- 📺 Phase 07: Authentication UI (`SampleTVAuth`) (In Progress)
+- 📺 Phase 08: Playback UI and Player (`SampleTVPlayer`) (In Progress)
+- 📺 Phase 09: Settings, Preferences, and Watchlist Features (In Progress)
+- 📺 Phase 10: Trailer and Metadata Handling (In Progress)
+- 📺 Phase 11: Continue Watching and Progress Tracking (In Progress)
+- 📺 Phase 12: Multi-profile Support (In Progress)
+- 📺 Phase 13: Dark Mode, Customization, and Themes (In Progress)
+- ⚙️ Phase 14: App Composition and Refactoring (Complete)
 
-## TMDB attribution
+## Contributing
 
-This product uses the TMDB API but is not endorsed or certified by TMDB. TMDB's terms require showing
-that notice (and their logo) in the app; the Phase 4 about/footer view includes it. TMDB's free API tier is
-for non-commercial use.
+Issues and pull requests are welcome! Please ensure your code follows SwiftLint rules.
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

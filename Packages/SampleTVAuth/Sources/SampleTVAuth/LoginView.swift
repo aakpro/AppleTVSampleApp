@@ -49,7 +49,7 @@ public struct LoginView: View {
             }
 
             if case .failed(let error) = viewModel.state {
-                Text(error.message)
+                Text(error.userMessage)
                     .font(.callout)
                     .foregroundStyle(.red)
                     .multilineTextAlignment(.center)
@@ -64,50 +64,8 @@ public struct LoginView: View {
     }
 }
 
-private extension AuthError {
-    var message: String {
-        switch self {
-        case .emptyFields:
-            "Email and password are required."
-        case .invalidCredentials:
-            "Invalid email or password."
-        case .sessionExpired:
-            "Session expired. Please sign in again."
-        }
-    }
-}
-
+#if DEBUG
 #Preview {
-    struct PreviewRepo: AuthRepository {
-        func currentAccount() async -> UserAccount? { nil }
-        func signIn(email: String, password: String) async throws -> UserAccount {
-            UserAccount(
-                id: "1",
-                email: email,
-                displayName: "Preview",
-                avatarSystemName: "person.circle",
-                isDemo: false,
-                createdAt: .now
-            )
-        }
-        func signInDemo() async throws -> UserAccount {
-            UserAccount(
-                id: "demo",
-                email: "demo@sampletv.app",
-                displayName: "Alex Mercer",
-                avatarSystemName: "person.circle",
-                isDemo: true,
-                createdAt: .now
-            )
-        }
-        func signOut() async {}
-    }
-    let repo = PreviewRepo()
-    return LoginView(
-        viewModel: LoginViewModel(
-            signIn: SignIn(repository: repo),
-            signInDemo: SignInDemo(repository: repo),
-            onAuthenticated: { _ in }
-        )
-    )
+    LoginView(viewModel: .preview)
 }
+#endif

@@ -1,17 +1,14 @@
 import AVKit
-import Combine
 import SwiftUI
 
 /// Thin wrapper over the system player. tvOS already provides transport controls, scrubbing,
 /// audio/subtitle pickers and Siri Remote handling; don't rebuild them.
 public struct PlayerView: View {
-    private let url: URL
-    private let title: String?
-    private let subtitle: String?
-    private let initialPosition: TimeInterval?
-    private let onProgress: (@MainActor @Sendable (TimeInterval, TimeInterval) -> Void)?
-    @State private var player: AVPlayer
-    @State private var failure: String?
+    @State private var viewModel: PlayerViewModel
+
+    public init(viewModel: PlayerViewModel) {
+        _viewModel = State(initialValue: viewModel)
+    }
 
     public init(
         url: URL,
@@ -20,21 +17,20 @@ public struct PlayerView: View {
         initialPosition: TimeInterval? = nil,
         onProgress: (@MainActor @Sendable (TimeInterval, TimeInterval) -> Void)? = nil
     ) {
-        self.url = url
-        self.title = title
-        self.subtitle = subtitle
-        self.initialPosition = initialPosition
-        self.onProgress = onProgress
-        let item = AVPlayerItem(url: url)
-        item.externalMetadata = Self.buildMetadata(title: title, subtitle: subtitle)
-        _player = State(initialValue: AVPlayer(playerItem: item))
+        _viewModel = State(initialValue: PlayerViewModel(
+            url: url,
+            title: title,
+            subtitle: subtitle,
+            initialPosition: initialPosition,
+            onProgress: onProgress
+        ))
     }
 
     public var body: some View {
-        VideoPlayer(player: player)
+        VideoPlayer(player: viewModel.player)
             .ignoresSafeArea()
             .overlay {
-                if let failure {
+                if let failure = viewModel.failure {
                     ContentUnavailableView(
                         "Playback Failed",
                         systemImage: "exclamationmark.triangle",
@@ -42,75 +38,8 @@ public struct PlayerView: View {
                     )
                 }
             }
-            .task {
-                async let statusTask: Void = observeStatus()
-                async let progressTask: Void = runProgressLoop()
-                _ = await (statusTask, progressTask)
-            }
-            .onAppear {
-                player.play()
-            }
-            .onDisappear {
-                player.pause()
-                reportCurrentProgress()
-            }
-    }
-
-    private static func buildMetadata(title: String?, subtitle: String?) -> [AVMetadataItem] {
-        var items: [AVMetadataItem] = []
-        if let title {
-            let item = AVMutableMetadataItem()
-            item.identifier = .commonIdentifierTitle
-            item.value = title as NSString
-            item.extendedLanguageTag = "und"
-            items.append(item)
-        }
-        if let subtitle {
-            let item = AVMutableMetadataItem()
-            item.identifier = .commonIdentifierDescription
-            item.value = subtitle as NSString
-            item.extendedLanguageTag = "und"
-            items.append(item)
-        }
-        return items
-    }
-
-    /// Observes `AVPlayerItem.status` for readiness (initial seek) and failures.
-    private func observeStatus() async {
-        guard let item = player.currentItem else { return }
-        var didSeek = false
-        for await status in item.publisher(for: \.status).values {
-            switch status {
-            case .readyToPlay:
-                if !didSeek, let initialPosition, initialPosition > 0 {
-                    didSeek = true
-                    await player.seek(to: CMTime(seconds: initialPosition, preferredTimescale: 1000))
-                }
-            case .failed:
-                failure = item.error?.localizedDescription ?? "Unknown error"
-                return
-            case .unknown:
-                break
-            @unknown default:
-                break
-            }
-        }
-    }
-
-    /// Periodically reports playback progress every 5 seconds until the view disappears.
-    private func runProgressLoop() async {
-        while !Task.isCancelled {
-            try? await Task.sleep(for: .seconds(5))
-            guard !Task.isCancelled else { return }
-            reportCurrentProgress()
-        }
-    }
-
-    private func reportCurrentProgress() {
-        guard let item = player.currentItem else { return }
-        let position = item.currentTime().seconds
-        let duration = item.duration.seconds
-        guard position.isFinite, position >= 0, duration.isFinite, duration > 0 else { return }
-        onProgress?(position, duration)
+            .task { await viewModel.startObserving() }
+            .onAppear { viewModel.play() }
+            .onDisappear { viewModel.pause() }
     }
 }

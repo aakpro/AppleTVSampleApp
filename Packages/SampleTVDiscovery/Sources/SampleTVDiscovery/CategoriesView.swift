@@ -3,42 +3,39 @@ import SampleTVUI
 import SwiftUI
 
 public struct CategoriesView: View {
-    private let getGenres: GetGenres
+    @State private var viewModel: CategoriesViewModel
     private let onSelectCategory: (MediaKind, Genre) -> Void
     private let onSelectKind: (MediaKind) -> Void
 
-    @State private var movieGenres: [Genre] = []
-    @State private var tvGenres: [Genre] = []
-    @State private var isLoading = false
-
     public init(
-        getGenres: GetGenres,
+        viewModel: CategoriesViewModel,
         onSelectCategory: @escaping (MediaKind, Genre) -> Void,
         onSelectKind: @escaping (MediaKind) -> Void
     ) {
-        self.getGenres = getGenres
+        _viewModel = State(initialValue: viewModel)
         self.onSelectCategory = onSelectCategory
         self.onSelectKind = onSelectKind
     }
 
     public var body: some View {
         Group {
-            if isLoading && movieGenres.isEmpty && tvGenres.isEmpty {
+            switch viewModel.state {
+            case .idle, .loading:
                 ProgressView()
-            } else {
+            case .failed(let error):
+                ErrorView(error: error) { Task { await viewModel.load() } }
+            case .loaded(let movies, let tvShows):
                 ScrollView {
                     VStack(alignment: .leading, spacing: 40) {
-                        genreSection(title: "Movies", kind: .movie, genres: movieGenres)
-                        genreSection(title: "TV Shows", kind: .tv, genres: tvGenres)
+                        genreSection(title: "Movies", kind: .movie, genres: movies)
+                        genreSection(title: "TV Shows", kind: .tv, genres: tvShows)
                     }
                     .padding(60)
                 }
             }
         }
         .navigationTitle("Categories")
-        .task {
-            await loadGenres()
-        }
+        .task { await viewModel.load() }
     }
 
     private func genreSection(title: String, kind: MediaKind, genres: [Genre]) -> some View {
@@ -60,14 +57,5 @@ public struct CategoriesView: View {
                 }
             }
         }
-    }
-
-    private func loadGenres() async {
-        isLoading = true
-        defer { isLoading = false }
-        async let movies = try? getGenres(for: .movie)
-        async let shows = try? getGenres(for: .tv)
-        movieGenres = (await movies) ?? []
-        tvGenres = (await shows) ?? []
     }
 }
