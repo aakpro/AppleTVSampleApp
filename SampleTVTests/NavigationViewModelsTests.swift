@@ -22,8 +22,37 @@ struct RootViewModelTests {
 
         await viewModel.loadSession()
 
+        #expect(viewModel.sessionState == .signedIn(account))
         #expect(viewModel.authenticatedAccount == account)
         #expect(viewModel.activeProfileID == "kids")
+    }
+
+    @Test func sessionStateStartsCheckingAndTransitionsOnLoadAndSignOut() async {
+        let signedOutVM = RootViewModel(
+            loadCurrentAccount: LoadCurrentAccount(repository: StubAuthRepository(account: nil)),
+            getCurrentProfile: GetCurrentUserProfile(repository: StubProfileRepository(activeID: "main")),
+            hasTMDBToken: true
+        )
+        #expect(signedOutVM.sessionState == .checking)
+
+        await signedOutVM.loadSession()
+        #expect(signedOutVM.sessionState == .signedOut)
+        #expect(signedOutVM.authenticatedAccount == nil)
+
+        let account = UserAccount(
+            id: "demo",
+            email: "demo@sampletv.app",
+            displayName: "Alex Mercer",
+            avatarSystemName: "person.circle",
+            isDemo: true,
+            createdAt: .now
+        )
+        await signedOutVM.didAuthenticate(account)
+        #expect(signedOutVM.sessionState == .signedIn(account))
+
+        signedOutVM.signOut()
+        #expect(signedOutVM.sessionState == .signedOut)
+        #expect(signedOutVM.authenticatedAccount == nil)
     }
 
     @Test func didAuthenticateAndSignOutManageSessionAndNavigationState() async {
