@@ -31,6 +31,7 @@ public struct ProfileView: View {
                     signOutButton
                 }
                 .frame(maxWidth: 960, alignment: .leading)
+                .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.horizontal, SampleTVTheme.horizontalSafeMargin)
 
                 WatchlistSection(viewModel: viewModel, onSelectItem: onSelectItem)

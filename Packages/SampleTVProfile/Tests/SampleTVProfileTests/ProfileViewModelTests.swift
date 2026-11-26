@@ -109,6 +109,13 @@ import Testing
 
         viewModel.clearError()
         #expect(viewModel.errorMessage == nil)
+
+        await viewModel.updatePreferences(UserPreferences(defaultKind: .tv, autoplayTrailers: false))
+        #expect(viewModel.errorMessage != nil)
+        viewModel.clearError()
+
+        await viewModel.switchToProfile("kids")
+        #expect(viewModel.errorMessage != nil)
     }
 
     @Test func loadLeavesWatchlistEmptyWithoutStore() async {
@@ -354,6 +361,10 @@ private struct FailingProfileRepository: ProfileRepository {
     func currentProfile() async throws -> ViewerProfile { throw MediaError.offline }
     func profiles() async throws -> [ViewerProfile] { throw MediaError.offline }
     func preferences(for profileID: String) async throws -> UserPreferences { throw MediaError.offline }
-    func updatePreferences(_ preferences: UserPreferences, for profileID: String) async throws {}
-    func switchProfile(to profileID: String) async throws {}
+    func updatePreferences(_ preferences: UserPreferences, for profileID: String) async throws {
+        throw MediaError.offline
+    }
+    func switchProfile(to profileID: String) async throws {
+        throw MediaError.offline
+    }
 }

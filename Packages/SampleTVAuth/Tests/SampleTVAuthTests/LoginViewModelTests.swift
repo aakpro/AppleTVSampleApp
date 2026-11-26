@@ -58,6 +58,18 @@ struct LoginViewModelTests {
         }
         #expect(account.isDemo)
     }
+
+    @Test("Transitions to failed when demo sign in throws")
+    func signInDemoFailure() async {
+        let viewModel = LoginViewModel(
+            signIn: SignIn(repository: StubFailingAuthRepository()),
+            signInDemo: SignInDemo(repository: StubFailingAuthRepository()),
+            onAuthenticated: { _ in }
+        )
+
+        await viewModel.continueAsDemo()
+        #expect(viewModel.state == .failed(.invalidCredentials))
+    }
 }
 
 private struct StubAuthRepository: AuthRepository {

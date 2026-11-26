@@ -22,6 +22,8 @@ public struct CategoryTile: View {
                 Text(title)
                     .font(SampleTVTheme.Typography.tileTitle)
                     .lineLimit(2)
+                    .minimumScaleFactor(0.85)
+                    .fixedSize(horizontal: false, vertical: true)
                     .multilineTextAlignment(.center)
                     .foregroundStyle(.primary)
             }

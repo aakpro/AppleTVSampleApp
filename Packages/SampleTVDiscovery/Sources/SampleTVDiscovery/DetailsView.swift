@@ -61,7 +61,7 @@ public struct DetailsView: View {
             SampleTVTheme.Colors.canvas
                 .ignoresSafeArea()
 
-            PosterImage(url: backdropURL, title: viewModel.item.title, aspectRatio: 16.0 / 9.0)
+            PosterImage(url: backdropURL, title: viewModel.item.title, aspectRatio: nil)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .ignoresSafeArea()
 

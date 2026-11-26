@@ -223,6 +223,36 @@ struct DiscoveryViewModelTests {
         #expect(model.presentedShelves.map(\.title) == ["Popular"])
         #expect(model.presentedShelves.first?.items == [noBackdrop, third])
     }
+
+    @Test func loadNextPageAppendsItemsToPopularShelf() async {
+        let first = MediaItem(id: MediaID(kind: .movie, value: 1), title: "First")
+        let second = MediaItem(id: MediaID(kind: .movie, value: 2), title: "Second")
+        let repo = PaginatedStubRepository(pages: [
+            1: ResultPage(items: [first], page: 1, totalPages: 2),
+            2: ResultPage(items: [second], page: 2, totalPages: 2)
+        ])
+        let model = DiscoveryViewModel(discover: DiscoverMedia(repository: repo))
+        await model.reload()
+        #expect(model.canLoadMore == true)
+
+        await model.loadNextPage()
+        if case .loaded(let shelves) = model.state {
+            #expect(shelves.first?.items == [first, second])
+        } else {
+            Issue.record("Expected loaded state")
+        }
+        #expect(model.canLoadMore == false)
+    }
+}
+
+private struct PaginatedStubRepository: MediaRepository {
+    let pages: [Int: ResultPage<MediaItem>]
+    func discover(_ filter: MediaFilter, page: Int) async throws -> ResultPage<MediaItem> {
+        pages[page] ?? .empty
+    }
+    func search(_ query: SearchQuery, page: Int) async throws -> ResultPage<MediaItem> { .empty }
+    func details(of id: MediaID) async throws -> MediaDetails { throw MediaError.notFound }
+    func genres(for kind: MediaKind) async throws -> [Genre] { [] }
 }
 
 private struct MultiShelfStubRepository: MediaRepository {

@@ -27,6 +27,7 @@ final class SampleTVUITests: XCTestCase {
 
         let tabBar = app.tabBars.firstMatch
         XCTAssertTrue(tabBar.waitForExistence(timeout: 10))
+        attachScreenshot(named: "01-discover", in: app)
         verifyDiscoverAndDetailsFlowIfLoaded(in: app)
 
         let discoverTab = tabBar.buttons["Discover"]
@@ -43,12 +44,22 @@ final class SampleTVUITests: XCTestCase {
                 || app.searchFields.firstMatch.waitForExistence(timeout: 5)
         )
         XCTAssertTrue(app.buttons["All"].waitForExistence(timeout: 5))
+        attachScreenshot(named: "04-search", in: app)
 
         selectTab(profileTab, from: searchTab, direction: .right)
         XCTAssertTrue(app.staticTexts["Profiles"].waitForExistence(timeout: 5))
         XCTAssertTrue(app.staticTexts["Preferences"].waitForExistence(timeout: 5))
         XCTAssertTrue(app.staticTexts["My List"].waitForExistence(timeout: 5))
         XCTAssertTrue(app.buttons["profile.signOutButton"].waitForExistence(timeout: 5))
+        attachScreenshot(named: "05-profile", in: app)
+    }
+
+    @MainActor
+    private func attachScreenshot(named name: String, in app: XCUIApplication) {
+        let attachment = XCTAttachment(screenshot: app.screenshot())
+        attachment.name = name
+        attachment.lifetime = .keepAlways
+        add(attachment)
     }
 
     @MainActor
@@ -81,21 +92,31 @@ final class SampleTVUITests: XCTestCase {
 
     @MainActor
     private func verifyDiscoverAndDetailsFlowIfLoaded(in app: XCUIApplication) {
+        let heroPlay = app.buttons["discover.heroPlayButton"]
         let heroDetails = app.buttons["discover.heroDetailsButton"]
         guard heroDetails.waitForExistence(timeout: 10) else { return }
-        if moveFocus(to: heroDetails, direction: .down, maxSteps: 8) {
-            XCUIRemote.shared.press(.select)
-            let watchlist = app.buttons["details.watchlistButton"]
-            if watchlist.waitForExistence(timeout: 6) {
-                XCTAssertTrue(app.buttons["details.playButton"].exists)
-                if moveFocus(to: watchlist, direction: .right, maxSteps: 4)
-                    || moveFocus(to: watchlist, direction: .down, maxSteps: 4) {
-                    XCUIRemote.shared.press(.select)
-                }
-            }
-            XCUIRemote.shared.press(.menu)
-            _ = app.tabBars.firstMatch.waitForExistence(timeout: 5)
+
+        for _ in 0..<4 {
+            if heroPlay.hasFocus || heroDetails.hasFocus { break }
+            XCUIRemote.shared.press(.down)
         }
+        if heroPlay.hasFocus && !heroDetails.hasFocus {
+            _ = moveFocus(to: heroDetails, direction: .right, maxSteps: 2)
+        }
+        guard heroDetails.hasFocus else { return }
+
+        XCUIRemote.shared.press(.select)
+        let watchlist = app.buttons["details.watchlistButton"]
+        if watchlist.waitForExistence(timeout: 6) {
+            XCTAssertTrue(app.buttons["details.playButton"].exists)
+            _ = moveFocus(to: watchlist, direction: .right, maxSteps: 4)
+            if watchlist.hasFocus {
+                XCUIRemote.shared.press(.select)
+            }
+            attachScreenshot(named: "02-details", in: app)
+        }
+        XCUIRemote.shared.press(.menu)
+        _ = app.tabBars.firstMatch.waitForExistence(timeout: 5)
     }
 
     @MainActor
@@ -103,6 +124,7 @@ final class SampleTVUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["Categories"].waitForExistence(timeout: 5))
         let allMoviesTile = app.buttons["category.tile.all-movies"]
         guard allMoviesTile.waitForExistence(timeout: 8) else { return }
+        attachScreenshot(named: "03-categories", in: app)
         if moveFocus(to: allMoviesTile, direction: .down, maxSteps: 6) {
             XCUIRemote.shared.press(.select)
             XCTAssertTrue(app.buttons["Popular"].waitForExistence(timeout: 5))
