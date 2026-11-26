@@ -46,13 +46,18 @@ public struct CategoryResultsView: View {
     }
 
     private var grid: some View {
-        ScrollView {
-            LazyVGrid(columns: [GridItem(.adaptive(minimum: 240), spacing: 40)], spacing: 60) {
+        let columns = [
+            GridItem(
+                .adaptive(minimum: SampleTVTheme.cardWidth, maximum: SampleTVTheme.cardWidth),
+                spacing: SampleTVTheme.shelfItemSpacing
+            )
+        ]
+        return ScrollView {
+            LazyVGrid(columns: columns, spacing: 44) {
                 ForEach(viewModel.items) { item in
-                    Button { onSelect(item) } label: {
-                        MediaCard(item: item)
+                    MediaCard(item: item) {
+                        onSelect(item)
                     }
-                    .buttonStyle(.card)
                     .task {
                         if item == viewModel.items.last, viewModel.canLoadMore {
                             await viewModel.loadNextPage()
@@ -60,7 +65,9 @@ public struct CategoryResultsView: View {
                     }
                 }
             }
-            .padding(60)
+            .padding(.horizontal, SampleTVTheme.horizontalSafeMargin)
+            .padding(.vertical, 40)
         }
+        .scrollClipDisabled()
     }
 }

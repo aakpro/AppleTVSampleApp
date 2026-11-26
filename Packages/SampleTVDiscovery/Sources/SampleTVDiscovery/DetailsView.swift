@@ -23,74 +23,71 @@ public struct DetailsView: View {
     public var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 40) {
-                HStack(alignment: .top, spacing: 60) {
-                    PosterImage(url: ImageURLBuilder().url(for: viewModel.item.posterPath, size: .w500))
-                        .frame(width: 400)
-
-                    VStack(alignment: .leading, spacing: 24) {
-                        Text(viewModel.item.title).font(.largeTitle)
-                        Text(viewModel.item.overview)
-
-                        if case .loaded(let details) = viewModel.state {
-                            Text(details.genres.map(\.name).joined(separator: " · "))
-                                .foregroundStyle(.secondary)
-
-                            HStack(spacing: 24) {
-                                Button(viewModel.resumeLabel) {
-                                    onPlay(viewModel.item)
-                                }
-                                .buttonStyle(.card)
-                                .accessibilityIdentifier("details.playButton")
-
-                                if viewModel.trailerResource != nil || !details.videos.isEmpty {
-                                    Button("Watch Trailer") {
-                                        onPlayTrailer?(viewModel.item)
-                                    }
-                                    .buttonStyle(.card)
-                                    .accessibilityIdentifier("details.trailerButton")
-                                }
-
-                                Button(viewModel.isInWatchlist ? "In My List" : "Add to My List") {
-                                    Task {
-                                        await viewModel.toggleWatchlist()
-                                    }
-                                }
-                                .buttonStyle(.card)
-                                .accessibilityIdentifier("details.watchlistButton")
-                            }
-                        }
-
-                        Spacer(minLength: 24)
-
-                        Text("This product uses the TMDB API but is not endorsed or certified by TMDB.")
-                            .font(.caption2)
-                            .foregroundStyle(.tertiary)
-                    }
-                }
+                heroDetailsSection
+                    .padding(.horizontal, SampleTVTheme.horizontalSafeMargin)
 
                 if case .loaded(let details) = viewModel.state, !details.recommendations.isEmpty {
-                    VStack(alignment: .leading, spacing: 16) {
-                        Text("More Like This")
-                            .font(.title2)
-                            .fontWeight(.semibold)
-
-                        ScrollView(.horizontal) {
-                            LazyHStack(spacing: 40) {
-                                ForEach(details.recommendations) { recommendation in
-                                    Button {
-                                        onSelectRecommendation?(recommendation)
-                                    } label: {
-                                        MediaCard(item: recommendation)
-                                    }
-                                    .buttonStyle(.card)
-                                }
-                            }
-                        }
+                    MediaShelfRow(
+                        title: "More Like This",
+                        items: details.recommendations
+                    ) { recommendation in
+                        onSelectRecommendation?(recommendation)
                     }
                 }
             }
-            .padding(60)
+            .padding(.vertical, 60)
         }
         .task { await viewModel.load() }
+    }
+
+    private var heroDetailsSection: some View {
+        HStack(alignment: .top, spacing: 60) {
+            PosterImage(
+                url: ImageURLBuilder().url(for: viewModel.item.posterPath, size: .w500),
+                title: viewModel.item.title
+            )
+            .frame(width: 400)
+            .clipShape(RoundedRectangle(cornerRadius: SampleTVTheme.cardCornerRadius, style: .continuous))
+
+            VStack(alignment: .leading, spacing: 24) {
+                Text(viewModel.item.title).font(.largeTitle)
+                Text(viewModel.item.overview)
+
+                if case .loaded(let details) = viewModel.state {
+                    Text(details.genres.map(\.name).joined(separator: " · "))
+                        .foregroundStyle(.secondary)
+
+                    HStack(spacing: 24) {
+                        Button(viewModel.resumeLabel) {
+                            onPlay(viewModel.item)
+                        }
+                        .buttonStyle(.card)
+                        .accessibilityIdentifier("details.playButton")
+
+                        if viewModel.trailerResource != nil || !details.videos.isEmpty {
+                            Button("Watch Trailer") {
+                                onPlayTrailer?(viewModel.item)
+                            }
+                            .buttonStyle(.card)
+                            .accessibilityIdentifier("details.trailerButton")
+                        }
+
+                        Button(viewModel.isInWatchlist ? "In My List" : "Add to My List") {
+                            Task {
+                                await viewModel.toggleWatchlist()
+                            }
+                        }
+                        .buttonStyle(.card)
+                        .accessibilityIdentifier("details.watchlistButton")
+                    }
+                }
+
+                Spacer(minLength: 24)
+
+                Text("This product uses the TMDB API but is not endorsed or certified by TMDB.")
+                    .font(.caption2)
+                    .foregroundStyle(.tertiary)
+            }
+        }
     }
 }
