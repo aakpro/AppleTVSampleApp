@@ -26,11 +26,11 @@ public struct CategoriesView: View {
                 ErrorView(error: error) { Task { await viewModel.load() } }
             case .loaded(let movies, let tvShows):
                 ScrollView {
-                    VStack(alignment: .leading, spacing: 40) {
+                    VStack(alignment: .leading, spacing: 36) {
                         genreSection(title: "Movies", kind: .movie, genres: movies)
                         genreSection(title: "TV Shows", kind: .tv, genres: tvShows)
                     }
-                    .padding(60)
+                    .padding(.vertical, 48)
                 }
             }
         }
@@ -39,13 +39,13 @@ public struct CategoriesView: View {
     }
 
     private func genreSection(title: String, kind: MediaKind, genres: [Genre]) -> some View {
-        VStack(alignment: .leading, spacing: 20) {
+        VStack(alignment: .leading, spacing: 12) {
             Text(title)
-                .font(.title2)
-                .fontWeight(.semibold)
+                .font(SampleTVTheme.Typography.sectionTitle)
+                .padding(.horizontal, SampleTVTheme.horizontalSafeMargin)
 
-            ScrollView(.horizontal) {
-                LazyHStack(spacing: 40) {
+            ScrollView(.horizontal, showsIndicators: false) {
+                LazyHStack(spacing: SampleTVTheme.shelfItemSpacing) {
                     CategoryTile(title: "All \(title)") {
                         onSelectKind(kind)
                     }
@@ -56,6 +56,9 @@ public struct CategoriesView: View {
                     }
                 }
             }
+            .contentMargins(.horizontal, SampleTVTheme.horizontalSafeMargin, for: .scrollContent)
+            .contentMargins(.vertical, SampleTVTheme.shelfVerticalMargin, for: .scrollContent)
+            .scrollClipDisabled()
         }
     }
 }

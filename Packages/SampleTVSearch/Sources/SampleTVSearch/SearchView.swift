@@ -60,7 +60,7 @@ public struct SearchView: View {
 
             Spacer()
         }
-        .padding(.horizontal, 60)
+        .padding(.horizontal, SampleTVTheme.horizontalSafeMargin)
     }
 
     @ViewBuilder
@@ -73,20 +73,29 @@ public struct SearchView: View {
         case .loaded(let items) where items.isEmpty:
             ContentUnavailableView.search(text: viewModel.text)
         case .loaded(let items):
+            let columns = [
+                GridItem(
+                    .adaptive(minimum: SampleTVTheme.cardWidth, maximum: SampleTVTheme.cardWidth),
+                    spacing: SampleTVTheme.shelfItemSpacing
+                )
+            ]
             ScrollView {
-                LazyVGrid(columns: [GridItem(.adaptive(minimum: 240), spacing: 40)], spacing: 60) {
+                LazyVGrid(columns: columns, spacing: 44) {
                     ForEach(items) { item in
-                        Button { onSelect(item) } label: { MediaCard(item: item) }
-                            .buttonStyle(.card)
-                            .task {
-                                if item == items.last, viewModel.canLoadMore {
-                                    await viewModel.loadNextPage()
-                                }
+                        MediaCard(item: item) {
+                            onSelect(item)
+                        }
+                        .task {
+                            if item == items.last, viewModel.canLoadMore {
+                                await viewModel.loadNextPage()
                             }
+                        }
                     }
                 }
-                .padding(60)
+                .padding(.horizontal, SampleTVTheme.horizontalSafeMargin)
+                .padding(.vertical, 36)
             }
+            .scrollClipDisabled()
         }
     }
 }

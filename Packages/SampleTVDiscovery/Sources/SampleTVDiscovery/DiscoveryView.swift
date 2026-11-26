@@ -42,54 +42,27 @@ public struct DiscoveryView: View {
             ErrorView(error: error) { Task { await viewModel.reload() } }
         case .loaded(let shelves):
             ScrollView {
-                VStack(alignment: .leading, spacing: 40) {
+                LazyVStack(alignment: .leading, spacing: 28) {
                     if !viewModel.continueWatchingItems.isEmpty {
-                        SectionHeader(title: "Continue Watching")
-                        ScrollView(.horizontal) {
-                            LazyHStack(spacing: 40) {
-                                ForEach(viewModel.continueWatchingItems) { item in
-                                    Button { onSelect(item) } label: {
-                                        MediaCard(
-                                            item: item,
-                                            playbackProgress: viewModel.progressByID[item.id]
-                                        )
-                                    }
-                                    .buttonStyle(.card)
-                                }
-                            }
-                        }
+                        MediaShelfRow(
+                            title: "Continue Watching",
+                            items: viewModel.continueWatchingItems,
+                            progressByID: viewModel.progressByID,
+                            onSelect: onSelect
+                        )
                     }
 
                     ForEach(shelves) { shelf in
-                        SectionHeader(title: shelf.title)
-                        ScrollView(.horizontal) {
-                            LazyHStack(spacing: 40) {
-                                ForEach(shelf.items) { item in
-                                    Button { onSelect(item) } label: {
-                                        MediaCard(
-                                            item: item,
-                                            playbackProgress: viewModel.progressByID[item.id]
-                                        )
-                                    }
-                                    .buttonStyle(.card)
-                                }
-                            }
-                        }
+                        MediaShelfRow(
+                            title: shelf.title,
+                            items: shelf.items,
+                            progressByID: viewModel.progressByID,
+                            onSelect: onSelect
+                        )
                     }
                 }
-                .padding(60)
+                .padding(.vertical, 48)
             }
         }
-    }
-}
-
-private struct SectionHeader: View {
-    let title: String
-
-    var body: some View {
-        Text(title)
-            .font(.title2)
-            .fontWeight(.semibold)
-            .foregroundStyle(.primary)
     }
 }

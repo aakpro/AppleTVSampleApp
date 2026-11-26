@@ -7,26 +7,21 @@ struct WatchlistSection: View {
     let onSelectItem: ((MediaItem) -> Void)?
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("My List")
-                .font(.headline)
+        if viewModel.watchlistItems.isEmpty {
+            VStack(alignment: .leading, spacing: 12) {
+                Text("My List")
+                    .font(.headline)
 
-            if viewModel.watchlistItems.isEmpty {
                 Text("No saved titles yet.")
                     .foregroundStyle(.secondary)
-            } else {
-                ScrollView(.horizontal) {
-                    LazyHStack(spacing: 40) {
-                        ForEach(viewModel.watchlistItems) { item in
-                            Button {
-                                onSelectItem?(item)
-                            } label: {
-                                MediaCard(item: item)
-                            }
-                            .buttonStyle(.card)
-                        }
-                    }
-                }
+            }
+        } else {
+            MediaShelfRow(
+                title: "My List",
+                items: viewModel.watchlistItems,
+                horizontalMargin: 0
+            ) { item in
+                onSelectItem?(item)
             }
         }
     }
