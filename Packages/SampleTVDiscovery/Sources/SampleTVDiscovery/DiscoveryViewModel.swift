@@ -12,6 +12,7 @@ public final class DiscoveryViewModel {
     }
 
     public private(set) var state: State = .idle
+    public private(set) var featuredItem: MediaItem?
     public private(set) var canLoadMore = false
     public internal(set) var continueWatchingItems: [MediaItem] = []
     public internal(set) var progressByID: [MediaID: Double] = [:]
@@ -24,6 +25,19 @@ public final class DiscoveryViewModel {
 
     var items: [MediaItem] {
         shelves.flatMap(\.items)
+    }
+
+    /// Shelves deduplicated against `featuredItem` and earlier shelves for presentation.
+    public var presentedShelves: [MediaShelf] {
+        var seen = Set<MediaID>()
+        if let featuredItem {
+            seen.insert(featuredItem.id)
+        }
+        return shelves.compactMap { shelf in
+            let uniqueItems = shelf.items.filter { seen.insert($0.id).inserted }
+            guard !uniqueItems.isEmpty else { return nil }
+            return MediaShelf(id: shelf.id, title: shelf.title, items: uniqueItems)
+        }
     }
 
     private let discover: DiscoverMedia
@@ -60,6 +74,7 @@ public final class DiscoveryViewModel {
     /// Reloads shelves from page 1. Call from `.task` and whenever `kind` or `filter` changes.
     public func reload() async {
         shelves = []
+        featuredItem = nil
         nextPage = 1
         canLoadMore = false
         state = .loading
@@ -71,6 +86,7 @@ public final class DiscoveryViewModel {
             if let getDiscoveryShelves {
                 let loadedShelves = try await getDiscoveryShelves(for: kind)
                 shelves = loadedShelves
+                featuredItem = selectFeaturedItem(from: loadedShelves)
                 state = .loaded(loadedShelves)
             } else {
                 let page = try await discover(filter, page: 1)
@@ -79,6 +95,7 @@ public final class DiscoveryViewModel {
                 let title = kind == .movie ? "Popular Movies" : "Popular TV Shows"
                 let shelf = MediaShelf(id: "popular-\(kind.rawValue)", title: title, items: page.items)
                 shelves = [shelf]
+                featuredItem = selectFeaturedItem(from: shelves)
                 state = .loaded(shelves)
             }
         } catch is CancellationError {
@@ -87,6 +104,17 @@ public final class DiscoveryViewModel {
             let mediaError = error as? MediaError ?? .unknown
             state = .failed(mediaError)
         }
+    }
+
+    private func selectFeaturedItem(from shelves: [MediaShelf]) -> MediaItem? {
+        for shelf in shelves {
+            if let hero = shelf.items.first(where: {
+                !($0.backdropPath ?? "").trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            }) {
+                return hero
+            }
+        }
+        return shelves.first?.items.first
     }
 
     public func loadNextPage() async {

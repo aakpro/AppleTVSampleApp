@@ -6,6 +6,7 @@ import SampleTVDomain
 public final class SearchViewModel {
     public enum State: Equatable {
         case idle
+        case loading
         case loaded([MediaItem])
         case failed(MediaError)
     }
@@ -48,6 +49,14 @@ public final class SearchViewModel {
     /// Drive from `.task(id: Key(...))`. SwiftUI cancels the previous task when the
     /// input changes, so the sleep is the debounce and no Combine pipeline is needed.
     public func performSearch() async {
+        guard SearchQuery(text) != nil else {
+            items = []
+            nextPage = 1
+            canLoadMore = false
+            state = .idle
+            return
+        }
+        state = .loading
         do {
             try await Task.sleep(for: debounce)
             items = []
@@ -63,6 +72,9 @@ public final class SearchViewModel {
             state = .idle
             canLoadMore = false
             return
+        }
+        if items.isEmpty {
+            state = .loading
         }
         do {
             let page = try await search(text, kind: selectedKind, page: nextPage)

@@ -68,6 +68,9 @@ public struct SearchView: View {
         switch viewModel.state {
         case .idle:
             ContentUnavailableView("Search Movies and Shows", systemImage: "magnifyingglass")
+        case .loading:
+            ProgressView()
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
         case .failed(let error):
             ErrorView(error: error) { Task { await viewModel.retry() } }
         case .loaded(let items) where items.isEmpty:
