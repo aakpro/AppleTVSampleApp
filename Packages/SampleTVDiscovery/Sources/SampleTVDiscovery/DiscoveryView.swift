@@ -18,6 +18,9 @@ public struct DiscoveryView: View {
                 async let continueTask: Void = viewModel.loadContinueWatching()
                 _ = await (reloadTask, continueTask)
             }
+            .task {
+                await viewModel.applyInitialPreferencesIfNeeded()
+            }
             .toolbar {
                 ToolbarItem(placement: .principal) {
                     Picker("Media Type", selection: $viewModel.kind) {

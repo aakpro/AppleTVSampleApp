@@ -8,6 +8,7 @@ struct DetailsScreen: View {
     let profileID: String
     let onSelectRecommendation: (MediaItem) -> Void
     @State private var viewModel: DetailsScreenViewModel
+    @State private var detailsViewModel: DetailsViewModel
 
     init(
         container: AppContainer,
@@ -20,16 +21,23 @@ struct DetailsScreen: View {
         self.profileID = profileID
         self.onSelectRecommendation = onSelectRecommendation
         _viewModel = State(initialValue: container.makeDetailsScreenViewModel(profileID: profileID))
+        _detailsViewModel = State(initialValue: container.makeDetailsViewModel(for: item, profileID: profileID))
     }
 
     var body: some View {
         DetailsView(
-            viewModel: container.makeDetailsViewModel(for: item, profileID: profileID),
+            viewModel: detailsViewModel,
             onPlay: { selected in
                 Task { await viewModel.startPlayback(for: selected, kind: .feature) }
             },
             onPlayTrailer: { selected in
-                Task { await viewModel.startPlayback(for: selected, kind: .trailer) }
+                Task {
+                    await viewModel.startPlayback(
+                        for: selected,
+                        kind: .trailer,
+                        trailerTitle: detailsViewModel.preferredTrailerTitle
+                    )
+                }
             },
             onSelectRecommendation: onSelectRecommendation
         )

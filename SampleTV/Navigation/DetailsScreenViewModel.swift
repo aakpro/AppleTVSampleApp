@@ -28,7 +28,7 @@ final class DetailsScreenViewModel {
         self.profileID = profileID
     }
 
-    func startPlayback(for item: MediaItem, kind: PlaybackResourceKind) async {
+    func startPlayback(for item: MediaItem, kind: PlaybackResourceKind, trailerTitle: String? = nil) async {
         let resolved = (try? await resolveResources.resolveFirst(
             item.id,
             genreIDs: item.genreIDs,
@@ -39,10 +39,32 @@ final class DetailsScreenViewModel {
             title: item.title,
             trackProgress: kind == .feature
         )
+
+        // Set the proper metadata based on playback kind
+        var updatedTitle = resolved.title
+        var updatedSubtitle = resolved.subtitle
+
+        if kind == .feature {
+            updatedTitle = item.title
+            updatedSubtitle = "Full Feature"
+        } else if kind == .trailer {
+            updatedTitle = trailerTitle ?? "\(item.title) — Trailer"
+            updatedSubtitle = item.title
+        }
+
+        // Update resource with proper metadata (keeping the original URL and trackProgress)
+        let updatedResource = PlayableResource(
+            url: resolved.url,
+            kind: resolved.kind,
+            title: updatedTitle,
+            subtitle: updatedSubtitle,
+            trackProgress: resolved.trackProgress
+        )
+
         playbackSelection = PlaybackSelection(
             mediaID: item.id,
             profileID: profileID,
-            resource: resolved
+            resource: updatedResource
         )
     }
 }

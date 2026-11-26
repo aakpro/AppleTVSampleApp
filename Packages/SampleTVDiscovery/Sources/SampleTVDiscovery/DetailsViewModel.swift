@@ -35,6 +35,18 @@ public final class DetailsViewModel {
         playableResources.first { $0.kind == .trailer }
     }
 
+    public var preferredTrailerTitle: String? {
+        guard case .loaded(let details) = state else { return nil }
+
+        // Look for the first video that is a trailer
+        if let trailer = details.videos.first(where: { $0.kind == .trailer }) {
+            return trailer.name
+        }
+
+        // If no trailer, look for any video and return its name
+        return details.videos.first?.name
+    }
+
     private let getDetails: GetMediaDetails
     private let loadProgress: LoadPlaybackProgress?
     private let resolveResources: ResolvePlaybackResources?

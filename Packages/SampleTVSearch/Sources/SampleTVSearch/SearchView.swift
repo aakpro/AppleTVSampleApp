@@ -68,8 +68,8 @@ public struct SearchView: View {
         switch viewModel.state {
         case .idle:
             ContentUnavailableView("Search Movies and Shows", systemImage: "magnifyingglass")
-        case .failed:
-            ContentUnavailableView("Search Failed", systemImage: "exclamationmark.triangle")
+        case .failed(let error):
+            ErrorView(error: error) { Task { await viewModel.retry() } }
         case .loaded(let items) where items.isEmpty:
             ContentUnavailableView.search(text: viewModel.text)
         case .loaded(let items):

@@ -11,7 +11,10 @@ public final class PlayerViewModel {
     public let initialPosition: TimeInterval?
     public let player: AVPlayer
 
+    public static let minimumProgressSeconds: TimeInterval = 5
+
     public private(set) var failure: String?
+    public private(set) var attemptID = 0
 
     private let progressInterval: Duration
     private let onProgress: (@MainActor @Sendable (TimeInterval, TimeInterval) -> Void)?
@@ -65,6 +68,7 @@ public final class PlayerViewModel {
             }
         case .failed:
             failure = errorDescription ?? player.currentItem?.error?.localizedDescription ?? "Unknown error"
+            player.pause()
         case .unknown:
             break
         @unknown default:
@@ -77,6 +81,8 @@ public final class PlayerViewModel {
         let position = item.currentTime().seconds
         let duration = item.duration.seconds
         guard position.isFinite, position >= 0, duration.isFinite, duration > 0 else { return }
+        // Skip progress reporting if position is less than minimum required seconds
+        guard position >= Self.minimumProgressSeconds else { return }
         onProgress?(position, duration)
     }
 
@@ -169,5 +175,16 @@ public final class PlayerViewModel {
             guard !Task.isCancelled else { return }
             reportCurrentProgress()
         }
+    }
+
+    public func retry() {
+        failure = nil
+        didSeek = false
+
+        let item = AVPlayerItem(url: url)
+        item.externalMetadata = Self.buildMetadata(title: title, subtitle: subtitle)
+        player.replaceCurrentItem(with: item)
+        attemptID += 1
+        player.play()
     }
 }

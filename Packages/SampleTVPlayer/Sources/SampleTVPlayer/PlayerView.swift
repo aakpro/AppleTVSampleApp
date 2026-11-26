@@ -5,6 +5,7 @@ import SwiftUI
 /// audio/subtitle pickers and Siri Remote handling; don't rebuild them.
 public struct PlayerView: View {
     @State private var viewModel: PlayerViewModel
+    @Environment(\.dismiss) private var dismiss
 
     public init(viewModel: PlayerViewModel) {
         _viewModel = State(initialValue: viewModel)
@@ -27,19 +28,57 @@ public struct PlayerView: View {
     }
 
     public var body: some View {
-        VideoPlayer(player: viewModel.player)
-            .ignoresSafeArea()
-            .overlay {
-                if let failure = viewModel.failure {
-                    ContentUnavailableView(
-                        "Playback Failed",
-                        systemImage: "exclamationmark.triangle",
-                        description: Text(failure)
-                    )
+        ZStack {
+            if let failure = viewModel.failure {
+                failureOverlay(message: failure)
+            } else {
+                VideoPlayer(player: viewModel.player)
+                    .ignoresSafeArea()
+            }
+        }
+        .task(id: viewModel.attemptID) { await viewModel.startObserving() }
+        .onAppear { viewModel.play() }
+        .onDisappear { viewModel.pause() }
+    }
+
+    private func failureOverlay(message: String) -> some View {
+        ZStack {
+            Color.black.opacity(0.96).ignoresSafeArea()
+            VStack(spacing: 24) {
+                Image(systemName: "exclamationmark.triangle")
+                    .font(.system(size: 56))
+                    .foregroundStyle(.red)
+
+                Text("Playback Failed")
+                    .font(.title2)
+                    .fontWeight(.bold)
+
+                Text(message)
+                    .multilineTextAlignment(.center)
+                    .foregroundStyle(.secondary)
+                    .frame(maxWidth: 640)
+
+                HStack(spacing: 24) {
+                    Button {
+                        viewModel.retry()
+                    } label: {
+                        Label("Try Again", systemImage: "arrow.clockwise")
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 8)
+                    }
+                    .buttonStyle(.borderedProminent)
+
+                    Button {
+                        dismiss()
+                    } label: {
+                        Label("Close", systemImage: "xmark")
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 8)
+                    }
+                    .buttonStyle(.bordered)
                 }
             }
-            .task { await viewModel.startObserving() }
-            .onAppear { viewModel.play() }
-            .onDisappear { viewModel.pause() }
+            .padding(60)
+        }
     }
 }
