@@ -60,6 +60,7 @@ extension AppContainer {
             isInWatchlist: IsInWatchlist(store: watchlistStore),
             toggleWatchlist: ToggleWatchlist(store: watchlistStore),
             getPreferences: GetUserPreferences(repository: profileRepository),
+            getSeasonDetails: GetTVSeasonDetails(repository: repository),
             profileID: profileID
         )
     }

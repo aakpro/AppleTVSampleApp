@@ -133,4 +133,38 @@ struct SwiftDataPlaybackProgressStoreTests {
         #expect(try await watchlistStore.items(for: profile.id) == [item])
         #expect(try await progressStore.loadProgress(for: item.id, profileID: profile.id)?.position == 120)
     }
+
+    @Test func seasonAndEpisodeNumbersRoundTripAndUpsert() async throws {
+        let store = try makeStore()
+        let tvShowID = MediaID(kind: .tv, value: 1396)
+        let progress = PlaybackProgress(
+            mediaID: tvShowID,
+            position: 300,
+            duration: 600,
+            profileID: "main",
+            seasonNumber: 2,
+            episodeNumber: 5
+        )
+
+        try await store.saveProgress(progress)
+
+        let loaded = try await store.loadProgress(for: tvShowID, profileID: "main")
+        #expect(loaded?.seasonNumber == 2)
+        #expect(loaded?.episodeNumber == 5)
+
+        let updatedProgress = PlaybackProgress(
+            mediaID: tvShowID,
+            position: 400,
+            duration: 600,
+            profileID: "main",
+            seasonNumber: 2,
+            episodeNumber: 6
+        )
+
+        try await store.saveProgress(updatedProgress)
+
+        let loadedUpdated = try await store.loadProgress(for: tvShowID, profileID: "main")
+        #expect(loadedUpdated?.seasonNumber == 2)
+        #expect(loadedUpdated?.episodeNumber == 6)
+    }
 }

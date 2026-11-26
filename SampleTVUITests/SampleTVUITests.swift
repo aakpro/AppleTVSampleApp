@@ -55,6 +55,82 @@ final class SampleTVUITests: XCTestCase {
     }
 
     @MainActor
+    func testTVShowSeasonAndEpisodeSelectionIfLoaded() throws {
+        let app = launchSampleTV(resetAuth: true)
+        signInWithDemoAccount(in: app)
+
+        guard selectTVShowsTabIfPresent(in: app) else { return }
+
+        let heroPlay = app.buttons["discover.heroPlayButton"]
+        let heroDetails = app.buttons["discover.heroDetailsButton"]
+        guard heroDetails.waitForExistence(timeout: 10) else { return }
+
+        for _ in 0..<4 {
+            if heroPlay.hasFocus || heroDetails.hasFocus { break }
+            XCUIRemote.shared.press(.down)
+        }
+        if heroPlay.hasFocus && !heroDetails.hasFocus {
+            _ = moveFocus(to: heroDetails, direction: .right, maxSteps: 2)
+        }
+        guard heroDetails.hasFocus else {
+            XCTFail("TV show hero details button should receive focus")
+            return
+        }
+        XCUIRemote.shared.press(.select)
+        verifyTVDetailsSeasonsAndEpisodes(in: app)
+    }
+
+    @MainActor
+    private func selectTVShowsTabIfPresent(in app: XCUIApplication) -> Bool {
+        let moviesButton = app.buttons["Movies"]
+        let tvShowsButton = app.buttons["TV Shows"]
+        guard tvShowsButton.waitForExistence(timeout: 10) else { return false }
+
+        if !moviesButton.hasFocus && !tvShowsButton.hasFocus {
+            _ = moveFocus(to: moviesButton, direction: .down, maxSteps: 4)
+        }
+        if !tvShowsButton.hasFocus {
+            _ = moveFocus(to: tvShowsButton, direction: .right, maxSteps: 4)
+        }
+        XCTAssertTrue(tvShowsButton.hasFocus, "TV Shows segment should receive focus")
+        XCUIRemote.shared.press(.select)
+        return true
+    }
+
+    @MainActor
+    private func verifyTVDetailsSeasonsAndEpisodes(in app: XCUIApplication) {
+        let seasonButton = app.buttons.matching(
+            NSPredicate(format: "identifier BEGINSWITH %@", "details.seasonButton.")
+        ).firstMatch
+        XCTAssertTrue(seasonButton.waitForExistence(timeout: 10), "TV details should show season buttons")
+
+        let episodeCard = app.buttons.matching(
+            NSPredicate(format: "identifier BEGINSWITH %@", "details.episodeCard.")
+        ).firstMatch
+        XCTAssertTrue(episodeCard.waitForExistence(timeout: 10), "TV details should show episode cards")
+
+        attachScreenshot(named: "06-tv-details-episodes", in: app)
+
+        let season2Button = app.buttons["details.seasonButton.2"]
+        if season2Button.waitForExistence(timeout: 3),
+           moveFocus(to: season2Button, direction: .down, maxSteps: 4) ||
+           moveFocus(to: season2Button, direction: .right, maxSteps: 4) {
+            XCUIRemote.shared.press(.select)
+            let season2Episode = app.buttons.matching(
+                NSPredicate(format: "identifier BEGINSWITH %@", "details.episodeCard.2.")
+            ).firstMatch
+            XCTAssertTrue(
+                season2Episode.waitForExistence(timeout: 8),
+                "Selecting Season 2 should load Season 2 episodes"
+            )
+            _ = moveFocus(to: season2Episode, direction: .down, maxSteps: 4)
+        } else {
+            _ = moveFocus(to: episodeCard, direction: .down, maxSteps: 6)
+        }
+        attachScreenshot(named: "07-tv-episodes-focused", in: app)
+    }
+
+    @MainActor
     private func attachScreenshot(named name: String, in app: XCUIApplication) {
         let attachment = XCTAttachment(screenshot: app.screenshot())
         attachment.name = name
