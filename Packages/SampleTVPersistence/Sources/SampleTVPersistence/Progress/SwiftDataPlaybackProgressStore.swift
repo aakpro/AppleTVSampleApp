@@ -21,6 +21,8 @@ public actor SwiftDataPlaybackProgressStore: PlaybackProgressStore {
             existing.position = progress.position
             existing.duration = progress.duration
             existing.updatedAt = progress.updatedAt
+            existing.seasonNumber = progress.seasonNumber
+            existing.episodeNumber = progress.episodeNumber
         } else {
             modelContext.insert(StoredProgress(progress: progress))
         }

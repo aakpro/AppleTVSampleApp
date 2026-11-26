@@ -52,6 +52,16 @@ public struct TMDBMediaRepository: MediaRepository {
         return dto.genres.map { Genre(id: $0.id, name: $0.name) }
     }
 
+    public func seasonDetails(of id: MediaID, seasonNumber: Int) async throws -> TVSeasonDetails {
+        guard id.kind == .tv, seasonNumber >= 0 else {
+            throw MediaError.notFound
+        }
+        let dto: TVSeasonDetailsDTO = try await client.get(
+            "tv/\(id.value)/season/\(seasonNumber)"
+        )
+        return dto.toDomain()
+    }
+
     private func appendDateBounds(for filter: MediaFilter, to query: inout [URLQueryItem]) {
         let dateKey = filter.kind == .movie ? "primary_release_date" : "first_air_date"
         let today = Self.formattedDate(now())

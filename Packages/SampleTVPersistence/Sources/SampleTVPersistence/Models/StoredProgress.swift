@@ -11,6 +11,8 @@ public final class StoredProgress {
     public var position: Double
     public var duration: Double
     public var updatedAt: Date
+    public var seasonNumber: Int?
+    public var episodeNumber: Int?
 
     public init(
         profileID: String,
@@ -18,7 +20,9 @@ public final class StoredProgress {
         mediaIDValue: Int,
         position: Double,
         duration: Double,
-        updatedAt: Date
+        updatedAt: Date,
+        seasonNumber: Int? = nil,
+        episodeNumber: Int? = nil
     ) {
         self.id = Self.compositeID(profileID: profileID, kindRaw: mediaKindRaw, value: mediaIDValue)
         self.profileID = profileID
@@ -27,6 +31,8 @@ public final class StoredProgress {
         self.position = position
         self.duration = duration
         self.updatedAt = updatedAt
+        self.seasonNumber = seasonNumber
+        self.episodeNumber = episodeNumber
     }
 
     public convenience init(progress: PlaybackProgress) {
@@ -36,7 +42,9 @@ public final class StoredProgress {
             mediaIDValue: progress.mediaID.value,
             position: progress.position,
             duration: progress.duration,
-            updatedAt: progress.updatedAt
+            updatedAt: progress.updatedAt,
+            seasonNumber: progress.seasonNumber,
+            episodeNumber: progress.episodeNumber
         )
     }
 
@@ -47,7 +55,9 @@ public final class StoredProgress {
             position: position,
             duration: duration,
             updatedAt: updatedAt,
-            profileID: profileID
+            profileID: profileID,
+            seasonNumber: seasonNumber,
+            episodeNumber: episodeNumber
         )
     }
 

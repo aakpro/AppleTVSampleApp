@@ -29,6 +29,13 @@ public struct PlayableResource: Sendable, Equatable {
 
 public protocol PlaybackResourceResolver: Sendable {
     func resolve(_ mediaID: MediaID, genreIDs: [Int]) async throws -> [PlayableResource]
+    func resolve(_ mediaID: MediaID, genreIDs: [Int], episode: TVEpisode?) async throws -> [PlayableResource]
+}
+
+public extension PlaybackResourceResolver {
+    func resolve(_ mediaID: MediaID, genreIDs: [Int], episode: TVEpisode?) async throws -> [PlayableResource] {
+        try await resolve(mediaID, genreIDs: genreIDs)
+    }
 }
 
 public struct ResolvePlaybackResources: Sendable {
@@ -40,17 +47,19 @@ public struct ResolvePlaybackResources: Sendable {
 
     public func callAsFunction(
         _ mediaID: MediaID,
-        genreIDs: [Int] = []
+        genreIDs: [Int] = [],
+        episode: TVEpisode? = nil
     ) async throws -> [PlayableResource] {
-        try await resolver.resolve(mediaID, genreIDs: genreIDs)
+        try await resolver.resolve(mediaID, genreIDs: genreIDs, episode: episode)
     }
 
     public func resolveFirst(
         _ mediaID: MediaID,
         genreIDs: [Int] = [],
+        episode: TVEpisode? = nil,
         kind: PlaybackResourceKind
     ) async throws -> PlayableResource? {
-        let resources = try await resolver.resolve(mediaID, genreIDs: genreIDs)
+        let resources = try await resolver.resolve(mediaID, genreIDs: genreIDs, episode: episode)
         return resources.first { $0.kind == kind }
     }
 }

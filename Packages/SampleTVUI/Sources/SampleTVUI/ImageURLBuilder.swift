@@ -1,7 +1,7 @@
 import Foundation
 
 public enum PosterSize: String, Sendable {
-    case w185, w342, w500, w780, w1280, original
+    case w185, w300, w342, w500, w780, w1280, original
 }
 
 public struct ImageURLBuilder: Sendable {
