@@ -23,21 +23,25 @@ private actor StubProgressStore: PlaybackProgressStore {
         self.recent = recent
     }
 
-    func loadProgress(for mediaID: MediaID) async throws -> PlaybackProgress? {
-        recent.first { $0.mediaID == mediaID }
+    func loadProgress(for mediaID: MediaID, profileID: String) async throws -> PlaybackProgress? {
+        recent.first { $0.mediaID == mediaID && $0.profileID == profileID }
     }
 
     func saveProgress(_ progress: PlaybackProgress) async throws {
-        recent.removeAll { $0.mediaID == progress.mediaID }
+        recent.removeAll { $0.mediaID == progress.mediaID && $0.profileID == progress.profileID }
         recent.insert(progress, at: 0)
     }
 
-    func clearProgress(for mediaID: MediaID) async throws {
-        recent.removeAll { $0.mediaID == mediaID }
+    func clearProgress(for mediaID: MediaID, profileID: String) async throws {
+        recent.removeAll { $0.mediaID == mediaID && $0.profileID == profileID }
     }
 
-    func recentlyWatched(maxCount: Int) async throws -> [PlaybackProgress] {
-        Array(recent.prefix(maxCount))
+    func clearAllProgress(for profileID: String) async throws {
+        recent.removeAll { $0.profileID == profileID }
+    }
+
+    func recentlyWatched(for profileID: String, maxCount: Int) async throws -> [PlaybackProgress] {
+        Array(recent.filter { $0.profileID == profileID }.prefix(maxCount))
     }
 }
 

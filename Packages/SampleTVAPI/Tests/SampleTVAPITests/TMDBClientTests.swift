@@ -31,7 +31,8 @@ actor StubTransport: HTTPTransport {
 
 private let tvPage = """
 {"page":1,"total_pages":3,"results":[
- {"id":1396,"name":"Breaking Bad","first_air_date":"2008-01-20","genre_ids":[18],"vote_average":8.9,"poster_path":"/p.jpg"}
+ {"id":1396,"name":"Breaking Bad","first_air_date":"2008-01-20",
+  "genre_ids":[18],"vote_average":8.9,"poster_path":"/p.jpg"}
 ]}
 """
 

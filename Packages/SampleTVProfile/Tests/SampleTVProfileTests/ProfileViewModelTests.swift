@@ -256,7 +256,7 @@ private actor StubProgressStore: PlaybackProgressStore {
         self.items = map
     }
 
-    func loadProgress(for mediaID: MediaID) async throws -> PlaybackProgress? {
+    func loadProgress(for mediaID: MediaID, profileID: String) async throws -> PlaybackProgress? {
         items[mediaID]
     }
 
@@ -264,11 +264,15 @@ private actor StubProgressStore: PlaybackProgressStore {
         items[progress.mediaID] = progress
     }
 
-    func clearProgress(for mediaID: MediaID) async throws {
+    func clearProgress(for mediaID: MediaID, profileID: String) async throws {
         items.removeValue(forKey: mediaID)
     }
 
-    func recentlyWatched(maxCount: Int) async throws -> [PlaybackProgress] {
+    func clearAllProgress(for profileID: String) async throws {
+        items = items.filter { $0.value.profileID != profileID }
+    }
+
+    func recentlyWatched(for profileID: String, maxCount: Int) async throws -> [PlaybackProgress] {
         Array(items.values.prefix(maxCount))
     }
 }

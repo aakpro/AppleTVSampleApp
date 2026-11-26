@@ -6,7 +6,14 @@ import Testing
 @Suite struct VideoDecodingTests {
     @Test func videoDTOMapsTrailerAndFeatureKinds() {
         let trailer = VideoDTO(id: "1", key: "k1", name: "Trailer", site: "YouTube", type: "Trailer", iso6391: "en")
-        let feature = VideoDTO(id: "2", key: "k2", name: "Clip", site: "YouTube", type: "Behind the Scenes", iso6391: nil)
+        let feature = VideoDTO(
+            id: "2",
+            key: "k2",
+            name: "Clip",
+            site: "YouTube",
+            type: "Behind the Scenes",
+            iso6391: nil
+        )
 
         #expect(trailer.videoKind == .trailer)
         #expect(feature.videoKind == .feature)

@@ -4,7 +4,7 @@ import SampleTVAPI
 import SampleTVAuth
 import SampleTVDiscovery
 import SampleTVDomain
-import SampleTVPlaybackProgress
+import SampleTVPersistence
 import SampleTVProfile
 import SampleTVSearch
 
@@ -47,30 +47,21 @@ final class AppContainer {
             configuration: TMDBConfiguration(readAccessToken: configuration.tmdbToken),
             transport: URLSession.tmdbCached()
         )
-        let progressStore = UserDefaultsPlaybackProgressStore()
         let sessionStore = KeychainSessionStore()
         if ProcessInfo.processInfo.arguments.contains("-reset-auth") {
             sessionStore.clear()
         }
         let authRepository = MockAuthRepository(sessionStore: sessionStore)
-        let profileRepository: any ProfileRepository
-        do {
-            profileRepository = try SwiftDataProfileRepository()
-        } catch {
-            fatalError("Failed to initialize SwiftDataProfileRepository: \(error)")
-        }
+        let modelContainer = PersistenceContainer.makeResilientModelContainer()
+        let profileRepository = SwiftDataProfileRepository(modelContainer: modelContainer)
         let resourceResolver = CatalogPlaybackResourceResolver()
-        let watchlistStore: any WatchlistStore
-        do {
-            watchlistStore = try SwiftDataWatchlistStore()
-        } catch {
-            fatalError("Failed to initialize SwiftDataWatchlistStore: \(error)")
-        }
+        let watchlistStore = SwiftDataWatchlistStore(modelContainer: modelContainer)
+        let playbackProgressStore = SwiftDataPlaybackProgressStore(modelContainer: modelContainer)
 
         return AppContainer(
             configuration: configuration,
             repository: TMDBMediaRepository(client: client),
-            progressStore: progressStore,
+            progressStore: playbackProgressStore,
             authRepository: authRepository,
             profileRepository: profileRepository,
             resourceResolver: resourceResolver,
@@ -94,7 +85,7 @@ final class AppContainer {
         )
     }
 
-    func makeDetailsViewModel(for item: MediaItem, profileID: String = "main") -> DetailsViewModel {
+    func makeDetailsViewModel(for item: MediaItem, profileID: String = ViewerProfile.defaultID) -> DetailsViewModel {
         DetailsViewModel(
             item: item,
             getDetails: GetMediaDetails(repository: repository),

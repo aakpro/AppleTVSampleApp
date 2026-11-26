@@ -47,7 +47,7 @@ public final class DetailsViewModel {
         progressStore: (any PlaybackProgressStore)? = nil,
         resourceResolver: (any PlaybackResourceResolver)? = nil,
         watchlistStore: (any WatchlistStore)? = nil,
-        profileID: String = "main"
+        profileID: String = ViewerProfile.defaultID
     ) {
         self.item = item
         self.getDetails = getDetails

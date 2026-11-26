@@ -34,6 +34,9 @@
       <FileRef
          location = "group:SampleTVProfile">
       </FileRef>
+      <FileRef
+         location = "group:SampleTVPersistence">
+      </FileRef>
    </Group>
    <FileRef
       location = "container:Config">

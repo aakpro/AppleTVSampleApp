@@ -62,7 +62,7 @@ public final class ProfileViewModel {
     }
 
     public func updatePreferences(_ newPreferences: UserPreferences) async {
-        let profileID = currentProfile?.id ?? "main"
+        let profileID = currentProfile?.id ?? ViewerProfile.defaultID
         do {
             try await updatePreferencesUseCase(newPreferences, for: profileID)
             preferences = newPreferences

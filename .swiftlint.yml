@@ -45,15 +45,15 @@ custom_rules:
   domain_is_framework_free:
     name: "Domain must stay framework-free"
     included: "Packages/SampleTVDomain/Sources"
-    regex: '^\s*(@testable\s+)?import\s+(SwiftUI|UIKit|AVKit|AVFoundation|Combine|Observation|SwiftData|SampleTV(API|UI|Discovery|Search|Player))\b'
+    regex: '^\s*(@testable\s+)?import\s+(SwiftUI|UIKit|AVKit|AVFoundation|Combine|Observation|SwiftData|SampleTV(API|Persistence|PlaybackProgress|UI|Discovery|Search|Player|Auth|Profile))\b'
     message: "SampleTVDomain may import Foundation only. Define a protocol here and implement it elsewhere."
     severity: error
 
   features_do_not_import_api:
-    name: "Feature modules depend on the Domain, not the API layer"
-    included: "Packages/SampleTV(Discovery|Search|Player|Auth|Profile)/Sources"
-    regex: '^\s*import\s+SampleTVAPI\b'
-    message: "Depend on the MediaRepository protocol from SampleTVDomain; the app target wires in SampleTVAPI."
+    name: "Feature and UI modules depend on the Domain, not Data layers"
+    included: "Packages/SampleTV(UI|Discovery|Search|Player|Auth|Profile)/Sources"
+    regex: '^\s*import\s+(SampleTVAPI|SampleTVPersistence|SampleTVPlaybackProgress)\b'
+    message: "Depend on protocols/use cases from SampleTVDomain; the app target wires concrete implementations."
     severity: error
 
   features_do_not_import_each_other:
@@ -61,4 +61,19 @@ custom_rules:
     included: "Packages/SampleTV(Discovery|Search|Player|Auth|Profile)/Sources"
     regex: '^\s*import\s+SampleTV(Discovery|Search|Player|Auth|Profile)\b'
     message: "Move shared code into SampleTVUI or SampleTVDomain; navigation between features lives in the app target."
+    severity: error
+
+  data_packages_are_isolated:
+    name: "Data packages must not import UI, feature modules, or each other"
+    included: "Packages/SampleTV(API|Persistence|PlaybackProgress)/Sources"
+    regex: '^\s*import\s+(SwiftUI|UIKit|AVKit|SampleTV(UI|Discovery|Search|Player|Auth|Profile))\b'
+    message: "Data packages may depend only on SampleTVDomain and system frameworks."
+    severity: error
+
+  no_combine:
+    name: "Combine is forbidden"
+    included: "Packages/.*/Sources|SampleTV"
+    excluded: "Packages/SampleTVPlayer/Sources/SampleTVPlayer/PlayerView.swift"
+    regex: '^\s*import\s+Combine\b'
+    message: "Use Swift 6 structured concurrency (async/await, AsyncStream, Task) instead of Combine."
     severity: error
