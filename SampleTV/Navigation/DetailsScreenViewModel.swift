@@ -8,6 +8,18 @@ struct PlaybackSelection: Identifiable, Sendable {
     let profileID: String
     let resource: PlayableResource
     let episode: TVEpisode?
+
+    init(
+        mediaID: MediaID,
+        profileID: String,
+        resource: PlayableResource,
+        episode: TVEpisode? = nil
+    ) {
+        self.mediaID = mediaID
+        self.profileID = profileID
+        self.resource = resource
+        self.episode = episode
+    }
 }
 
 @MainActor
