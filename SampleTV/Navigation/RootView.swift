@@ -43,7 +43,6 @@ struct RootView: View {
                 DiscoveryView(viewModel: container.makeDiscoveryViewModel()) { item in
                     Task { await viewModel.selectMedia(item) }
                 }
-                .navigationTitle("Discover")
             }
             .tabItem { Label("Discover", systemImage: "square.grid.2x2") }
 

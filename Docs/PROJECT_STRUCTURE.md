@@ -26,7 +26,7 @@ phase PR; it is the source of truth that [AGENTS.md](../AGENTS.md) points agents
 | 14 | [Presentation Refactoring](Phase14_Presentation_Refactoring/Documentation/Phase_14_Presentation_Refactoring.md) (thin Views, ViewModels for Categories/Player/Root, remove `Combine`) | ✅ Complete & Verified | `feature/phase_14_presentation_refactoring` |
 | 15 | [Playback & Data Polish](Phase15_Playback_And_Data_Polish/Documentation/Phase_15_Playback_And_Data_Polish.md) (working streams, player errors, TMDB query hygiene, kind-filtered Continue Watching) | ✅ Complete & Verified | `feature/phase_15_playback_and_data_polish` |
 | 16 | [Design System & Cards](Phase16_Design_System_And_Cards/Documentation/Phase_16_Design_System_And_Cards.md) (`AccentColor`, cached posters, unclipped `MediaCard` & `CategoryTile`) | ✅ Complete & Verified | `feature/phase_16_design_system_and_cards` |
-| 17 | [Discover, Categories & Search Chrome](Phase17_Discover_Search_Chrome/Documentation/Phase_17_Discover_Search_Chrome.md) (hero banner, un-truncated pickers, headers, Search loading state) | ⏳ Not started | - |
+| 17 | [Discover, Categories & Search Chrome](Phase17_Discover_Search_Chrome/Documentation/Phase_17_Discover_Search_Chrome.md) (hero banner, un-truncated pickers, headers, Search loading state) | ✅ Complete & Verified | `feature/phase_17_discover_search_chrome` |
 | 18 | [Details, Auth & Profile Polish](Phase18_Details_Auth_Profile/Documentation/Phase_18_Details_Auth_Profile.md) (opaque backdrop `DetailsView`, flash-free auth, `ProfileView` layout) | ⏳ Not started | - |
 | 19 | [Visual QA & Release](Phase19_Visual_QA_And_Release/Documentation/Phase_19_Visual_QA_And_Release.md) (expanded XCUITests, accessibility pass, `v2.1.0`) | ⏳ Not started | - |
 

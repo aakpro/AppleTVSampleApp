@@ -39,7 +39,8 @@ public struct SearchView: View {
                 Text("TV Shows").tag(MediaKind?.some(.tv))
             }
             .pickerStyle(.segmented)
-            .frame(maxWidth: 420)
+            .fixedSize()
+            .accessibilityIdentifier("search.kindPicker")
 
             if !viewModel.availableGenres.isEmpty {
                 Menu {
@@ -68,6 +69,9 @@ public struct SearchView: View {
         switch viewModel.state {
         case .idle:
             ContentUnavailableView("Search Movies and Shows", systemImage: "magnifyingglass")
+        case .loading:
+            ProgressView()
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
         case .failed(let error):
             ErrorView(error: error) { Task { await viewModel.retry() } }
         case .loaded(let items) where items.isEmpty:
