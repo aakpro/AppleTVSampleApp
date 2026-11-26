@@ -105,8 +105,7 @@ struct DiscoveryViewModelTests {
 
         let model = DiscoveryViewModel(
             discover: DiscoverMedia(repository: repo),
-            getDetails: GetMediaDetails(repository: repo),
-            progressStore: store
+            getContinueWatching: GetContinueWatching(progressStore: store, mediaRepository: repo)
         )
 
         await model.reload()

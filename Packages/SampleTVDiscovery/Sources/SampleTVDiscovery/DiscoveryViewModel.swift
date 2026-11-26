@@ -28,22 +28,22 @@ public final class DiscoveryViewModel {
 
     private let discover: DiscoverMedia
     private let getDiscoveryShelves: GetDiscoveryShelves?
-    let getDetails: GetMediaDetails?
-    let progressStore: (any PlaybackProgressStore)?
+    let getContinueWatching: GetContinueWatching?
+    let profileID: String
     private var shelves: [MediaShelf] = []
     private var nextPage = 1
 
     public init(
         discover: DiscoverMedia,
         getDiscoveryShelves: GetDiscoveryShelves? = nil,
-        getDetails: GetMediaDetails? = nil,
-        progressStore: (any PlaybackProgressStore)? = nil,
+        getContinueWatching: GetContinueWatching? = nil,
+        profileID: String = ViewerProfile.defaultID,
         filter: MediaFilter = MediaFilter(kind: .movie)
     ) {
         self.discover = discover
         self.getDiscoveryShelves = getDiscoveryShelves
-        self.getDetails = getDetails
-        self.progressStore = progressStore
+        self.getContinueWatching = getContinueWatching
+        self.profileID = profileID
         self.filter = filter
         self.kind = filter.kind
     }

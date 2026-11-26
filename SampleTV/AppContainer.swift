@@ -1,13 +1,9 @@
-/// Composition root. Phases 2-6 add the repository and one factory method per feature.
 import Foundation
 import SampleTVAPI
-import SampleTVAuth
-import SampleTVDiscovery
 import SampleTVDomain
 import SampleTVPersistence
-import SampleTVProfile
-import SampleTVSearch
 
+/// Composition root wiring data implementations and Domain ports for the tvOS app.
 @MainActor
 final class AppContainer {
     /// Public Apple test stream. TMDB provides metadata only, never video.
@@ -69,57 +65,8 @@ final class AppContainer {
         )
     }
 
-    func makeDiscoveryViewModel() -> DiscoveryViewModel {
-        DiscoveryViewModel(
-            discover: DiscoverMedia(repository: repository),
-            getDiscoveryShelves: GetDiscoveryShelves(repository: repository),
-            getDetails: GetMediaDetails(repository: repository),
-            progressStore: progressStore
-        )
-    }
-
-    func makeSearchViewModel() -> SearchViewModel {
-        SearchViewModel(
-            search: SearchMedia(repository: repository),
-            getGenres: GetGenres(repository: repository)
-        )
-    }
-
-    func makeDetailsViewModel(for item: MediaItem, profileID: String = ViewerProfile.defaultID) -> DetailsViewModel {
-        DetailsViewModel(
-            item: item,
-            getDetails: GetMediaDetails(repository: repository),
-            progressStore: progressStore,
-            resourceResolver: resourceResolver,
-            watchlistStore: watchlistStore,
-            profileID: profileID
-        )
-    }
-
-    /// Seam for a real catalogue: map a title to its stream. Always the sample stream for now.
+    /// Seam for a real catalogue: map a title to its fallback stream.
     func playbackURL(for item: MediaItem) -> URL {
         Self.sampleStream
-    }
-
-    func makeLoginViewModel(onAuthenticated: @MainActor @Sendable @escaping (UserAccount) -> Void) -> LoginViewModel {
-        LoginViewModel(
-            signIn: SignIn(repository: authRepository),
-            signInDemo: SignInDemo(repository: authRepository),
-            onAuthenticated: onAuthenticated
-        )
-    }
-
-    func makeProfileViewModel(onSignOut: @MainActor @Sendable @escaping () -> Void) -> ProfileViewModel {
-        ProfileViewModel(
-            getCurrentProfile: GetCurrentUserProfile(repository: profileRepository),
-            getProfiles: GetProfiles(repository: profileRepository),
-            getPreferences: GetUserPreferences(repository: profileRepository),
-            updatePreferences: UpdateUserPreferences(repository: profileRepository),
-            switchProfile: SwitchProfile(repository: profileRepository),
-            signOut: SignOut(repository: authRepository),
-            progressStore: progressStore,
-            watchlistStore: watchlistStore,
-            onSignOut: onSignOut
-        )
     }
 }

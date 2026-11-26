@@ -16,6 +16,21 @@ public struct ContinueWatchingItem: Identifiable, Hashable, Sendable {
     }
 }
 
+public struct GetWatchHistory: Sendable {
+    private let store: any PlaybackProgressStore
+
+    public init(store: any PlaybackProgressStore) {
+        self.store = store
+    }
+
+    public func callAsFunction(
+        for profileID: String = ViewerProfile.defaultID,
+        maxCount: Int = 100
+    ) async throws -> [PlaybackProgress] {
+        try await store.recentlyWatched(for: profileID, maxCount: maxCount)
+    }
+}
+
 public struct LoadPlaybackProgress: Sendable {
     private let store: any PlaybackProgressStore
 

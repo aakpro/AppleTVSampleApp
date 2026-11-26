@@ -36,24 +36,27 @@ public final class DetailsViewModel {
     }
 
     private let getDetails: GetMediaDetails
-    private let progressStore: (any PlaybackProgressStore)?
-    private let resourceResolver: (any PlaybackResourceResolver)?
-    private let watchlistStore: (any WatchlistStore)?
+    private let loadProgress: LoadPlaybackProgress?
+    private let resolveResources: ResolvePlaybackResources?
+    private let isInWatchlistUseCase: IsInWatchlist?
+    private let toggleWatchlistUseCase: ToggleWatchlist?
     private let profileID: String
 
     public init(
         item: MediaItem,
         getDetails: GetMediaDetails,
-        progressStore: (any PlaybackProgressStore)? = nil,
-        resourceResolver: (any PlaybackResourceResolver)? = nil,
-        watchlistStore: (any WatchlistStore)? = nil,
+        loadProgress: LoadPlaybackProgress? = nil,
+        resolveResources: ResolvePlaybackResources? = nil,
+        isInWatchlist: IsInWatchlist? = nil,
+        toggleWatchlist: ToggleWatchlist? = nil,
         profileID: String = ViewerProfile.defaultID
     ) {
         self.item = item
         self.getDetails = getDetails
-        self.progressStore = progressStore
-        self.resourceResolver = resourceResolver
-        self.watchlistStore = watchlistStore
+        self.loadProgress = loadProgress
+        self.resolveResources = resolveResources
+        self.isInWatchlistUseCase = isInWatchlist
+        self.toggleWatchlistUseCase = toggleWatchlist
         self.profileID = profileID
     }
 
@@ -62,17 +65,17 @@ public final class DetailsViewModel {
         do {
             let details = try await getDetails(item.id)
             state = .loaded(details)
-            savedProgress = try? await progressStore?.loadProgress(for: item.id)
-            if let resourceResolver {
-                playableResources = (try? await resourceResolver.resolve(
+            savedProgress = try? await loadProgress?(for: item.id, profileID: profileID)
+            if let resolveResources {
+                playableResources = (try? await resolveResources(
                     item.id,
                     genreIDs: details.item.genreIDs
                 )) ?? []
             }
 
-            if let watchlistStore {
+            if let isInWatchlistUseCase {
                 do {
-                    isInWatchlist = try await watchlistStore.contains(item.id, in: profileID)
+                    isInWatchlist = try await isInWatchlistUseCase(item.id, for: profileID)
                 } catch is CancellationError {
                     throw CancellationError()
                 } catch {
@@ -89,10 +92,10 @@ public final class DetailsViewModel {
     }
 
     public func toggleWatchlist() async {
-        guard let watchlistStore else { return }
+        guard let toggleWatchlistUseCase else { return }
 
         do {
-            isInWatchlist = try await watchlistStore.toggle(item, for: profileID)
+            isInWatchlist = try await toggleWatchlistUseCase(item, for: profileID)
         } catch is CancellationError {
             return
         } catch {
@@ -104,8 +107,8 @@ public final class DetailsViewModel {
         if let cached = playableResources.first(where: { $0.kind == kind }) {
             return cached
         }
-        guard case .loaded(let details) = state, let resourceResolver else { return nil }
-        let resources = try await resourceResolver.resolve(item.id, genreIDs: details.item.genreIDs)
+        guard case .loaded(let details) = state, let resolveResources else { return nil }
+        let resources = try await resolveResources(item.id, genreIDs: details.item.genreIDs)
         playableResources = resources
         return resources.first { $0.kind == kind }
     }
@@ -114,8 +117,8 @@ public final class DetailsViewModel {
         if !playableResources.isEmpty {
             return playableResources
         }
-        guard case .loaded(let details) = state, let resourceResolver else { return [] }
-        let resources = try await resourceResolver.resolve(item.id, genreIDs: details.item.genreIDs)
+        guard case .loaded(let details) = state, let resolveResources else { return [] }
+        let resources = try await resolveResources(item.id, genreIDs: details.item.genreIDs)
         playableResources = resources
         return resources
     }
