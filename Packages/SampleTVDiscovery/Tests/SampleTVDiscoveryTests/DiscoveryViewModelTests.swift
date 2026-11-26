@@ -195,6 +195,57 @@ struct DiscoveryViewModelTests {
         model.kind = .tv
         #expect(model.filter.kind == .tv)
     }
+
+    @Test func featuredItemPrefersBackdropAndPresentedShelvesDeduplicate() async {
+        let noBackdrop = MediaItem(id: MediaID(kind: .movie, value: 1), title: "No Backdrop")
+        let hero = MediaItem(
+            id: MediaID(kind: .movie, value: 2),
+            title: "Hero Movie",
+            backdropPath: "/hero.jpg"
+        )
+        let third = MediaItem(id: MediaID(kind: .movie, value: 3), title: "Third")
+        let shelves = [
+            MediaShelf(id: "popular", title: "Popular", items: [noBackdrop, hero, third]),
+            MediaShelf(id: "rated", title: "Top Rated", items: [hero, noBackdrop]),
+            MediaShelf(id: "duplicate-only", title: "Only Dups", items: [hero])
+        ]
+
+        let model = DiscoveryViewModel(
+            discover: DiscoverMedia(repository: StubRepository(result: .success(.empty))),
+            getDiscoveryShelves: GetDiscoveryShelves(
+                repository: MultiShelfStubRepository(pagesByFilter: shelves)
+            )
+        )
+
+        #expect(model.featuredItem == nil)
+        await model.reload()
+        #expect(model.featuredItem == hero)
+        #expect(model.presentedShelves.map(\.title) == ["Popular"])
+        #expect(model.presentedShelves.first?.items == [noBackdrop, third])
+    }
+}
+
+private struct MultiShelfStubRepository: MediaRepository {
+    let pagesByFilter: [MediaShelf]
+
+    func discover(_ filter: MediaFilter, page: Int) async throws -> ResultPage<MediaItem> {
+        let items: [MediaItem]
+        switch filter.sort {
+        case .popularity where filter.genreIDs.isEmpty:
+            items = pagesByFilter.indices.contains(0) ? pagesByFilter[0].items : []
+        case .rating:
+            items = pagesByFilter.indices.contains(1) ? pagesByFilter[1].items : []
+        case .newest:
+            items = pagesByFilter.indices.contains(2) ? pagesByFilter[2].items : []
+        default:
+            items = []
+        }
+        return ResultPage(items: items, page: 1, totalPages: 1)
+    }
+
+    func search(_ query: SearchQuery, page: Int) async throws -> ResultPage<MediaItem> { .empty }
+    func details(of id: MediaID) async throws -> MediaDetails { throw MediaError.notFound }
+    func genres(for kind: MediaKind) async throws -> [Genre] { [] }
 }
 
 @MainActor

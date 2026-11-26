@@ -80,6 +80,55 @@ struct SearchViewModelTests {
         await model.retry()
         #expect(model.state == .loaded([expected]))
     }
+
+    @Test func performSearchPublishesLoadingStateBeforeSettling() async {
+        let expected = item(10, genres: [18])
+        let gatedRepo = GatedSearchRepository(
+            page: ResultPage(items: [expected], page: 1, totalPages: 1)
+        )
+        let model = SearchViewModel(
+            search: SearchMedia(repository: gatedRepo),
+            debounce: .milliseconds(1)
+        )
+        model.text = "inception"
+
+        let task = Task {
+            await model.performSearch()
+        }
+
+        for _ in 0..<50 where await !gatedRepo.didStartSearch {
+            await Task.yield()
+        }
+        #expect(model.state == .loading)
+
+        await gatedRepo.resume()
+        await task.value
+        #expect(model.state == .loaded([expected]))
+    }
+}
+
+private actor GatedSearchRepository: MediaRepository {
+    private let page: ResultPage<MediaItem>
+    private var continuation: CheckedContinuation<Void, Never>?
+    private(set) var didStartSearch = false
+
+    init(page: ResultPage<MediaItem>) {
+        self.page = page
+    }
+
+    func resume() {
+        continuation?.resume()
+        continuation = nil
+    }
+
+    func discover(_ filter: MediaFilter, page: Int) async throws -> ResultPage<MediaItem> { .empty }
+    func search(_ query: SearchQuery, page: Int) async throws -> ResultPage<MediaItem> {
+        didStartSearch = true
+        await withCheckedContinuation { continuation = $0 }
+        return self.page
+    }
+    func details(of id: MediaID) async throws -> MediaDetails { throw MediaError.unknown }
+    func genres(for kind: MediaKind) async throws -> [Genre] { [] }
 }
 
 private actor ToggleableSearchRepository: MediaRepository {
